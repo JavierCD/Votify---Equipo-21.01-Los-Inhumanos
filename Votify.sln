@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37012.4 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.Persistence", "Votify.Persistence\Votify.Persistence.csproj", "{5AC227A8-F5A0-40F3-8643-54B0810B867A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.Services", "Votify.Services\Votify.Services.csproj", "{D2A1F331-E8EA-4396-B373-31E3C8F393D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.API", "Votify.API\Votify.API.csproj", "{7731F2F5-5DC8-4733-B909-1A05B784B0F8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.Web", "Votify.Client\Votify.Client\Votify.Web.csproj", "{2D7CBA6E-B301-4D8D-9B34-DB586B1C8DBE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.UI", "Votify.Client\Votify.Client.Client\Votify.UI.csproj", "{0CD9AF5B-8DD8-4FB7-A52D-09F13E30302C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5AC227A8-F5A0-40F3-8643-54B0810B867A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AC227A8-F5A0-40F3-8643-54B0810B867A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AC227A8-F5A0-40F3-8643-54B0810B867A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AC227A8-F5A0-40F3-8643-54B0810B867A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2A1F331-E8EA-4396-B373-31E3C8F393D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2A1F331-E8EA-4396-B373-31E3C8F393D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2A1F331-E8EA-4396-B373-31E3C8F393D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2A1F331-E8EA-4396-B373-31E3C8F393D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7731F2F5-5DC8-4733-B909-1A05B784B0F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7731F2F5-5DC8-4733-B909-1A05B784B0F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7731F2F5-5DC8-4733-B909-1A05B784B0F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7731F2F5-5DC8-4733-B909-1A05B784B0F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D7CBA6E-B301-4D8D-9B34-DB586B1C8DBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D7CBA6E-B301-4D8D-9B34-DB586B1C8DBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D7CBA6E-B301-4D8D-9B34-DB586B1C8DBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D7CBA6E-B301-4D8D-9B34-DB586B1C8DBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CD9AF5B-8DD8-4FB7-A52D-09F13E30302C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CD9AF5B-8DD8-4FB7-A52D-09F13E30302C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CD9AF5B-8DD8-4FB7-A52D-09F13E30302C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CD9AF5B-8DD8-4FB7-A52D-09F13E30302C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EF885767-781F-4ABE-8EA9-F359BA0F4468}
+	EndGlobalSection
+EndGlobal
