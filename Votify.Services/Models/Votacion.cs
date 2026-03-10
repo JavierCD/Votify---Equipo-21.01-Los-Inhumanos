@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class Evento{
+    internal abstract class Votacion {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public DateTime fechaInicio { get; set; }
-        public DataSetDateTime fechaFin { get; set; }
+        public DateTime fechaApertura { get; set; }
+        public DateTime fechaCierre { get; set; }
         public string estado { get; set; }
+
     }
 }
