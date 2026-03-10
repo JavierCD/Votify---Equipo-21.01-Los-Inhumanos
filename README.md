@@ -5,7 +5,7 @@ Proyecto desarrollado en .NET 8 con arquitectura de capas.
 ## Tecnologías utilizadas
 * **Backend:** ASP.NET Core Web API
 * **Frontend:** Blazor WebAssembly
-* **Base de Datos:** PostgreSQL 17/18
+* **Base de Datos:** PostgreSQL 17
 * **ORM:** Entity Framework Core
 
 ## Configuración rápida
