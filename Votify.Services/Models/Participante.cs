@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class Participante : Miembro{
+    public class Participante : Miembro{
         public string Descripcion { get; set; }
-        public bool visible { get; set; }
-        public string estado { get; set; }
-
+        public bool Visible { get; set; }
+        public string Estado { get; set; }
+        public Proyecto Proyecto { get; set; }
     }
 }

@@ -7,12 +7,17 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class Evento{
+    public class Evento{
         public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public DateTime fechaInicio { get; set; }
-        public DataSetDateTime fechaFin { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
         public string estado { get; set; }
+        public List<Participante> Participante { get; set; }
+        public List<Juez> Jurado { get; set; }
+        public Organizador Organizador { get; set; }
+        public List<Votante> Votantes { get; set; }
+        public List<Categoria> CategoriasEvento { get; set; }
     }
 }

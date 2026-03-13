@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Votify.Persistence.Entities
 {
-    internal class Class1
+    internal class VotoEntity
     {
     }
 }

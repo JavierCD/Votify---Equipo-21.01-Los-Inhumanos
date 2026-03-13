@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class Organizador : Miembro
+    public class Organizador : Miembro
     {
     }
 }

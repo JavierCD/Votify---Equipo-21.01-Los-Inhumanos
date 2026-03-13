@@ -6,11 +6,15 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class Voto{
+    public class Voto{
         public int Id { get; set; }
         public DateTime fecha { get; set; }
         public bool anonimo { get; set; }
         public string hashanonimo { get; set; }
+
+        public Juez Juez { get; set; }
+        public Votante Votante { get; set; }
+        public Votacion Votacion { get; set; }
 
     }
 }

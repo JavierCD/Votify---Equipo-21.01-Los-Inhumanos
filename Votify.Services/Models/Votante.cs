@@ -6,8 +6,13 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class Votante : Miembro{
-        public bool anonimo { get; set; }
+    public class Votante{
+        public int Id { get; set; }
+        public string Email { get; set; }
+
+        public bool Anonimo { get; set; }
+        public List<Evento> Eventos { get; set; }
+        public Voto Voto { get; set; }
 
     }
 }

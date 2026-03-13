@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal abstract class Miembro {
+    public abstract class Miembro {
         public int Id { get; set; }
         public string Name { get; set; }
-        public string email { get; set; }
-        public string password { get; set; }
-        public DateTime fechaRegistro { get; set; }
-
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public DateTime FechaRegistro { get; set; }
+        public List<Evento> Eventos { get; set; }
     }
 }

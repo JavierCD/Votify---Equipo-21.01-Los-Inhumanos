@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Votify.Services.Models
+namespace Votify.Persistence.Entities
 {
-    public class Juez : Miembro
+    internal class VotanteEntity
     {
     }
 }
