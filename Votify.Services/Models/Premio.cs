@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class Premio {
+    public class Premio {
         public int Id { get; set; }
         public string Name { get; set; }
         public string Descripcion { get; set; }
-        public int posicion { get; set; }
+        public int Posicion { get; set; }
+        public Categoria Categoria { get; set; }
 
     }
 }

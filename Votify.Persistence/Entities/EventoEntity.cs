@@ -7,24 +7,24 @@ using System.Threading.Tasks;
 
 namespace Votify.Persistence.Entities
 {
-    internal class Evento
+    public class EventoEntity
     {
         [Key]
-        public int id { get; set; }
+        public int Id { get; set; }
 
-        [Required(ErrorMessage = "El nombre del evento es obligatorio")]
-        [StringLength(255)]
-        public string Name { get; set; } = string.Empty;
-
+        [Required]
+        [MaxLength(100)]
+        public string Name { get; set; }
         public string? Descripcion { get; set; }
 
         [Required]
         public DateTime FechaInicio { get; set; }
+        
         [Required]
-        public DateTime FechaFin { get; set; }
+        public DateTime FechaFin {  get; set; }
 
-        //public ICollection<Participante> 
+        //Relaciones
+        //public virtual ICollection<>
 
-        public DateTime FechaCreacion { get; set; }
     }
 }

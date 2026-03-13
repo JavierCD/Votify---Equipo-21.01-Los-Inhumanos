@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class Popular:Votacion{
+    public class Popular:Votacion{
         public int maxSelection { get; set; }
     }
 }

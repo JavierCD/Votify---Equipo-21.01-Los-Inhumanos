@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class Multicriterio : Votacion{
+    public class Multicriterio : Votacion{
         public bool usaPesos { get; set; }
 
     }
