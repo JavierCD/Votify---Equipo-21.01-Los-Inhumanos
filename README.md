@@ -1,12 +1,13 @@
 ﻿# Votify - Sistema de Votación
 
-Proyecto desarrollado en .NET 8 con arquitectura de capas.
+Proyecto desarrollado en .NET 8 con Clean Architecture.
 
 ## Tecnologías utilizadas
-* **Backend:** ASP.NET Core Web API
-* **Frontend:** Blazor WebAssembly
+* **Arquitectura:** Clean Architecture (Core, UI, Web, Services, Persistence)
+* **Backend / Host:** ASP.NET Core (API REST y Servidor de Blazor)
+* **Frontend:** Blazor WebAssembly (`Votify.UI`)
 * **Base de Datos:** PostgreSQL 17
-* **ORM:** Entity Framework Core
+* **ORM:** Entity Framework Core 8
 
 ## Configuración rápida
 
