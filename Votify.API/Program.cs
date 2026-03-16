@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Votify.Persistence.Context;
+using Votify.Persistence.Repositories;
+using Votify.Core.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +25,12 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowAnyHeader());
 });
+
+// 2. Registrar el Repositorio (Inyección de Dependencias)
+builder.Services.AddScoped<IVotanteRepository, VotanteRepository>();
+
+// 3. Si tienes un Servicio, regístralo también
+// builder.Services.AddScoped<IVotanteService, VotanteService>();
 
 var app = builder.Build();
 

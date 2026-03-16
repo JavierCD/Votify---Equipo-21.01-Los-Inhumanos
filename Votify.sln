@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.37012.4 d17.14
+VisualStudioVersion = 17.14.37012.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.Persistence", "Votify.Persistence\Votify.Persistence.csproj", "{5AC227A8-F5A0-40F3-8643-54B0810B867A}"
 EndProject
@@ -9,15 +9,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.Services", "Votify.S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.API", "Votify.API\Votify.API.csproj", "{7731F2F5-5DC8-4733-B909-1A05B784B0F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.Web", "Votify.Client\Votify.Client\Votify.Web.csproj", "{2D7CBA6E-B301-4D8D-9B34-DB586B1C8DBE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.Web", "Votify.Client\Votify.Web\Votify.Web.csproj", "{2D7CBA6E-B301-4D8D-9B34-DB586B1C8DBE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.UI", "Votify.Client\Votify.Client.Client\Votify.UI.csproj", "{0CD9AF5B-8DD8-4FB7-A52D-09F13E30302C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.UI", "Votify.Client\Votify.UI\Votify.UI.csproj", "{0CD9AF5B-8DD8-4FB7-A52D-09F13E30302C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{D107F4C8-89CC-BEA8-D3D7-CA6B7733353D}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Votify.Core", "Votify.Core\Votify.Core.csproj", "{D44D1CC4-DA3B-4C3A-AD14-089335E7DBB7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{0CD9AF5B-8DD8-4FB7-A52D-09F13E30302C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CD9AF5B-8DD8-4FB7-A52D-09F13E30302C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0CD9AF5B-8DD8-4FB7-A52D-09F13E30302C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D44D1CC4-DA3B-4C3A-AD14-089335E7DBB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D44D1CC4-DA3B-4C3A-AD14-089335E7DBB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D44D1CC4-DA3B-4C3A-AD14-089335E7DBB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D44D1CC4-DA3B-4C3A-AD14-089335E7DBB7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

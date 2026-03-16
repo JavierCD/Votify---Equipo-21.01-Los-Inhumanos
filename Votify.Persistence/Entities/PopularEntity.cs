@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using Votify.Core.Models;
+using Votify.Core.Interfaces;
 
 namespace Votify.Persistence.Entities
 {
-    internal class PopularEntity
+    public class PopularEntity : VotacionEntity
     {
+        public int MaxSelection { get; set; }
     }
 }

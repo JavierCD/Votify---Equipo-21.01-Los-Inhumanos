@@ -1,0 +1,15 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Votify.Core.Models
+{
+    public class Participante : Miembro{
+        public string Descripcion { get; set; }
+        public bool Visible { get; set; }
+        public string Estado { get; set; }
+        public Proyecto Proyecto { get; set; }
+    }
+}
