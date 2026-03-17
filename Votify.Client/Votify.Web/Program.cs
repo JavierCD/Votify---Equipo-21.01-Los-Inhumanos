@@ -36,7 +36,8 @@ builder.Services.AddCors(options =>
 });
 
 // --- Inyección de Dependencias (Core, Persistence, Services) ---
-builder.Services.AddScoped<IVotanteRepository, VotanteRepository>();
+// Registrar el Repositorio Genérico para todas las entidades
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 
 
