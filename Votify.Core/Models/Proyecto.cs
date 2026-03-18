@@ -6,14 +6,28 @@ using System.Threading.Tasks;
 
 namespace Votify.Core.Models
 {
-    public class Proyecto{
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public DateTime FechaRegistro { get; set; }
-        public bool Visible { get; set; }
-        public Participante Participante { get; set; }
-        public List<Categoria> Categorias { get; set; }
+    namespace Votify.Core.Models
+    {
+        public class Proyecto
+        {
+            public int Id { get; set; }
 
+            public required string Name { get; set; }
 
+            // Asignamos la fecha actual por defecto para no tener que recordarlo al crear
+            public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+
+            public bool Visible { get; set; }
+
+            // Clave foránea: El proyecto le pertenece a un participante
+            public int ParticipanteId { get; set; }
+            public Participante? Participante { get; set; }
+
+            // Propiedad de navegación MUCHOS A MUCHOS
+            // Un proyecto puede estar nominado a varias categorías, y una categoría tiene varios proyectos
+            public List<Categoria> Categorias { get; set; } = new List<Categoria>();
+
+            public List<Voto> Votos { get; set; } = new List<Voto>();
+        }
     }
 }

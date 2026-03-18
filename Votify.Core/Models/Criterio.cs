@@ -6,12 +6,22 @@ using System.Threading.Tasks;
 
 namespace Votify.Core.Models
 {
-    public class Criterio{
+    public class Criterio
+    {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Descripcion { get; set; }
-        public float Peso { get; set; }
-        public Multicriterio Votacion { get; set; }
 
+        public required string Name { get; set; }
+
+        // Lo dejamos nullable (?) como lo tenías en tu Entity original, 
+        // ya que las descripciones suelen ser opcionales
+        public string? Descripcion { get; set; }
+
+        public float Peso { get; set; }
+
+        // Clave foránea
+        public int MulticriterioId { get; set; }
+
+        // Propiedad de navegación pura
+        public Multicriterio? Votacion { get; set; }
     }
 }
