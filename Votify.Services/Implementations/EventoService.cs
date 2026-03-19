@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Votify.Core;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
+using Votify.Core.Enums;
 
 namespace Votify.Services.Implementations
 {
@@ -25,7 +26,20 @@ namespace Votify.Services.Implementations
             {
                 throw new KeyNotFoundException($"No se encontró el evento con ID {evento.Id}");
             }
-            await _repository.UpdateAsync(evento);
+            
+            eventoExistente.Id = evento.Id;
+            eventoExistente.Description = evento.Description;
+
+            if (evento.FechaFin <= evento.FechaInicio)
+            {
+                throw new ArgumentException("La fecha de fin debe ser posterior a la fecha de inicio");
+            }
+            
+            eventoExistente.FechaFin = evento.FechaFin;
+            eventoExistente.FechaInicio = evento.FechaInicio;
+
+            await _repository.UpdateAsync(eventoExistente);
+
         }
 
         public async Task<Evento> CrearAsync(Evento evento)
@@ -35,7 +49,6 @@ namespace Votify.Services.Implementations
                 throw new ArgumentException("La fecha de fin debe ser posterior a la fecha de inicio");
             }
 
-            evento.Estado = "Borrador"; // Falta crear un enum con los estados de los eventos
 
             return await _repository.AddAsync(evento);
         }
@@ -47,7 +60,7 @@ namespace Votify.Services.Implementations
             {
                 throw new KeyNotFoundException($"No se encontró el evento con ID {id}");
             }
-            if (evento.Estado == "Cerrado" || evento.Estado == "Activo")
+            if (evento.Estado == EstadoEvento.Cerrado || evento.Estado == EstadoEvento.Activo)
             {
                 throw new InvalidOperationException("No se puede eliminar un evento que esta activo o que ya fue cerrado.");
             }

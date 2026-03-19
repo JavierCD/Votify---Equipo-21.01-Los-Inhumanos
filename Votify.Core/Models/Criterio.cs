@@ -10,7 +10,7 @@ namespace Votify.Core.Models
     {
         public int Id { get; set; }
 
-        public required string Name { get; set; }
+        public string Name { get; set; }
 
         // Lo dejamos nullable (?) como lo tenías en tu Entity original, 
         // ya que las descripciones suelen ser opcionales
