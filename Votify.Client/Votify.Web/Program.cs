@@ -4,7 +4,8 @@ using Votify.Persistence.Repositories;
 using Votify.Core.Interfaces;
 using Votify.UI;
 using Votify.Web.Components;
-// using Votify.Services.Implementations; // Descomenta esto cuando uses el VotanteService
+using Radzen;
+using Votify.Services.Implementations; // Descomenta esto cuando uses el VotanteService
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,8 @@ var builder = WebApplication.CreateBuilder(args);
 // --- Blazor ---
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
+
+builder.Services.AddRadzenComponents();
 
 // --- API y Swagger ---
 builder.Services.AddControllers();
@@ -39,6 +42,8 @@ builder.Services.AddCors(options =>
 // Registrar el Repositorio Genérico para todas las entidades
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
+// 2. Registramos el servicio de Eventos que acabamos de crear
+builder.Services.AddScoped<IEventoService, EventoService>();
 
 
 // ==========================================
