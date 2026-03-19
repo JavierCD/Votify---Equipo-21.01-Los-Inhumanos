@@ -4,17 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Votify.Core.Models
+namespace Votify.Services.Models
 {
-    public abstract class Votacion {
+    internal class PopularResponse
+    {
         public int Id { get; set; }
         public int EventoId { get; set; }
         public DateTime FechaApertura { get; set; }
         public DateTime FechaCierre { get; set; }
-        public string Estado { get; set; }
-        public List<Voto> Votos { get; set; }
-        public Categoria Categoria { get; set; }
-
-
+        public string Estado { get; set; } = string.Empty;
+        public int MaxSelecciones { get; set; }
     }
 }

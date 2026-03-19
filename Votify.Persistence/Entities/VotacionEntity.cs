@@ -17,6 +17,11 @@ namespace Votify.Persistence.Entities
         public DateTime FechaCierre { get; set; }
         public string Estado { get; set; } = "Cerrada";
 
+        //Relación con Evento
+        public int EventoId { get; set; }
+        public virtual EventoEntity Evento { get; set; } = null!;
+
+
         // Relación con Categoría
         public int CategoriaId { get; set; }
         public virtual CategoriaEntity Categoria { get; set; } = null!;
