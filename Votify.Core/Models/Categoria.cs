@@ -11,7 +11,7 @@ namespace Votify.Core.Models
     {
         public int Id { get; set; }
 
-        public required string Name { get; set; }
+        public string Name { get; set; }
 
         public string? Descripcion { get; set; }
 
@@ -23,5 +23,25 @@ namespace Votify.Core.Models
         public Votacion? Votacion { get; set; }
         public List<Proyecto> Proyectos { get; set; } = new List<Proyecto>();
         public List<Premio> Premios { get; set; } = new List<Premio>();
+
+        protected Categoria() { }
+
+        public Categoria(string name, string? desc)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("El nombre de la categoría no puede estar vacío.", nameof(name));
+
+            Name = name;
+            Descripcion = desc;
+        }
+
+        public void ActualizarDetalles(string newName, string? descripcion = null)
+        {
+            if (string.IsNullOrWhiteSpace(newName))
+                throw new ArgumentException("El nombre de la categoría no puede estar vacío", nameof(newName));
+
+            Name = newName;
+            Descripcion = descripcion;
+        }
     }
 }
