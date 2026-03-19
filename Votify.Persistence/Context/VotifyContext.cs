@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Models;
 using Votify.Core.Models.Votify.Core.Models;
+using Votify.Core.Enums;
 
 
  
@@ -66,7 +67,11 @@ namespace Votify.Persistence.Context
                 entity.HasKey(e => e.Id);
 
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(150);
-                entity.Property(e => e.Estado).IsRequired().HasDefaultValue("Borrador");
+
+                entity.Property(e => e.Estado)
+                .IsRequired()
+                .HasConversion<string>()
+                .HasDefaultValue(EstadoEvento.Borrador);
 
                 // Relación 1 a N con Organizador
                 entity.HasOne(e => e.Organizador)
