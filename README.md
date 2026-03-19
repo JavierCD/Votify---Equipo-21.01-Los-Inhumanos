@@ -29,4 +29,4 @@ El proyecto utiliza Entity Framework Core. Sigue estos pasos para generar las ta
    Abre la **Consola del Administrador de Paquetes** en Visual Studio y ejecuta el siguiente comando para aplicar las migraciones a tu base de datos local:
 
    ```powershell
-   Update-Database -Project Votify.Persistence -StartupProject Votify.Persistence
+    Update-Database -Project Votify.Persistence -StartupProject Votify.Web
