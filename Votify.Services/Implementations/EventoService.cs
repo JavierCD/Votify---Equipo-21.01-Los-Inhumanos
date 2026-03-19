@@ -13,29 +13,55 @@ namespace Votify.Services.Implementations
     {
         private readonly IGenericRepository<Evento> _repository;
 
-        public Task ActualizarAsync(Evento evento)
+        public EventoService(IGenericRepository<Evento> repository)
         {
-            throw new NotImplementedException();
+            _repository = repository;
         }
 
-        public Task<Evento> CrearAsync(Evento evento)
+        public async Task ActualizarAsync(Evento evento)
         {
-            throw new NotImplementedException();
+            var eventoExistente = await _repository.GetByIdAsync(evento.Id);
+            if (eventoExistente == null) 
+            {
+                throw new KeyNotFoundException($"No se encontró el evento con ID {evento.Id}");
+            }
+            await _repository.UpdateAsync(evento);
         }
 
-        public Task EliminarAsync(int id)
+        public async Task<Evento> CrearAsync(Evento evento)
         {
-            throw new NotImplementedException();
+            if (evento.FechaFin <= evento.FechaInicio)
+            {
+                throw new ArgumentException("La fecha de fin debe ser posterior a la fecha de inicio");
+            }
+
+            evento.Estado = "Borrador"; // Falta crear un enum con los estados de los eventos
+
+            return await _repository.AddAsync(evento);
         }
 
-        public Task<Evento?> ObtenerPorIdAsync(int id)
+        public async Task EliminarAsync(int id)
         {
-            throw new NotImplementedException();
+            var evento = await _repository.GetByIdAsync(id);
+            if (evento == null)
+            {
+                throw new KeyNotFoundException($"No se encontró el evento con ID {id}");
+            }
+            if (evento.Estado == "Cerrado" || evento.Estado == "Activo")
+            {
+                throw new InvalidOperationException("No se puede eliminar un evento que esta activo o que ya fue cerrado.");
+            }
+            await _repository.DeleteAsync(id);
         }
 
-        public Task<IEnumerable<Evento>> ObtenerTodosAsync()
+        public async Task<Evento?> ObtenerPorIdAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _repository.GetByIdAsync(id);
+        }
+
+        public async Task<IEnumerable<Evento>> ObtenerTodosAsync()
+        {
+            return await _repository.GetAllAsync();
         }
     }
 }
