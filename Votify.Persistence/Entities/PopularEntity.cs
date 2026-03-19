@@ -11,6 +11,6 @@ namespace Votify.Persistence.Entities
 {
     public class PopularEntity : VotacionEntity
     {
-        public int MaxSelection { get; set; }
+        public int MaxSelecciones { get; set; }
     }
 }
