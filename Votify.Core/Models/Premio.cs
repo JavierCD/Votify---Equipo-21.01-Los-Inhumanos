@@ -11,7 +11,7 @@ namespace Votify.Core.Models
         public int Id { get; set; }
 
         // Usamos required para garantizar que no haya premios sin nombre
-        public required string Name { get; set; }
+        public string Name { get; set; }
 
         // Nullable (?) porque a veces un premio se explica por sí solo ("Primer Puesto")
         public string? Descripcion { get; set; }

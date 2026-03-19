@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Votify.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InicialLimpia : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,15 +18,14 @@ namespace Votify.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Email = table.Column<string>(type: "text", nullable: false),
-                    Password = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    Password = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     FechaRegistro = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TipoMiembro = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
+                    TipoDeMiembro = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
                     Descripcion = table.Column<string>(type: "text", nullable: true),
                     Visible = table.Column<bool>(type: "boolean", nullable: true),
-                    Estado = table.Column<string>(type: "text", nullable: true),
-                    ProyectoId = table.Column<int>(type: "integer", nullable: true)
+                    Estado = table.Column<string>(type: "text", nullable: true, defaultValue: "Pendiente")
                 },
                 constraints: table =>
                 {
@@ -39,8 +38,8 @@ namespace Votify.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Email = table.Column<string>(type: "text", nullable: false),
-                    Anonimo = table.Column<bool>(type: "boolean", nullable: false)
+                    Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    Anonimo = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -53,11 +52,11 @@ namespace Votify.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
                     FechaInicio = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     FechaFin = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Estado = table.Column<string>(type: "text", nullable: false),
+                    Estado = table.Column<string>(type: "text", nullable: false, defaultValue: "Borrador"),
                     OrganizadorId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -77,7 +76,7 @@ namespace Votify.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     FechaRegistro = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Visible = table.Column<bool>(type: "boolean", nullable: false),
                     ParticipanteId = table.Column<int>(type: "integer", nullable: false)
@@ -99,7 +98,7 @@ namespace Votify.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Descripcion = table.Column<string>(type: "text", nullable: true),
                     EventoId = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -115,31 +114,55 @@ namespace Votify.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "EventoEntityMiembroEntity",
+                name: "EventosJurado",
                 columns: table => new
                 {
-                    EventosId = table.Column<int>(type: "integer", nullable: false),
-                    MiembrosId = table.Column<int>(type: "integer", nullable: false)
+                    EventoId = table.Column<int>(type: "integer", nullable: false),
+                    JuradoId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EventoEntityMiembroEntity", x => new { x.EventosId, x.MiembrosId });
+                    table.PrimaryKey("PK_EventosJurado", x => new { x.EventoId, x.JuradoId });
                     table.ForeignKey(
-                        name: "FK_EventoEntityMiembroEntity_Eventos_EventosId",
-                        column: x => x.EventosId,
+                        name: "FK_EventosJurado_Eventos_EventoId",
+                        column: x => x.EventoId,
                         principalTable: "Eventos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_EventoEntityMiembroEntity_Miembros_MiembrosId",
-                        column: x => x.MiembrosId,
+                        name: "FK_EventosJurado_Miembros_JuradoId",
+                        column: x => x.JuradoId,
                         principalTable: "Miembros",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "EventoEntityVotanteEntity",
+                name: "EventosParticipantes",
+                columns: table => new
+                {
+                    EventoId = table.Column<int>(type: "integer", nullable: false),
+                    ParticipantesId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventosParticipantes", x => new { x.EventoId, x.ParticipantesId });
+                    table.ForeignKey(
+                        name: "FK_EventosParticipantes_Eventos_EventoId",
+                        column: x => x.EventoId,
+                        principalTable: "Eventos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EventosParticipantes_Miembros_ParticipantesId",
+                        column: x => x.ParticipantesId,
+                        principalTable: "Miembros",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EventosVotantes",
                 columns: table => new
                 {
                     EventosId = table.Column<int>(type: "integer", nullable: false),
@@ -147,41 +170,17 @@ namespace Votify.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EventoEntityVotanteEntity", x => new { x.EventosId, x.VotantesId });
+                    table.PrimaryKey("PK_EventosVotantes", x => new { x.EventosId, x.VotantesId });
                     table.ForeignKey(
-                        name: "FK_EventoEntityVotanteEntity_Eventos_EventosId",
+                        name: "FK_EventosVotantes_Eventos_EventosId",
                         column: x => x.EventosId,
                         principalTable: "Eventos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_EventoEntityVotanteEntity_Votantes_VotantesId",
+                        name: "FK_EventosVotantes_Votantes_VotantesId",
                         column: x => x.VotantesId,
                         principalTable: "Votantes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "CategoriaEntityProyectoEntity",
-                columns: table => new
-                {
-                    CategoriasId = table.Column<int>(type: "integer", nullable: false),
-                    ProyectosId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CategoriaEntityProyectoEntity", x => new { x.CategoriasId, x.ProyectosId });
-                    table.ForeignKey(
-                        name: "FK_CategoriaEntityProyectoEntity_Categorias_CategoriasId",
-                        column: x => x.CategoriasId,
-                        principalTable: "Categorias",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CategoriaEntityProyectoEntity_Proyectos_ProyectosId",
-                        column: x => x.ProyectosId,
-                        principalTable: "Proyectos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -192,7 +191,7 @@ namespace Votify.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Descripcion = table.Column<string>(type: "text", nullable: true),
                     Posicion = table.Column<int>(type: "integer", nullable: false),
                     CategoriaId = table.Column<int>(type: "integer", nullable: false)
@@ -209,6 +208,30 @@ namespace Votify.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ProyectosCategorias",
+                columns: table => new
+                {
+                    CategoriasId = table.Column<int>(type: "integer", nullable: false),
+                    ProyectosId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProyectosCategorias", x => new { x.CategoriasId, x.ProyectosId });
+                    table.ForeignKey(
+                        name: "FK_ProyectosCategorias_Categorias_CategoriasId",
+                        column: x => x.CategoriasId,
+                        principalTable: "Categorias",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProyectosCategorias_Proyectos_ProyectosId",
+                        column: x => x.ProyectosId,
+                        principalTable: "Proyectos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Votaciones",
                 columns: table => new
                 {
@@ -216,12 +239,12 @@ namespace Votify.Persistence.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     FechaApertura = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     FechaCierre = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Estado = table.Column<string>(type: "text", nullable: false),
+                    Estado = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "Cerrada"),
                     CategoriaId = table.Column<int>(type: "integer", nullable: false),
-                    TipoVotacion = table.Column<string>(type: "character varying(21)", maxLength: 21, nullable: false),
-                    UsaPesos = table.Column<bool>(type: "boolean", nullable: true),
+                    TipoVotacion = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
+                    UsaPesos = table.Column<bool>(type: "boolean", nullable: true, defaultValue: false),
                     MaxSelection = table.Column<int>(type: "integer", nullable: true),
-                    ValorMax = table.Column<int>(type: "integer", nullable: true)
+                    ValorMax = table.Column<int>(type: "integer", nullable: true, defaultValue: 5)
                 },
                 constraints: table =>
                 {
@@ -240,18 +263,17 @@ namespace Votify.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Descripcion = table.Column<string>(type: "text", nullable: true),
                     Peso = table.Column<float>(type: "real", nullable: false),
-                    MulticriterioId = table.Column<int>(type: "integer", nullable: false),
-                    VotacionId = table.Column<int>(type: "integer", nullable: false)
+                    MulticriterioId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Criterios", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Criterios_Votaciones_VotacionId",
-                        column: x => x.VotacionId,
+                        name: "FK_Criterios_Votaciones_MulticriterioId",
+                        column: x => x.MulticriterioId,
                         principalTable: "Votaciones",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -265,10 +287,11 @@ namespace Votify.Persistence.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Fecha = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Anonimo = table.Column<bool>(type: "boolean", nullable: false),
-                    HashAnonimo = table.Column<string>(type: "text", nullable: true),
+                    HashAnonimo = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     JuezId = table.Column<int>(type: "integer", nullable: true),
                     VotanteId = table.Column<int>(type: "integer", nullable: true),
-                    VotacionId = table.Column<int>(type: "integer", nullable: false)
+                    VotacionId = table.Column<int>(type: "integer", nullable: false),
+                    ProyectoId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -277,7 +300,14 @@ namespace Votify.Persistence.Migrations
                         name: "FK_Votos_Miembros_JuezId",
                         column: x => x.JuezId,
                         principalTable: "Miembros",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Votos_Proyectos_ProyectoId",
+                        column: x => x.ProyectoId,
+                        principalTable: "Proyectos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Votos_Votaciones_VotacionId",
                         column: x => x.VotacionId,
@@ -288,13 +318,9 @@ namespace Votify.Persistence.Migrations
                         name: "FK_Votos_Votantes_VotanteId",
                         column: x => x.VotanteId,
                         principalTable: "Votantes",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CategoriaEntityProyectoEntity_ProyectosId",
-                table: "CategoriaEntityProyectoEntity",
-                column: "ProyectosId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Categorias_EventoId",
@@ -302,24 +328,29 @@ namespace Votify.Persistence.Migrations
                 column: "EventoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Criterios_VotacionId",
+                name: "IX_Criterios_MulticriterioId",
                 table: "Criterios",
-                column: "VotacionId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EventoEntityMiembroEntity_MiembrosId",
-                table: "EventoEntityMiembroEntity",
-                column: "MiembrosId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EventoEntityVotanteEntity_VotantesId",
-                table: "EventoEntityVotanteEntity",
-                column: "VotantesId");
+                column: "MulticriterioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Eventos_OrganizadorId",
                 table: "Eventos",
                 column: "OrganizadorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventosJurado_JuradoId",
+                table: "EventosJurado",
+                column: "JuradoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventosParticipantes_ParticipantesId",
+                table: "EventosParticipantes",
+                column: "ParticipantesId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventosVotantes_VotantesId",
+                table: "EventosVotantes",
+                column: "VotantesId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Premios_CategoriaId",
@@ -333,6 +364,11 @@ namespace Votify.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ProyectosCategorias_ProyectosId",
+                table: "ProyectosCategorias",
+                column: "ProyectosId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Votaciones_CategoriaId",
                 table: "Votaciones",
                 column: "CategoriaId",
@@ -342,6 +378,11 @@ namespace Votify.Persistence.Migrations
                 name: "IX_Votos_JuezId",
                 table: "Votos",
                 column: "JuezId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Votos_ProyectoId",
+                table: "Votos",
+                column: "ProyectoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Votos_VotacionId",
@@ -358,19 +399,22 @@ namespace Votify.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "CategoriaEntityProyectoEntity");
-
-            migrationBuilder.DropTable(
                 name: "Criterios");
 
             migrationBuilder.DropTable(
-                name: "EventoEntityMiembroEntity");
+                name: "EventosJurado");
 
             migrationBuilder.DropTable(
-                name: "EventoEntityVotanteEntity");
+                name: "EventosParticipantes");
+
+            migrationBuilder.DropTable(
+                name: "EventosVotantes");
 
             migrationBuilder.DropTable(
                 name: "Premios");
+
+            migrationBuilder.DropTable(
+                name: "ProyectosCategorias");
 
             migrationBuilder.DropTable(
                 name: "Votos");

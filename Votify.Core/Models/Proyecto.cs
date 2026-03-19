@@ -12,7 +12,7 @@ namespace Votify.Core.Models
         {
             public int Id { get; set; }
 
-            public required string Name { get; set; }
+            public string Name { get; set; }
 
             // Asignamos la fecha actual por defecto para no tener que recordarlo al crear
             public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;

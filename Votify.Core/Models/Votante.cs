@@ -11,7 +11,7 @@ namespace Votify.Core.Models
         public int Id { get; set; }
 
         // El email es obligatorio para saber quién es
-        public required string Email { get; set; }
+        public string Email { get; set; }
 
         // Para saber si su identidad debe ocultarse al público/organizador
         public bool Anonimo { get; set; }
