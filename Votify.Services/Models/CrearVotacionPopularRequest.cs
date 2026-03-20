@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class CrearVotacionPopularRequest
+    public class CrearVotacionPopularRequest
     {
         public int EventoId { get; set; }
         public DateTime FechaApertura { get; set; }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class PopularResponse
+   public class PopularResponse
     {
         public int Id { get; set; }
         public int EventoId { get; set; }

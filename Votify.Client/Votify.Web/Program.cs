@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Votify.Core.Interfaces;
 using Votify.Persistence.Context;
 using Votify.Persistence.Repositories;
-using Votify.Core.Interfaces;
+using Votify.Services.Implementations;
+using Votify.Services.Interfaces;
 using Votify.UI;
 using Votify.Web.Components;
 // using Votify.Services.Implementations; // Descomenta esto cuando uses el VotanteService
@@ -37,6 +39,8 @@ builder.Services.AddCors(options =>
 
 // --- Inyección de Dependencias (Core, Persistence, Services) ---
 builder.Services.AddScoped<IVotanteRepository, VotanteRepository>();
+builder.Services.AddScoped<IPopularService, PopularService>();
+builder.Services.AddScoped<IPopularRepository, PopularRepository>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 
 
