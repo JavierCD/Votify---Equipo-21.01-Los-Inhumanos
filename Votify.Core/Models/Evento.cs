@@ -41,7 +41,7 @@ namespace Votify.Core.Models
 
             if (fechaFin <= fechaInit) throw new ArgumentException("La fecha de acabar el evento no puede ser anterior a la fecha de inicio.");
 
-            if(OrganizadorId <= 0) throw new ArgumentException("El Id del organizador es inválido.", nameof(OrganizadorId));
+            if(orgaId <= 0) throw new ArgumentException("El Id del organizador es inválido.", nameof(OrganizadorId));
 
             Name = name;
             FechaFin = fechaFin;
