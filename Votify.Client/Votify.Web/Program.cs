@@ -15,8 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // --- Blazor ---
 builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
-
+    
 builder.Services.AddRadzenComponents();
 
 // --- API y Swagger ---
@@ -83,6 +84,7 @@ app.MapControllers();
 
 // Mapea las páginas de Blazor
 app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Votify.UI._Imports).Assembly);
 
