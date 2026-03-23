@@ -5,7 +5,9 @@ using Votify.Core.Interfaces;
 using Votify.UI;
 using Votify.Web.Components;
 using Radzen;
-using Votify.Services.Implementations; // Descomenta esto cuando uses el VotanteService
+using Votify.Services.Implementations;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // --- Blazor ---
 builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddRadzenComponents();
@@ -81,6 +84,7 @@ app.MapControllers();
 
 // Mapea las páginas de Blazor
 app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Votify.UI._Imports).Assembly);
 
