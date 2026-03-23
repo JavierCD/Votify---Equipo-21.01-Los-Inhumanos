@@ -45,6 +45,8 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 // 2. Registramos el servicio de Eventos que acabamos de crear
 builder.Services.AddScoped<IEventoService, EventoService>();
 
+// 3. Registramos el servicio de Participantes 
+builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 
 // ==========================================
 // 2. CONFIGURACIÓN DEL PIPELINE (MIDDLEWARE)

@@ -1,0 +1,118 @@
+﻿@page "/ficha-participante/{Id:int}"
+@rendermode InteractiveServer
+
+@using Votify.Core.Models
+@using Votify.Core.Interfaces
+
+@* Aquí inyectamos el servicio que programaste *@
+@inject IParticipanteService ParticipanteService
+
+<PageTitle>Ficha de Participante - Votify</PageTitle>
+
+@if (cargando)
+{
+    <div class="container rz-mt-4 rz-text-align-center">
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mt-4">Buscando en la base de datos...</RadzenText>
+    </div>
+}
+else if (participante == null)
+{
+    <div class="container rz-mt-4">
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
+            No se ha encontrado ningún participante con el ID @Id.
+        </RadzenAlert>
+    </div>
+}
+else
+{
+    <div class="container rz-mt-4">
+        <RadzenText TextStyle="TextStyle.H3">Ficha de Participante</RadzenText>
+
+        <RadzenCard class="rz-mt-4 rz-shadow-3" Style="max-width: 600px;">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenIcon Icon="account_circle" Style="font-size: 4rem; color: var(--rz-primary);" />
+
+                <RadzenStack Gap="0">
+                    @* Bindeamos los datos reales del participante *@
+                    <RadzenText TextStyle="TextStyle.H5" class="rz-mb-0">@participante.Name</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-color-primary-light">@participante.Email</RadzenText>
+
+                    <div class="rz-mt-2">
+                        <RadzenBadge BadgeStyle="ObtenerColorEstado(participante.Estado)" Text="@participante.Estado" IsPill="true" />
+
+                        @if (participante.Visible)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Visible" IsPill="true" class="rz-ml-2" />
+                        }
+                        else
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Oculto" IsPill="true" class="rz-ml-2" />
+                        }
+                    </div>
+                </RadzenStack>
+            </RadzenStack>
+
+            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mt-4 rz-mb-2"><b>Descripción</b></RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">
+                @(string.IsNullOrWhiteSpace(participante.Descripcion) ? "El participante no ha proporcionado una descripción todavía." : participante.Descripcion)
+            </RadzenText>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" class="rz-mt-4" Gap="1rem">
+                @* Botones mágicos que llaman a tu backend *@
+                @if (participante.Estado != "Rechazado")
+                {
+                    <RadzenButton Text="Rechazar" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Outlined" Icon="cancel" Click="@(() => CambiarEstado("Rechazado"))" />
+                }
+                @if (participante.Estado != "Aprobado")
+                {
+                    <RadzenButton Text="Aprobar" ButtonStyle="ButtonStyle.Success" Icon="check_circle" Click="@(() => CambiarEstado("Aprobado"))" />
+                }
+            </RadzenStack>
+        </RadzenCard>
+    </div>
+}
+
+@code {
+    // Esto captura el ID de la URL (ej: /ficha-participante/5)
+    [Parameter]
+    public int Id { get; set; }
+
+    private Participante? participante;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Buscamos el participante en tu servicio
+        participante = await ParticipanteService.ObtenerPorIdAsync(Id);
+        cargando = false;
+    }
+
+    private async Task CambiarEstado(string nuevoEstado)
+    {
+
+        try
+        {
+            // 2. Llamamos al método de tu servicio que actualiza la BD
+            await ParticipanteService.CambiarEstadoAsync(Id, nuevoEstado);
+
+            // 3. Actualizamos el objeto local para que la pantalla cambie de color sin tener que recargar
+            participante!.EvaluarEstado(nuevoEstado);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al guardar: {ex.Message}");
+        }
+    }
+
+    // Un truquito para que el color de la etiqueta cambie según el estado
+    private BadgeStyle ObtenerColorEstado(string estado)
+    {
+        return estado switch
+        {
+            "Aprobado" => BadgeStyle.Success,
+            "Rechazado" => BadgeStyle.Danger,
+            _ => BadgeStyle.Warning
+        };
+    }
+}
