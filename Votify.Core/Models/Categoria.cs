@@ -24,7 +24,7 @@ namespace Votify.Core.Models
         public List<Proyecto> Proyectos { get; set; } = new List<Proyecto>();
         public List<Premio> Premios { get; set; } = new List<Premio>();
 
-        protected Categoria() { }
+        public Categoria() { }
 
         public Categoria(string name, string? desc)
         {
