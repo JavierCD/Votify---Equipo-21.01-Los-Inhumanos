@@ -33,7 +33,7 @@ namespace Votify.Core.Models
         public List<Votante> Votantes { get; set; } = new List<Votante>();
         public List<Categoria> CategoriasEvento { get; set; } = new List<Categoria>();
 
-        protected Evento() { }
+        public Evento() { }
 
         public Evento(string name, DateTime fechaInit, DateTime fechaFin, int orgaId, string? desc = null) 
         {

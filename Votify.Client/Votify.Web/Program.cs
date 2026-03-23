@@ -84,4 +84,24 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Votify.UI._Imports).Assembly);
 
+// INICIO DEL SEEDING DE DATOS
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        // Obtenemos el contexto de base de datos
+        var context = services.GetRequiredService<VotifyContext>();
+
+        // Ejecutamos el inicializador
+        DbInitializer.Initialize(context);
+    }
+    catch (Exception ex)
+    {
+        // En caso de que falle algo al insertar (muy útil para debugear)
+        Console.WriteLine($"Ocurrió un error al poblar la base de datos: {ex.Message}");
+    }
+}
+// FIN DEL SEEDING DE DATOS
+
 app.Run();
