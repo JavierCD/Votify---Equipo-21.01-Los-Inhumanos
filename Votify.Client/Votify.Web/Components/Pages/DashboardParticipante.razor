@@ -1,0 +1,130 @@
+﻿@page "/dashboard-participante/{Id:int}"
+@rendermode InteractiveServer
+
+@using Votify.Core.Models
+@using Votify.Core.Interfaces
+
+@inject IParticipanteService ParticipanteService
+@inject NavigationManager NavManager
+
+<PageTitle>Mi Panel - Votify</PageTitle>
+
+@if (cargando)
+{
+    <div class="container rz-mt-4 rz-text-align-center">
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mt-4">Cargando tu panel de control...</RadzenText>
+    </div>
+}
+else if (participante == null)
+{
+    <div class="container rz-mt-4">
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
+            No se ha encontrado el participante.
+        </RadzenAlert>
+    </div>
+}
+else
+{
+    <div class="container rz-mt-4">
+        <RadzenText TextStyle="TextStyle.H3" class="rz-mb-4">Hola, @participante.Name 👋</RadzenText>
+
+        @* CONTENEDOR PRINCIPAL TIPO GRID *@
+        <RadzenRow Gap="1.5rem">
+            
+            @* COLUMNA IZQUIERDA (Ocupa 8 de 12 espacios en pantallas grandes) *@
+            <RadzenColumn Size="12" SizeMD="8">
+                
+                @* TARJETA 1: ESTADO DEL PARTICIPANTE *@
+                <RadzenCard class="rz-shadow-3 rz-mb-4" Style="border-top: 4px solid var(--rz-primary);">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                            <RadzenIcon Icon="assignment_ind" Style="font-size: 3rem; color: var(--rz-primary);" />
+                            <RadzenStack Gap="0">
+                                <RadzenText TextStyle="TextStyle.H6" class="rz-mb-0">Estado de tu cuenta</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-color-primary-light">@participante.Email</RadzenText>
+                            </RadzenStack>
+                        </RadzenStack>
+                        
+                        <RadzenBadge BadgeStyle="ObtenerColorEstado(participante.Estado)" Text="@participante.Estado" IsPill="true" class="rz-p-2 rz-text-h6" />
+                    </RadzenStack>
+                    
+                    <RadzenText TextStyle="TextStyle.Body1" class="rz-mt-3">
+                        @(participante.Estado == "Pendiente" 
+                            ? "Tu perfil está siendo revisado por los organizadores. Pronto recibirás una actualización." 
+                            : "Tu perfil está activo y listo para participar en los eventos.")
+                    </RadzenText>
+                </RadzenCard>
+
+                @* TARJETA 2: MI PROYECTO *@
+                <RadzenCard class="rz-shadow-3">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" class="rz-mb-3">
+                        <RadzenText TextStyle="TextStyle.H6" class="rz-m-0"><RadzenIcon Icon="rocket_launch" class="rz-mr-1" /> Mi Proyecto</RadzenText>
+                        <RadzenButton Icon="edit" Text="Gestionar Proyecto" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" />
+                    </RadzenStack>
+
+                    @* Aquí simulamos qué pasaría si no tiene proyecto (porque aún no lo hemos cargado de BD) *@
+                    @if (participante.Proyecto == null)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" class="rz-m-0">
+                            Aún no has registrado ningún proyecto. ¡Anímate y presenta tu idea!
+                        </RadzenAlert>
+                    }
+                    else
+                    {
+                        <RadzenText TextStyle="TextStyle.Subtitle1"><b>@participante.Proyecto.Name</b></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Registrado el: @participante.Proyecto.FechaRegistro.ToString("dd/MM/yyyy")</RadzenText>
+                    }
+                </RadzenCard>
+
+            </RadzenColumn>
+
+            @* COLUMNA DERECHA (Ocupa 4 de 12 espacios en pantallas grandes) *@
+            <RadzenColumn Size="12" SizeMD="4">
+                
+                @* TARJETA 3: RESUMEN DE EVENTOS *@
+                <RadzenCard class="rz-shadow-3 rz-h-100" Style="background-color: var(--rz-secondary-lighter);">
+                    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-3"><RadzenIcon Icon="event" class="rz-mr-1" /> Mis Eventos</RadzenText>
+                    
+                    <RadzenStack AlignItems="AlignItems.Center" class="rz-py-4">
+                        @* Este número es inventado hasta que conectemos el backend *@
+                        <RadzenText TextStyle="TextStyle.H1" class="rz-color-secondary rz-m-0" Style="font-size: 4rem;">0</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-color-secondary-dark">Eventos inscritos</RadzenText>
+                    </RadzenStack>
+
+                    <RadzenDivider class="rz-my-3" />
+                    <RadzenButton Text="Explorar Eventos" ButtonStyle="ButtonStyle.Secondary" class="w-100" />
+                </RadzenCard>
+
+            </RadzenColumn>
+
+        </RadzenRow>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Participante? participante;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // De momento usamos el método que ya tenemos.
+        // OJO: Este método NO trae el Proyecto ni los Eventos todavía, 
+        // así que la parte de "Mi Proyecto" saldrá como vacía.
+        participante = await ParticipanteService.ObtenerPorIdAsync(Id);
+        cargando = false;
+    }
+
+    private BadgeStyle ObtenerColorEstado(string estado)
+    {
+        return estado switch
+        {
+            "Aprobado" => BadgeStyle.Success,
+            "Rechazado" => BadgeStyle.Danger,
+            _ => BadgeStyle.Warning
+        };
+    }
+}
