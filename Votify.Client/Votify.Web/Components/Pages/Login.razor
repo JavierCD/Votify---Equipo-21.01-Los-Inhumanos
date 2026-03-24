@@ -1,5 +1,6 @@
 ﻿@page "/login"
 @inject Votify.Services.Interfaces.IAuthService AuthService
+@inject NavigationManager Navigation
 
 <h3>Login</h3>
 
@@ -11,7 +12,7 @@
     <input @bind="password" type="password" placeholder="Contraseña" />
 </div>
 
-<button @onclick="HandleLogin">Iniciar sesión</button>
+<button @onclick=" HandleLogin">Iniciar sesión</button>
 
 <p style="color:red">@mensaje</p>
 
@@ -26,13 +27,14 @@
         {
             var user = await AuthService.Login(email, password);
 
-            mensaje = "Login correcto";
-
+            //mensaje = "Login correcto";
+            Navigation.NavigateTo("/");
             // siguiente paso → redirigir según rol
         }
         catch (Exception ex)
         {
-            mensaje = ex.Message;
+            //mensaje = ex.Message;
+            mensaje = "Credenciales incorrectas";
         }
     }
 
