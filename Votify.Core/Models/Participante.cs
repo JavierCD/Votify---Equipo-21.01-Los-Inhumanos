@@ -20,4 +20,5 @@ namespace Votify.Core.Models
         // Propiedad de navegación pura
         public Proyecto? Proyecto { get; set; }
     }
+    //Prueba verificación rama github y cambio nombre rama para que salga bien en github 
 }
