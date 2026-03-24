@@ -1,0 +1,39 @@
+﻿@page "/login"
+@inject Votify.Services.Interfaces.IAuthService AuthService
+
+<h3>Login</h3>
+
+<div>
+    <input @bind="email" placeholder="Email" />
+</div>
+
+<div>
+    <input @bind="password" type="password" placeholder="Contraseña" />
+</div>
+
+<button @onclick="HandleLogin">Iniciar sesión</button>
+
+<p style="color:red">@mensaje</p>
+
+@code {
+    private string email;
+    private string password;
+    private string mensaje;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            var user = await AuthService.Login(email, password);
+
+            mensaje = "Login correcto";
+
+            // siguiente paso → redirigir según rol
+        }
+        catch (Exception ex)
+        {
+            mensaje = ex.Message;
+        }
+    }
+
+}
