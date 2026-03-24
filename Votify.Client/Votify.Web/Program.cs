@@ -20,7 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
-
+    
 builder.Services.AddRadzenComponents();
 
 // --- API y Swagger ---
@@ -52,6 +52,8 @@ builder.Services.AddScoped<IEventoService, EventoService>();
 //LOGIN
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// 3. Registramos el servicio de Participantes 
+builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 
 // ==========================================
 // 2. CONFIGURACIÓN DEL PIPELINE (MIDDLEWARE)

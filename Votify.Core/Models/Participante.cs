@@ -19,6 +19,42 @@ namespace Votify.Core.Models
 
         // Propiedad de navegación pura
         public Proyecto? Proyecto { get; set; }
+
+        // Constructor vacío necesario para Entity Framework
+        protected Participante() { }
+
+        // --- MÉTODOS DE DOMINIO (Reglas de negocio) ---
+
+        public void ActualizarFicha(string? nuevaDescripcion)
+        {
+            // Aquí centralizamos las reglas. Por ejemplo, si no queremos descripciones larguísimas:
+            if (nuevaDescripcion?.Length > 500)
+                throw new ArgumentException("La descripción no puede superar los 500 caracteres.");
+
+            Descripcion = nuevaDescripcion;
+        }
+
+        public void CambiarVisibilidad(bool hacerVisible)
+        {
+            // Aquí podríamos meter lógica futura, ej: "No se puede hacer visible si no tiene proyecto"
+            Visible = hacerVisible;
+        }
+
+        public void EvaluarEstado(string nuevoEstado)
+        {
+            if (string.IsNullOrWhiteSpace(nuevoEstado))
+                throw new ArgumentNullException(nameof(nuevoEstado), "El estado es obligatorio.");
+
+            // Blindamos la clase para que nadie se invente estados raros
+            var estadosValidos = new[] { "Pendiente", "Aprobado", "Rechazado" };
+            if (!Array.Exists(estadosValidos, e => e.Equals(nuevoEstado, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException($"El estado '{nuevoEstado}' no es un estado válido.");
+            }
+
+            Estado = nuevoEstado;
+        }
     }
     //Prueba verificación rama github y cambio nombre rama para que salga bien en github 
 }
+
