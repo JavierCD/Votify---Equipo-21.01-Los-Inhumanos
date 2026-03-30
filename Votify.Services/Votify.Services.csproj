@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Votify.Core\Votify.Core.csproj" />
+    <ProjectReference Include="..\Votify.Persistence\Votify.Persistence.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,120 @@
+﻿@page "/home-alternate"
+@rendermode InteractiveServer
+@using Votify.Core.Interfaces
+@using Votify.Core.Models
+@using Votify.Core.Enums
+@inject IEventoService EventoService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Crear Evento (Demo) - Votify</PageTitle>
+
+<div class="container mt-4">
+    <h2>🛠️ Zona de Pruebas: Crear Evento</h2>
+    <p class="text-muted">Esta página es temporal para demostrar la creación de eventos sin necesidad de estar logueado como Organizador.</p>
+
+    <div class="card shadow-sm p-4 mt-3">
+        @* Usamos el EditForm nativo de Blazor por simplicidad en esta demo *@
+        <EditForm Model="@modelo" OnValidSubmit="GuardarEvento" FormName="demoCrearEventoForm">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nombre del Evento</label>
+                <InputText @bind-Value="modelo.Nombre" class="form-control" placeholder="Ej. Hackathon 2026" />
+                <ValidationMessage For="@(() => modelo.Nombre)" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Descripción</label>
+                <InputTextArea @bind-Value="modelo.Descripcion" class="form-control" rows="3" />
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Fecha de Inicio</label>
+                    <InputDate @bind-Value="modelo.FechaInicio" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Fecha de Fin</label>
+                    <InputDate @bind-Value="modelo.FechaFin" class="form-control" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(mensajeError))
+            {
+                <div class="alert alert-danger">
+                    @mensajeError
+                </div>
+            }
+
+            @if (guardadoExitoso)
+            {
+                <div class="alert alert-success">
+                    ¡Evento creado con éxito en PostgreSQL!
+                </div>
+            }
+
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary px-4">Crear Evento</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    // Usamos un pequeño modelo temporal para el formulario.
+    // Como el constructor de Evento sin parámetros es 'protected', no podemos enlazarlo directamente a la UI.
+    private class EventoFormModel
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
+        public DateTime FechaInicio { get; set; } = DateTime.Today;
+        public DateTime FechaFin { get; set; } = DateTime.Today.AddDays(3);
+    }
+
+    private EventoFormModel modelo = new();
+    private string? mensajeError;
+    private bool guardadoExitoso = false;
+
+    private async Task GuardarEvento()
+    {
+        mensajeError = null;
+        guardadoExitoso = false;
+
+        try
+        {
+            // 1. HARDCODE DEL ORGANIZADOR:
+            // Como no hay Login, asumimos que el organizador con ID 1 (el de tu DbInitializer) está creando esto.
+            int organizadorMockId = 1;
+
+            // 2. Instanciamos el evento real usando el constructor que protege las reglas de negocio
+            var nuevoEvento = new Evento(
+                modelo.Nombre,
+                modelo.FechaInicio,
+                modelo.FechaFin,
+                organizadorMockId,
+                modelo.Descripcion
+            );
+
+            // 3. Llamamos a nuestra capa de Servicios
+            await EventoService.CrearAsync(nuevoEvento);
+
+            // 4. Mostramos éxito y limpiamos el formulario
+            guardadoExitoso = true;
+            modelo = new EventoFormModel(); // Resetea el formulario
+        }
+        catch (ArgumentException ex)
+        {
+            // Captura el error si la fecha de fin es menor a la de inicio
+            mensajeError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            // Extraemos el detalle profundo del error de base de datos
+            string detalle = ex.InnerException != null ? ex.InnerException.Message : "";
+            mensajeError = $"Error al guardar en BD: {ex.Message}. Detalle profundo: {detalle}";
+
+            // Esto lo imprimirá en la consola negra de Visual Studio para mayor detalle
+            Console.WriteLine(ex.ToString());
+        }
+    }
+}
