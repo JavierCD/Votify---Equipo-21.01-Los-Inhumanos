@@ -45,6 +45,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IVotanteRepository, VotanteRepository>();
 builder.Services.AddScoped<IPopularService, PopularService>();
 builder.Services.AddScoped<IPopularRepository, PopularRepository>();
+builder.Services.AddScoped<IEventoService, EventoService>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 // 2. Registramos el servicio de Eventos que acabamos de crear
 builder.Services.AddScoped<IEventoService, EventoService>();
