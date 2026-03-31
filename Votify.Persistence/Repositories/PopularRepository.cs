@@ -2,7 +2,6 @@
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Persistence.Context;
-using Votify.Persistence.Entities;
 
 namespace Votify.Persistence.Repositories
 {
@@ -15,34 +14,26 @@ namespace Votify.Persistence.Repositories
             _context = context;
         }
 
-        public async Task<bool> EventoExisteAsync(int eventoId)
+        public async Task<bool> CategoriaExisteAsync(int categoriaId)
         {
-            return await _context.Eventos.AnyAsync(e => e.Id == eventoId);
+            return await _context.Categorias.AnyAsync(c => c.Id == categoriaId);
         }
 
         public async Task<Popular> CrearAsync(Popular popular)
         {
-            var entity = new PopularEntity
+            var entity = new Popular
             {
-                EventoId = popular.EventoId,
+                CategoriaId = popular.CategoriaId,
                 FechaApertura = popular.FechaApertura,
                 FechaCierre = popular.FechaCierre,
                 Estado = popular.Estado,
-                MaxSelecciones = popular.MaxSelecciones
+                MaxSelection = popular.MaxSelection
             };
 
             _context.Votaciones.Add(entity);
             await _context.SaveChangesAsync();
 
-            return new Popular
-            {
-                Id = entity.Id,
-                EventoId = entity.EventoId,
-                FechaApertura = entity.FechaApertura,
-                FechaCierre = entity.FechaCierre,
-                Estado = entity.Estado,
-                MaxSelecciones = entity.MaxSelecciones
-            };
+            return entity;
         }
     }
 }
