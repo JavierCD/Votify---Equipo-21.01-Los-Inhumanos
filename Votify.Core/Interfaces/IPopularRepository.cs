@@ -6,5 +6,6 @@ namespace Votify.Core.Interfaces
     {
         Task<bool> CategoriaExisteAsync(int categoriaId);
         Task<Popular> CrearAsync(Popular popular);
+        Task<bool> YaExisteVotacionParaCategoriaAsync(int categoriaId);
     }
 }

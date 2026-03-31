@@ -11,9 +11,9 @@
     <ValidationSummary />
 
     <div class="mb-3">
-        <label class="form-label">ID del evento</label>
-        <InputNumber @bind-Value="request.EventoId" class="form-control" />
-        <ValidationMessage For="@(() => request.EventoId)" />
+        <label class="form-label">ID de la categoría</label>
+        <InputNumber @bind-Value="request.CategoriaId" class="form-control" />
+        <ValidationMessage For="@(() => request.CategoriaId)" />
     </div>
 
     <div class="mb-3">
@@ -36,8 +36,8 @@
 
     <div class="mb-3">
         <label class="form-label">Máximo de selecciones</label>
-        <InputNumber @bind-Value="request.MaxSelecciones" class="form-control" />
-        <ValidationMessage For="@(() => request.MaxSelecciones)" />
+        <InputNumber @bind-Value="request.MaxSelection" class="form-control" />
+        <ValidationMessage For="@(() => request.MaxSelection)" />
     </div>
 
     <button type="submit" class="btn btn-primary" disabled="@isLoading">
@@ -65,7 +65,7 @@
         FechaApertura = DateTime.Today,
         FechaCierre = DateTime.Today.AddDays(1),
         Estado = "Abierta",
-        MaxSelecciones = 1
+        MaxSelection = 1
     };
 
     private bool isLoading = false;
@@ -116,7 +116,7 @@
             FechaApertura = DateTime.Today,
             FechaCierre = DateTime.Today.AddDays(1),
             Estado = "Abierta",
-            MaxSelecciones = 1
+            MaxSelection = 1
         };
     }
 }
