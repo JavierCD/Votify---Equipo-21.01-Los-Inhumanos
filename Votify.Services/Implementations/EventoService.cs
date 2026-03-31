@@ -42,6 +42,15 @@ namespace Votify.Services.Implementations
 
         }
 
+        public async Task<Evento?> ObtenerEventoConDetallesAsync(int id)
+        {
+            return await _repository.GetWithIncludesAsync(
+                e => e.Id == id,
+                e => e.CategoriasEvento,
+                e => e.Participantes,
+                e => e.Organizador);
+        }
+
         public async Task<Evento> CrearAsync(Evento evento)
         {
             if (evento.FechaFin <= evento.FechaInicio)
