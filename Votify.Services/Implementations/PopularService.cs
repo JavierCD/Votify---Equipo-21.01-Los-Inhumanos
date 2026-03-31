@@ -16,25 +16,28 @@ namespace Votify.Services.Implementations
 
         public async Task<PopularResponse> CrearVotacionPopularAsync(CrearVotacionPopularRequest request)
         {
-            if (!await _popularRepository.EventoExisteAsync(request.EventoId))
-                throw new ArgumentException("El evento no existe.");
+            if (request == null)
+                throw new ArgumentNullException(nameof(request), "La solicitud no puede ser nula.");
+
+            if (!await _popularRepository.CategoriaExisteAsync(request.CategoriaId))
+                throw new ArgumentException("La categoría no existe.");
 
             if (request.FechaApertura >= request.FechaCierre)
                 throw new ArgumentException("La fecha de apertura debe ser anterior a la fecha de cierre.");
 
-            if (request.MaxSelecciones <= 0)
-                throw new ArgumentException("MaxSelecciones debe ser mayor que 0.");
+            if (request.MaxSelection <= 0)
+                throw new ArgumentException("MaxSelection debe ser mayor que 0.");
 
             if (string.IsNullOrWhiteSpace(request.Estado))
                 throw new ArgumentException("El estado es obligatorio.");
 
             var popular = new Popular
             {
-                EventoId = request.EventoId,
+                CategoriaId = request.CategoriaId,
                 FechaApertura = request.FechaApertura,
                 FechaCierre = request.FechaCierre,
                 Estado = request.Estado,
-                MaxSelecciones = request.MaxSelecciones
+                MaxSelection = request.MaxSelection
             };
 
             var creada = await _popularRepository.CrearAsync(popular);
@@ -42,11 +45,11 @@ namespace Votify.Services.Implementations
             return new PopularResponse
             {
                 Id = creada.Id,
-                EventoId = creada.EventoId,
+                CategoriaId = creada.CategoriaId,
                 FechaApertura = creada.FechaApertura,
                 FechaCierre = creada.FechaCierre,
                 Estado = creada.Estado,
-                MaxSelecciones = creada.MaxSelecciones
+                MaxSelection = creada.MaxSelection
             };
         }
     }
