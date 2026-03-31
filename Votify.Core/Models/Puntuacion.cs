@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Votify.Core.Models
 {
     public class Puntuacion : Votacion{
-        public int valorMax { get; set; }
+        public int ValorMax { get; set; }
 
     }
 }

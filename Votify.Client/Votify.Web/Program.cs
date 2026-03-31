@@ -6,7 +6,8 @@ using Votify.Services.Implementations;
 using Votify.Services.Interfaces;
 using Votify.UI;
 using Votify.Web.Components;
-// using Votify.Services.Implementations; // Descomenta esto cuando uses el VotanteService
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +17,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // --- Blazor ---
 builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
+    
+builder.Services.AddRadzenComponents();
 
 // --- API y Swagger ---
 builder.Services.AddControllers();
@@ -42,7 +46,14 @@ builder.Services.AddScoped<IVotanteRepository, VotanteRepository>();
 builder.Services.AddScoped<IPopularService, PopularService>();
 builder.Services.AddScoped<IPopularRepository, PopularRepository>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
+// 2. Registramos el servicio de Eventos que acabamos de crear
+builder.Services.AddScoped<IEventoService, EventoService>();
 
+//LOGIN
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// 3. Registramos el servicio de Participantes 
+builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 
 // ==========================================
 // 2. CONFIGURACIÓN DEL PIPELINE (MIDDLEWARE)
@@ -79,7 +90,28 @@ app.MapControllers();
 
 // Mapea las páginas de Blazor
 app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Votify.UI._Imports).Assembly);
+
+// INICIO DEL SEEDING DE DATOS
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        // Obtenemos el contexto de base de datos
+        var context = services.GetRequiredService<VotifyContext>();
+
+        // Ejecutamos el inicializador
+        DbInitializer.Initialize(context);
+    }
+    catch (Exception ex)
+    {
+        // En caso de que falle algo al insertar (muy útil para debugear)
+        Console.WriteLine($"Ocurrió un error al poblar la base de datos: {ex.Message}");
+    }
+}
+// FIN DEL SEEDING DE DATOS
 
 app.Run();
