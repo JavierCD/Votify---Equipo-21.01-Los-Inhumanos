@@ -6,12 +6,31 @@ using System.Threading.Tasks;
 
 namespace Votify.Core.Models
 {
-    public abstract class Miembro {
+    public abstract class Miembro
+    {
         public int Id { get; set; }
+
         public string Name { get; set; }
+
         public string Email { get; set; }
-        public string Password { get; set; }
-        public DateTime FechaRegistro { get; set; }
-        public List<Evento> Eventos { get; set; }
+
+        // Asumimos que aquí guardarás el hash de la contraseña, no el texto plano 
+        public string Password { get; set; } = string.Empty;
+
+        public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+
+        public Miembro()
+        {
+
+        }
+
+        public Miembro(string name, string email, string password)
+        {
+            this.Name = name;
+            this.Email = email;
+            this.Password = password;
+        }
+
+        
     }
 }
