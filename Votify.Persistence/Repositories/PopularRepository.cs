@@ -35,5 +35,9 @@ namespace Votify.Persistence.Repositories
 
             return entity;
         }
+        public async Task<bool> YaExisteVotacionParaCategoriaAsync(int categoriaId)
+        {
+        return await _context.Votaciones.AnyAsync(v=> v.CategoriaId==categoriaId);
+        }
     }
 }
