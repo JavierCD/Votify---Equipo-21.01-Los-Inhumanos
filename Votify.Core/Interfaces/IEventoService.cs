@@ -11,6 +11,7 @@ namespace Votify.Core.Interfaces
     {
         Task<IEnumerable<Evento>> ObtenerTodosAsync();
         Task<Evento?> ObtenerPorIdAsync(int id);
+        Task<Evento?> ObtenerEventoConDetallesAsync(int id);
         Task<Evento> CrearAsync(Evento evento);
         Task ActualizarAsync(Evento evento);
         Task EliminarAsync(int id);
