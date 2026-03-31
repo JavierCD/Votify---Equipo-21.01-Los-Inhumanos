@@ -9,10 +9,10 @@ namespace Votify.Services.Models
    public class PopularResponse
     {
         public int Id { get; set; }
-        public int EventoId { get; set; }
+        public int CategoriaId { get; set; }
         public DateTime FechaApertura { get; set; }
         public DateTime FechaCierre { get; set; }
         public string Estado { get; set; } = string.Empty;
-        public int MaxSelecciones { get; set; }
+        public int MaxSelection { get; set; }
     }
 }
