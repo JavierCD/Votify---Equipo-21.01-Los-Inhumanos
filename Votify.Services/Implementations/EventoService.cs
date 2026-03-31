@@ -85,5 +85,21 @@ namespace Votify.Services.Implementations
         {
             return await _repository.GetAllAsync();
         }
+        public async Task<IEnumerable<Evento>> ObtenerEventosPorOrganizadorAsync(int organizadorId)
+        {
+            // Traemos todos los eventos incluyendo sus categorías
+            var eventos = await _repository.GetAllWithIncludesAsync(e => e.CategoriasEvento);
+
+            // Filtramos por el organizador y devolvemos
+            return eventos.Where(e => e.OrganizadorId == organizadorId);
+        }
+
+        public async Task<int> ObtenerOrganizadorMockIdAsync()
+        {
+            // Buscamos cualquier evento que ya exista (el del Seeder) y le "robamos" el ID del organizador.
+            // Es un hack inofensivo que no toca la tabla de Usuarios directamente.
+            var eventoDemo = await _repository.GetAllAsync();
+            return eventoDemo.FirstOrDefault()?.OrganizadorId ?? 1; // Si no hay, devolvemos 1 por si acaso
+        }
     }
 }

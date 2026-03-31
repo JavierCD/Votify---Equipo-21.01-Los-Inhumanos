@@ -1,6 +1,11 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 
+@using Votify.Core.Models
+@using Votify.Core.Interfaces
+@inject NavigationManager NavigationManager
+@inject IEventoService EventoService
+
 <PageTitle>Inicio - Votify</PageTitle>
 
 @* ==========================================
@@ -42,30 +47,42 @@ else if (RolActual == "Organizador")
 {
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Hola, Nombre de usuario</h2>
-            <button class="btn btn-primary">+ Añadir Evento</button>
+            <h2>Hola, @NombreUsuario</h2>
+            <RadzenButton Text="+ Añadir Evento" Click="@(() => NavigationManager.NavigateTo("/eventos/crear"))" ButtonStyle="ButtonStyle.Primary" />
         </div>
 
-        <h4 class="mb-3">Mis Eventos</h4>
+        <h4 class="mb-3">Mis Eventos (@misEventos.Count())</h4>
+
         <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
+            @foreach (var ev in misEventos)
+            {
+                <div class="col-md-6 mb-4">
+                    <RadzenCard class="h-100 shadow-sm">
                         <div class="d-flex mb-3">
-                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center rounded" style="width: 80px; height: 80px;">Img</div>
+                            <div class="bg-primary text-white d-flex align-items-center justify-content-center rounded" style="width: 80px; height: 80px;">
+                                <RadzenIcon Icon="event" Style="font-size: 3rem" />
+                            </div>
                             <div class="ms-3">
-                                <h5>Nombre del evento</h5>
-                                <p class="text-muted mb-1 small">Fecha inicio - Fecha fin</p>
-                                <p class="text-muted small">Lugar del evento</p>
+                                <h5 class="mb-1">@ev.Name</h5>
+                                <p class="text-muted mb-1 small">
+                                    <RadzenIcon Icon="calendar_today" Style="font-size: 0.8rem" />
+                                    @ev.FechaInicio.ToLocalTime().ToString("dd MMM") - @ev.FechaFin.ToLocalTime().ToString("dd MMM yyyy")
+                                </p>
+                                <div class="mt-2">
+                                    @foreach (var cat in ev.CategoriasEvento)
+                                    {
+                                        <span class="badge bg-light text-primary border me-1">@cat.Name</span>
+                                    }
+                                </div>
                             </div>
                         </div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-outline-primary w-100">Modificar Evento</button>
-                            <button class="btn btn-primary w-100">Publicar Evento</button>
+                            <RadzenButton Text="Modificar" ButtonStyle="ButtonStyle.Light" class="w-100" />
+                            <RadzenButton Text="Publicar" ButtonStyle="ButtonStyle.Primary" class="w-100" />
                         </div>
-                    </div>
+                    </RadzenCard>
                 </div>
-            </div>
+            }
         </div>
     </div>
 }
@@ -99,6 +116,40 @@ else if (RolActual == "Jurado")
 }
 
 @code {
-    // Empezamos asumiendo que es un Votante no registrado
-    private string RolActual { get; set; } = "Votante";
+    private string _rolActual = "Votante";
+    private string RolActual
+    {
+        get => _rolActual;
+        set { _rolActual = value; OnRoleChanged(); }
+    }
+
+    private string NombreUsuario = "Invitado";
+    private IEnumerable<Evento> misEventos = new List<Evento>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosSegunRol();
+    }
+
+    private async void OnRoleChanged()
+    {
+        await CargarDatosSegunRol();
+        StateHasChanged(); // Forzamos a Blazor a repintar
+    }
+
+    private async Task CargarDatosSegunRol()
+    {
+        if (RolActual == "Organizador")
+        {
+            NombreUsuario = "Alan Brito"; // El nombre que pusimos en el Seeder
+            // Hardcodeamos el ID 1 que es el del primer organizador del Seeder
+            int miOrgaId = await EventoService.ObtenerOrganizadorMockIdAsync();
+            misEventos = await EventoService.ObtenerEventosPorOrganizadorAsync(miOrgaId);
+        }
+        else
+        {
+            misEventos = new List<Evento>();
+            NombreUsuario = "Usuario Demo";
+        }
+    }
 }

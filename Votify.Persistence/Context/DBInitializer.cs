@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,13 +14,10 @@ namespace Votify.Persistence.Context
     {
         public static void Initialize(VotifyContext context)
         {
-            // 1. Verificamos si ya hay algún organizador en la base de datos
-            // Como usamos TPH, EF Core buscará automáticamente en la tabla Miembros donde Discriminator == "Organizador"
-            if (context.Miembros.OfType<Organizador>().Any())
-            {
-                return;   // Ya hay datos, no hacemos nada para no duplicar
-            } else
-            {
+            context.Database.EnsureDeleted();
+            context.Database.Migrate();
+            
+            
                 // 2. Creamos nuestro Organizador Mock (El usuario que usaremos por ahora)
                 var organizadorMock = new Organizador
                 {
@@ -28,7 +26,21 @@ namespace Votify.Persistence.Context
                     Password = "HashFalsoTemporal123" // Tus compañeros de Login cambiarán esto luego
                 };
 
-                context.Miembros.Add(organizadorMock);
+                var juez = new Juez
+                {
+                    Name = "Armando Bronca (Juez)",
+                    Email = "juez@votify.com",
+                    Password = "HashTemporal123"
+                };
+
+                var participante = new Participante
+                {
+                    Name = "Paco Merte (Participante)",
+                    Email = "participante@votify.com",
+                    Password = "HashTemporal123"
+                };
+
+                context.Miembros.AddRange(organizadorMock, juez, participante);
                 context.SaveChanges(); // Guardamos para que PostgreSQL le asigne un ID real
 
                 // 3. Creamos un Evento de prueba asociado a ese Organizador
@@ -39,6 +51,7 @@ namespace Votify.Persistence.Context
                     FechaInicio = DateTime.UtcNow.AddDays(5),
                     FechaFin = DateTime.UtcNow.AddDays(7),
                     OrganizadorId = organizadorMock.Id,
+                    Organizador = organizadorMock,
                     Estado = EstadoEvento.Borrador
                 };
 
@@ -65,7 +78,7 @@ namespace Votify.Persistence.Context
 
                 context.Categorias.AddRange(categoria1, categoria2);
                 context.SaveChanges(); 
-            }
+            
 
 
 

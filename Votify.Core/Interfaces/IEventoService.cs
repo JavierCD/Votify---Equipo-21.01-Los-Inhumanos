@@ -11,9 +11,13 @@ namespace Votify.Core.Interfaces
     {
         Task<IEnumerable<Evento>> ObtenerTodosAsync();
         Task<Evento?> ObtenerPorIdAsync(int id);
+        Task<IEnumerable<Evento>> ObtenerEventosPorOrganizadorAsync(int organizadorId);
         Task<Evento?> ObtenerEventoConDetallesAsync(int id);
         Task<Evento> CrearAsync(Evento evento);
         Task ActualizarAsync(Evento evento);
         Task EliminarAsync(int id);
+        
+        // TODO: Borrar cuando Login terminado
+        Task<int> ObtenerOrganizadorMockIdAsync();
     }
 }
