@@ -62,6 +62,7 @@
 @code {
     private CrearVotacionPopularRequest request = new()
     {
+        CategoriaId=1,
         FechaApertura = DateTime.Today,
         FechaCierre = DateTime.Today.AddDays(1),
         Estado = "Abierta",
