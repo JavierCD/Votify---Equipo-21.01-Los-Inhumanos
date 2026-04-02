@@ -20,6 +20,6 @@ namespace Votify.Core.Models
         public Categoria? Categoria { get; set; }
 
         // Propiedad de navegación: Una votación tiene muchos votos
-        public List<Voto> Votos { get; set; } = new List<Voto>();
+        public List<Voto> Votos { get; set; } = new();
     }
 }

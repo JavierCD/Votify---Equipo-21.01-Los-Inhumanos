@@ -18,6 +18,7 @@ namespace Votify.Persistence.Repositories
         {
             return await _context.Categorias.AnyAsync(c => c.Id == categoriaId);
         }
+        
 
         public async Task<Popular> CrearAsync(Popular popular)
         {
