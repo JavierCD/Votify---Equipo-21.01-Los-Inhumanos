@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models
 {
-    internal class ServiceResult
+    public class ProyectoVotacionPopularResponse
     {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 }
-  

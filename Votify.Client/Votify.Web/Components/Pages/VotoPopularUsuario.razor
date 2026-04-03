@@ -1,0 +1,130 @@
+﻿@page "/voto-popular-usuario"
+@using Votify.Services.Interfaces
+@using Votify.Services.Models
+@inject IVotoPopularService VotoPopularService
+@inject ILogger<VotoPopularUsuario> Logger
+
+<h3>Voto popular</h3>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+@if (votacion is null)
+{
+    <p>Cargando votación...</p>
+}
+else
+{
+    <EditForm Model="@formModel" OnValidSubmit="EmitirVotoAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <strong>Categoría:</strong> @votacion.CategoriaNombre
+        </div>
+
+        <div class="mb-3">
+            <strong>Máximo de selecciones:</strong> @votacion.MaxSelection
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">ID del votante</label>
+            <InputNumber @bind-Value="formModel.VotanteId" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Proyectos</label>
+
+            @foreach (var proyecto in votacion.Proyectos)
+            {
+                <div class="form-check mb-2">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           checked="@proyectosSeleccionados.Contains(proyecto.Id)"
+                           @onchange="(e => AlternarProyecto(proyecto.Id, e.Value is bool valor && valor))" />
+                    <label class="form-check-label">@proyecto.Name</label>
+                </div>
+            }
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Enviar voto</button>
+    </EditForm>
+}
+
+@code {
+    private VotacionPopularDisponibleResponse? votacion;
+    private FormVotoPopularModel formModel = new();
+    private List<int> proyectosSeleccionados = new();
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            votacion = await VotoPopularService.ObtenerVotacionPopularDisponibleAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogError(ex, "Error cargando la votación popular.");
+        }
+    }
+
+    private void AlternarProyecto(int proyectoId, bool seleccionado)
+    {
+        if (seleccionado)
+        {
+            if (!proyectosSeleccionados.Contains(proyectoId))
+            {
+                proyectosSeleccionados.Add(proyectoId);
+            }
+        }
+        else
+        {
+            proyectosSeleccionados.Remove(proyectoId);
+        }
+    }
+
+    private async Task EmitirVotoAsync()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            if (votacion == null)
+                throw new InvalidOperationException("No hay votación cargada.");
+
+            var request = new EmitirVotoPopularRequest
+            {
+                VotacionId = votacion.VotacionId,
+                VotanteId = formModel.VotanteId,
+                ProyectosSeleccionadosIds = proyectosSeleccionados
+            };
+
+            await VotoPopularService.EmitirVotoPopularAsync(request);
+
+            successMessage = "Voto emitido correctamente.";
+            proyectosSeleccionados.Clear();
+            formModel = new FormVotoPopularModel();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogError(ex, "Error emitiendo voto popular.");
+        }
+    }
+
+    public class FormVotoPopularModel
+    {
+        public int VotanteId { get; set; }
+    }
+}
