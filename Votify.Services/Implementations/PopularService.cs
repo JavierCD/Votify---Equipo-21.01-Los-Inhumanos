@@ -30,6 +30,7 @@ namespace Votify.Services.Implementations
 
             if (string.IsNullOrWhiteSpace(request.Estado))
                 throw new ArgumentException("El estado es obligatorio.");
+
             if (await _popularRepository.YaExisteVotacionParaCategoriaAsync(request.CategoriaId))
                 throw new InvalidOperationException("Ya existe una votacion asociada a esta categoria");
 

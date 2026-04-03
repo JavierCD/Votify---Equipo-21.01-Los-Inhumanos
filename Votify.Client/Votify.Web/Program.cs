@@ -48,6 +48,8 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 //builder.Services.AddScoped<IVotanteRepository, VotanteRepository>();
 builder.Services.AddScoped<IPopularService, PopularService>();
 builder.Services.AddScoped<IPopularRepository, PopularRepository>();
+builder.Services.AddScoped<IVotoPopularRepository, VotoPopularRepository>();
+builder.Services.AddScoped<IVotoPopularService, VotoPopularService>();
 //builder.Services.AddScoped<IEventoService, EventoService>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 //builder.Services.AddScoped<IEventoService, EventoService>(); 

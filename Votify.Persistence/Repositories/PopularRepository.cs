@@ -40,5 +40,12 @@ namespace Votify.Persistence.Repositories
         {
         return await _context.Votaciones.AnyAsync(v=> v.CategoriaId==categoriaId);
         }
+        public async Task<Popular?> ObtenerPorIdConCategoriaAsync(int id)
+        {
+            return await _context.Votaciones
+                .OfType<Popular>()
+                .Include(v => v.Categoria)
+                .FirstOrDefaultAsync(v => v.Id == id);
+        }
     }
 }
