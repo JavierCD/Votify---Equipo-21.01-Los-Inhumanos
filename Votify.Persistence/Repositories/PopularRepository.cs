@@ -28,7 +28,7 @@ namespace Votify.Persistence.Repositories
                 FechaApertura = popular.FechaApertura,
                 FechaCierre = popular.FechaCierre,
                 Estado = popular.Estado,
-                MaxSelecciones = popular.MaxSelecciones
+                MaxSelection = popular.MaxSelection
             };
 
             _context.Votaciones.Add(entity);

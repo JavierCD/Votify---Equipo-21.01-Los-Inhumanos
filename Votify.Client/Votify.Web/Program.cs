@@ -49,9 +49,9 @@ builder.Services.AddScoped<IPopularService, PopularService>();
 builder.Services.AddScoped<IPopularRepository, PopularRepository>();
 builder.Services.AddScoped<IVotoPopularRepository, VotoPopularRepository>();
 builder.Services.AddScoped<IVotoPopularService, VotoPopularService>();
-//builder.Services.AddScoped<IEventoService, EventoService>();
+builder.Services.AddScoped<IEventoService, EventoService>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
-//builder.Services.AddScoped<IEventoService, EventoService>(); 
+builder.Services.AddScoped<IEventoService, EventoService>(); 
 
 // 3. Registramos el servicio de Participantes 
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
