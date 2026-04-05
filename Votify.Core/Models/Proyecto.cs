@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace Votify.Core.Models
 {
-    namespace Votify.Core.Models
-    {
         public class Proyecto
         {
             public int Id { get; set; }
 
             public string Name { get; set; }
+
+            public string? Description { get; set; }
 
             // Asignamos la fecha actual por defecto para no tener que recordarlo al crear
             public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
@@ -31,7 +31,7 @@ namespace Votify.Core.Models
 
             public Proyecto() { }
 
-            public Proyecto(string nombre, int idParticipante, bool visible = true)
+            public Proyecto(string nombre, int idParticipante, bool visible = true, string? desc = null)
             {
                 if (string.IsNullOrWhiteSpace(nombre))
                     throw new ArgumentException("El nombre del proyecto no puede estar vacío", nameof(nombre));
@@ -42,8 +42,20 @@ namespace Votify.Core.Models
                 Name = nombre;
                 ParticipanteId = idParticipante;
                 Visible = visible;
+                Description = desc;
                 FechaRegistro = DateTime.UtcNow;
             }
+
+            public void AgregarCategoria(Categoria categoria)
+            {
+                if (categoria == null)
+                    throw new ArgumentNullException(nameof(categoria), "La categoría no puede ser nula.");
+
+                // Evitamos que se añada la misma categoría dos veces
+                if (!Categorias.Contains(categoria))
+                {
+                    Categorias.Add(categoria);
+                }
+            }
         }
-    }
 }
