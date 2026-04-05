@@ -5,6 +5,7 @@
 @using Votify.Core.Interfaces
 @inject NavigationManager NavigationManager
 @inject IEventoService EventoService
+@inject IProyectoService ProyectoService
 
 <PageTitle>Inicio - Votify</PageTitle>
 
@@ -68,6 +69,10 @@ else if (RolActual == "Organizador")
                                     <RadzenIcon Icon="calendar_today" Style="font-size: 0.8rem" />
                                     @ev.FechaInicio.ToLocalTime().ToString("dd MMM") - @ev.FechaFin.ToLocalTime().ToString("dd MMM yyyy")
                                 </p>
+                                <div class="mt-2 mb-2 p-2 bg-light border rounded d-flex justify-content-between align-items-center">
+                                    <span class="small fw-bold text-muted">Código de invitación:</span>
+                                    <span class="badge bg-warning text-dark fs-6 font-monospace" style="letter-spacing: 2px;">@ev.CodigoAcceso</span>
+                                </div>
                                 <div class="mt-2">
                                     @foreach (var cat in ev.CategoriasEvento)
                                     {
@@ -126,6 +131,15 @@ else if (RolActual == "Jurado")
     private string NombreUsuario = "Invitado";
     private IEnumerable<Evento> misEventos = new List<Evento>();
 
+    private string codigoBusqueda = "";
+    private Evento? eventoEncontrado;
+    private string? mensajeErrorParticipante;
+    private string? mensajeExitoParticipante;
+
+    private string nombreProyecto = "";
+    private string? descripcionProyecto; // Opcional, depende de si lo pusiste en tu UI
+    private int categoriaSeleccionadaId;
+
     protected override async Task OnInitializedAsync()
     {
         await CargarDatosSegunRol();
@@ -133,6 +147,13 @@ else if (RolActual == "Jurado")
 
     private async void OnRoleChanged()
     {
+        eventoEncontrado = null;
+        codigoBusqueda = "";
+        nombreProyecto = "";
+        descripcionProyecto = null;
+        mensajeErrorParticipante = null;
+        mensajeExitoParticipante = null;
+
         await CargarDatosSegunRol();
         StateHasChanged(); // Forzamos a Blazor a repintar
     }
@@ -146,10 +167,73 @@ else if (RolActual == "Jurado")
             int miOrgaId = await EventoService.ObtenerOrganizadorMockIdAsync();
             misEventos = await EventoService.ObtenerEventosPorOrganizadorAsync(miOrgaId);
         }
+        else if (RolActual == "Participante")
+        {
+            misEventos = new List<Evento>();
+            NombreUsuario = "Participante Demo"; // Para que el saludo de arriba cambie
+        }
+        else if (RolActual == "Jurado")
+        {
+            misEventos = new List<Evento>();
+            NombreUsuario = "Jurado Demo";
+        }
         else
         {
             misEventos = new List<Evento>();
             NombreUsuario = "Usuario Demo";
+        }
+    }
+
+    private async Task BuscarEvento()
+    {
+        mensajeErrorParticipante = null;
+        mensajeExitoParticipante = null;
+
+        if (string.IsNullOrWhiteSpace(codigoBusqueda)) return;
+
+        eventoEncontrado = await EventoService.ObtenerEventoPorCodigoAsync(codigoBusqueda);
+
+        if (eventoEncontrado == null)
+        {
+            mensajeErrorParticipante = "No hemos encontrado ningún evento con ese código.";
+        }
+    }
+
+    private async Task InscribirProyecto()
+    {
+        mensajeErrorParticipante = null;
+
+        if (string.IsNullOrWhiteSpace(nombreProyecto) || categoriaSeleccionadaId == 0)
+        {
+            mensajeErrorParticipante = "El nombre del proyecto y la categoría son obligatorios.";
+            return;
+        }
+
+        try
+        {
+            // 1. Mockeamos el ID del participante (suponiendo que en tu Seeder es el ID 3)
+            // TODO: Cambiar esto cuando tu compañero acabe el Login (UT 3616)
+            int participanteMockId = 3;
+
+            // 2. Instanciamos tu Proyecto usando el constructor blindado
+            var nuevoProyecto = new Proyecto(nombreProyecto, participanteMockId);
+
+            // (Si le añadiste la descripción al proyecto, la asignarías aquí si la necesitas)
+
+            // 3. Lo guardamos a través del servicio
+            await ProyectoService.CrearProyectoConCategoriaAsync(nuevoProyecto, categoriaSeleccionadaId);
+
+            // 4. Limpiamos la UI y mostramos el éxito
+            mensajeExitoParticipante = $"¡Tu proyecto '{nombreProyecto}' fue inscrito exitosamente!";
+            eventoEncontrado = null;
+            codigoBusqueda = "";
+            nombreProyecto = "";
+            descripcionProyecto = null;
+            categoriaSeleccionadaId = 0;
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorParticipante = $"Error al inscribir: {ex.Message}";
         }
     }
 }

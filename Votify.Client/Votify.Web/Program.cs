@@ -13,7 +13,7 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================================
-// 1. CONFIGURACIÓN DE SERVICIOS (CONTENEDOR)
+// 1. CONFIGURACIÃ“N DE SERVICIOS (CONTENEDOR)
 // ==========================================
 
 // --- Blazor ---
@@ -42,29 +42,35 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader());
 });
 
-// --- Inyección de Dependencias (Core, Persistence, Services) ---
+// --- InyecciÃ³n de Dependencias (Core, Persistence, Services) ---
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 //builder.Services.AddScoped<IVotanteRepository, VotanteRepository>();
+
+// builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
+// 2. Registramos el servicio de Eventos que acabamos de crear
+builder.Services.AddScoped<IProyectoService, ProyectoService>();
+
+
 builder.Services.AddScoped<IPopularService, PopularService>();
 builder.Services.AddScoped<IPopularRepository, PopularRepository>();
 builder.Services.AddScoped<IVotoPopularRepository, VotoPopularRepository>();
 builder.Services.AddScoped<IVotoPopularService, VotoPopularService>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
-builder.Services.AddScoped<IEventoService, EventoService>(); 
+
 
 // 3. Registramos el servicio de Participantes 
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 
 // ==========================================
-// 2. CONFIGURACIÓN DEL PIPELINE (MIDDLEWARE)
+// 2. CONFIGURACIÃ“N DEL PIPELINE (MIDDLEWARE)
 // ==========================================
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging(); // Debug para Blazor WASM
-    app.UseSwagger();              // Documentación de la API
+    app.UseSwagger();              // DocumentaciÃ³n de la API
     app.UseSwaggerUI();            // Interfaz visual de Swagger
 }
 else
@@ -76,7 +82,7 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-// ¡CORS debe ir siempre antes de Antiforgery y Authorization!
+// Â¡CORS debe ir siempre antes de Antiforgery y Authorization!
 app.UseCors("AllowBlazor");
 
 app.UseAntiforgery();
@@ -89,7 +95,7 @@ app.UseAuthorization();
 // Mapea las rutas de tu API (ej: /api/votantes)
 app.MapControllers();
 
-// Mapea las páginas de Blazor
+// Mapea las pÃ¡ginas de Blazor
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
@@ -109,8 +115,8 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        // En caso de que falle algo al insertar (muy útil para debugear)
-        Console.WriteLine($"Ocurrió un error al poblar la base de datos: {ex.Message}");
+        // En caso de que falle algo al insertar (muy Ãºtil para debugear)
+        Console.WriteLine($"OcurriÃ³ un error al poblar la base de datos: {ex.Message}");
     }
 }
 // FIN DEL SEEDING DE DATOS
