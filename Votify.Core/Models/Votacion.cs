@@ -18,9 +18,9 @@ namespace Votify.Core.Models
 
         // Relación 1 a 1 con Categoría (la clave foránea vive aquí)
         public int CategoriaId { get; set; }
-        public Categoria? Categoria { get; set; }
+        //public Categoria? Categoria { get; set; }
 
         // Propiedad de navegación: Una votación tiene muchos votos
-        public List<Voto> Votos { get; set; } = new List<Voto>();
+        //public List<Voto> Votos { get; set; } = new List<Voto>();
     }
 }

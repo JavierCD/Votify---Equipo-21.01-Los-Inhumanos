@@ -39,7 +39,7 @@ namespace Votify.Services.Implementations
                 FechaApertura = request.FechaApertura,
                 FechaCierre = request.FechaCierre,
                 Estado = request.Estado,
-                MaxSelection = request.MaxSelection
+                MaxSelecciones = request.MaxSelection
             };
 
             var creada = await _popularRepository.CrearAsync(popular);
@@ -51,7 +51,7 @@ namespace Votify.Services.Implementations
                 FechaApertura = creada.FechaApertura,
                 FechaCierre = creada.FechaCierre,
                 Estado = creada.Estado,
-                MaxSelection = creada.MaxSelection
+                MaxSelection = creada.MaxSelecciones
             };
         }
     }
