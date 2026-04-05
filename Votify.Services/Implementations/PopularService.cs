@@ -30,6 +30,7 @@ namespace Votify.Services.Implementations
 
             if (string.IsNullOrWhiteSpace(request.Estado))
                 throw new ArgumentException("El estado es obligatorio.");
+
             if (await _popularRepository.YaExisteVotacionParaCategoriaAsync(request.CategoriaId))
                 throw new InvalidOperationException("Ya existe una votacion asociada a esta categoria");
 
@@ -39,7 +40,7 @@ namespace Votify.Services.Implementations
                 FechaApertura = request.FechaApertura,
                 FechaCierre = request.FechaCierre,
                 Estado = request.Estado,
-                MaxSelecciones = request.MaxSelection
+                MaxSelection = request.MaxSelection
             };
 
             var creada = await _popularRepository.CrearAsync(popular);
@@ -51,7 +52,7 @@ namespace Votify.Services.Implementations
                 FechaApertura = creada.FechaApertura,
                 FechaCierre = creada.FechaCierre,
                 Estado = creada.Estado,
-                MaxSelection = creada.MaxSelecciones
+                MaxSelection = creada.MaxSelection
             };
         }
     }

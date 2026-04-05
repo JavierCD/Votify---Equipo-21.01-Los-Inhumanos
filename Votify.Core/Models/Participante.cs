@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Votify.Core.Models.Votify.Core.Models;
+using Votify.Core.Models;
 
 namespace Votify.Core.Models
 {
