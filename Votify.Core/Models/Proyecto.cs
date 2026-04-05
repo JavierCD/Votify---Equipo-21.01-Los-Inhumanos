@@ -6,9 +6,7 @@ using System.Threading.Tasks;
 
 namespace Votify.Core.Models
 {
-    namespace Votify.Core.Models
-    {
-        public class Proyecto
+    public class Proyecto
         {
             public int Id { get; set; }
 
@@ -29,5 +27,5 @@ namespace Votify.Core.Models
 
             public List<Voto> Votos { get; set; } = new List<Voto>();
         }
-    }
+    
 }

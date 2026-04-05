@@ -38,7 +38,9 @@ namespace Votify.Persistence.Repositories
         }
         public async Task<bool> YaExisteVotacionParaCategoriaAsync(int categoriaId)
         {
-        return await _context.Votaciones.AnyAsync(v=> v.CategoriaId==categoriaId);
+            return await _context.Votaciones
+             .OfType<Popular>()  
+             .AnyAsync(v => v.CategoriaId == categoriaId);
         }
         public async Task<Popular?> ObtenerPorIdConCategoriaAsync(int id)
         {

@@ -19,12 +19,27 @@ namespace Votify.Services.Implementations
             _votoPopularRepository = votoPopularRepository;
         }
 
-        public async Task<VotacionPopularDisponibleResponse> ObtenerVotacionPopularDisponibleAsync()
+        public async Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesPopularesDisponiblesAsync()
         {
-            var votacion = await _votoPopularRepository.ObtenerPrimeraVotacionPopularDisponibleAsync();
+            var votaciones = await _votoPopularRepository.ObtenerVotacionesPopularesDisponiblesAsync();
+
+            return votaciones.Select(v => new VotacionPopularDisponibleResponse
+            {
+                VotacionId = v.Id,
+                CategoriaId = v.CategoriaId,
+                CategoriaNombre = v.Categoria?.Name ?? "Sin categoría",
+                Estado = v.Estado,
+                MaxSelection = v.MaxSelection,
+                Proyectos = new() 
+            }).ToList();
+        }
+
+        public async Task<VotacionPopularDisponibleResponse> ObtenerDetallePorIdAsync(int votacionId)
+        {
+            var votacion = await _votoPopularRepository.ObtenerVotacionPopularPorIdAsync(votacionId);
 
             if (votacion == null)
-                throw new InvalidOperationException("No hay votaciones populares disponibles.");
+                throw new InvalidOperationException("La votación no existe o no está disponible.");
 
             var proyectos = await _votoPopularRepository.ObtenerProyectosPorCategoriaAsync(votacion.CategoriaId);
 

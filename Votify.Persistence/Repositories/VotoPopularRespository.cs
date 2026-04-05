@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
-using Votify.Core.Models.Votify.Core.Models;
+using Votify.Core.Models;
 using Votify.Persistence.Context;
 
 namespace Votify.Persistence.Repositories
@@ -28,12 +28,13 @@ namespace Votify.Persistence.Repositories
                 .FirstOrDefaultAsync(v => v.Id == votacionId);
         }
 
-        public async Task<Popular?> ObtenerPrimeraVotacionPopularDisponibleAsync()
+        public async Task<List<Popular>> ObtenerVotacionesPopularesDisponiblesAsync()
         {
             return await _context.Votaciones
-                .OfType<Popular>()
-                .Include(v => v.Categoria)
-                .FirstOrDefaultAsync();
+         .OfType<Popular>()
+         .Include(v => v.Categoria)
+         .Where(v => v.Estado == "Abierta")
+         .ToListAsync();
         }
 
         public async Task<Votante?> ObtenerVotantePorIdAsync(int votanteId)
@@ -54,6 +55,11 @@ namespace Votify.Persistence.Repositories
         {
             _context.Votos.AddRange(votos);
             await _context.SaveChangesAsync();
+        }
+        public async Task<bool> YaVotoEnEstaVotacionAsync(int votanteId, int votacionId)
+        {
+            return await _context.Votos
+                .AnyAsync(v => v.VotanteId == votanteId && v.VotacionId == votacionId);
         }
     }
 }
