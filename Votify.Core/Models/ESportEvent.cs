@@ -2,6 +2,8 @@
 {
     public class ESportsEvent : Evento
     {
+
+        protected ESportsEvent() { }
         public ESportsEvent(string name, DateTime fechaInicio, DateTime fechaFin, int organizadorId, string? descripcion = null)
             : base(name, fechaInicio, fechaFin, organizadorId, descripcion) { }
 

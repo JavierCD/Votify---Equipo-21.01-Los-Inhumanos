@@ -78,6 +78,11 @@ namespace Votify.Persistence.Context
                       .HasForeignKey(e => e.OrganizadorId)
                       .OnDelete(DeleteBehavior.Restrict);
 
+                entity.HasDiscriminator<string>("Discriminador")
+                .HasValue<HackathonEvent>("Hackathon")
+                .HasValue<InnovationFairEvent>("FeriaInnovacion")
+                .HasValue<ESportsEvent>("ESport");
+
                 // ---> ¡NUEVO! Separamos las listas para que EF no se vuelva loco <---
 
                 // Relación N a N con Jurado (Jueces)
@@ -183,6 +188,11 @@ namespace Votify.Persistence.Context
                 entity.HasMany(p => p.Categorias)
                       .WithMany(c => c.Proyectos)
                       .UsingEntity(j => j.ToTable("ProyectosCategorias"));
+
+                entity.HasDiscriminator<string>("TipoProyecto")
+                .HasValue<AiProject>("AI")
+                .HasValue<SustainabilityProject>("Sostenibilidad")
+                .HasValue<CybersecurityProject>("Ciberseguridad");
             });
 
             // 9. CONFIGURACIÓN DE VOTANTE
@@ -205,15 +215,10 @@ namespace Votify.Persistence.Context
                 entity.HasKey(v => v.Id);
                 entity.Property(v => v.HashAnonimo).HasMaxLength(256);
 
-                entity.HasOne(v => v.Juez)
-                      .WithMany()
-                      .HasForeignKey(v => v.JuezId)
-                      .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasOne(v => v.Votante)
-                      .WithMany(v => v.Votos)
-                      .HasForeignKey(v => v.VotanteId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                entity.HasDiscriminator<string>("TipoVoto")
+                .HasValue<VotoExperto>("Experto")
+                .HasValue<VotoPublico>("Publico")
+                .HasValue<VotoSponsor>("Sponsor");
 
                 entity.HasOne(v => v.Votacion)
                       .WithMany(v => v.Votos)

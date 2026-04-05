@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Votify.Core.Factories;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Interfaces;
@@ -91,14 +92,38 @@ namespace Votify.Services.Implementations
             if (request.ProyectosSeleccionadosIds.Any(id => !proyectosValidosIds.Contains(id)))
                 throw new ArgumentException("Uno o más proyectos no pertenecen a la categoría de la votación.");
 
-            var votos = request.ProyectosSeleccionadosIds.Select(proyectoId => new Voto
+            VotoCreator creadorVoto;
+
+            if (votante.Rol == "EXPERT")
             {
-                Fecha = DateTime.UtcNow,
-                Anonimo = votante.Anonimo,
-                VotanteId = votante.Id,
-                VotacionId = votacion.Id,
-                ProyectoId = proyectoId
-            }).ToList();
+                creadorVoto = new VotoExpertoCreator();
+            }
+            else if (votante.Rol == "SPONSOR")
+            {
+                creadorVoto = new VotoSponsorCreator();
+            }
+            else
+            {
+                // Asumimos que si no es experto ni sponsor, es el público general
+                creadorVoto = new VotoPublicoCreator();
+            }
+
+            // Suponiendo que tienes una puntuación base que el usuario acaba de emitir (ej. 10 puntos)
+            double puntuacionBaseEmitida = 10.0; // ¡Cámbialo por la variable de puntuación real de tu request!
+
+            // 2. Ahora usamos la fábrica elegida para crear cada voto
+            var votos = request.ProyectosSeleccionadosIds.Select(proyectoId =>
+
+                // Llamamos al método CrearVoto de la fábrica, pasándole los parámetros en orden
+                creadorVoto.CrearVoto(
+                    votacion.Id,
+                    proyectoId,
+                    puntuacionBaseEmitida,
+                    votante.Anonimo,
+                    null // (Pásale null si en este punto no lo tienes)
+                )
+
+            ).ToList();
 
             await _votoPopularRepository.GuardarVotosAsync(votos);
         }
