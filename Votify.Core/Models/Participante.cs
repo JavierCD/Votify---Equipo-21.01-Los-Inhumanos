@@ -21,7 +21,12 @@ namespace Votify.Core.Models
         public Proyecto? Proyecto { get; set; }
 
         // Constructor vacío necesario para Entity Framework
-        protected Participante() { }
+        public Participante():base() { }
+
+        public Participante(string name, string email, string password):base(name, email, password)
+        {
+
+        }
 
         // --- MÉTODOS DE DOMINIO (Reglas de negocio) ---
 
