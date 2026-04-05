@@ -17,6 +17,8 @@ namespace Votify.Core.Models
 
         public string? Description { get; set; }
 
+        public string CodigoAcceso { get; set; }
+
         public DateTime FechaInicio { get; set; }
 
         public DateTime FechaFin { get; set; }
@@ -49,6 +51,14 @@ namespace Votify.Core.Models
             OrganizadorId = orgaId;
             Description = desc;
             Estado = EstadoEvento.Borrador;
+            CodigoAcceso = GenerarCodigoAcceso();
+        }
+
+        private string GenerarCodigoAcceso()
+        {
+            var chars = "ABCDEFGIJKLMNOPQRSTUWXYZ0123456789";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, 6).Select(s=> s[random.Next(s.Length)]).ToArray());
         }
 
         public void ModificarVentanaDeTiempo(DateTime nuevaInicio, DateTime nuevaFim)

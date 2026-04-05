@@ -28,6 +28,22 @@ namespace Votify.Core.Models
             public List<Categoria> Categorias { get; set; } = new List<Categoria>();
 
             public List<Voto> Votos { get; set; } = new List<Voto>();
+
+            public Proyecto() { }
+
+            public Proyecto(string nombre, int idParticipante, bool visible = true)
+            {
+                if (string.IsNullOrWhiteSpace(nombre))
+                    throw new ArgumentException("El nombre del proyecto no puede estar vacío", nameof(nombre));
+
+                if (idParticipante <= 0)
+                    throw new ArgumentException("El proyecto debe estar vinculado a un participante válido.", nameof(idParticipante));
+
+                Name = nombre;
+                ParticipanteId = idParticipante;
+                Visible = visible;
+                FechaRegistro = DateTime.UtcNow;
+            }
         }
     }
 }
