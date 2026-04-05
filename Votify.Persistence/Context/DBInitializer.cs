@@ -15,10 +15,10 @@ namespace Votify.Persistence.Context
         {
             // 1. Verificamos si ya hay algún organizador en la base de datos
             // Como usamos TPH, EF Core buscará automáticamente en la tabla Miembros donde Discriminator == "Organizador"
-            if (context.Miembros.OfType<Organizador>().Any())
-            {
+            if (context.Proyectos.Any())
+            { 
                 return;   // Ya hay datos, no hacemos nada para no duplicar
-            }
+        }
 
             // 2. Creamos nuestro Organizador Mock (El usuario que usaremos por ahora)
             var organizadorMock = new Organizador

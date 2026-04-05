@@ -11,7 +11,8 @@ namespace Votify.Services.Interfaces
 {
     public interface IVotoPopularService
     {
-        Task<VotacionPopularDisponibleResponse> ObtenerVotacionPopularDisponibleAsync();
+        Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesPopularesDisponiblesAsync();
+        Task<VotacionPopularDisponibleResponse> ObtenerDetallePorIdAsync(int votacionId);
         Task EmitirVotoPopularAsync(EmitirVotoPopularRequest request);
     }
 }
