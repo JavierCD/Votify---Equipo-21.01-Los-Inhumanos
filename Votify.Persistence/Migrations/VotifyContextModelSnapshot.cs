@@ -145,10 +145,6 @@ namespace Votify.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CodigoAcceso")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -345,36 +341,6 @@ namespace Votify.Persistence.Migrations
                     b.ToTable("Votantes", (string)null);
                 });
 
-            modelBuilder.Entity("Votify.Core.Models.Proyecto", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("FechaRegistro")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("ParticipanteId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Visible")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParticipanteId")
-                        .IsUnique();
-
-                    b.ToTable("Proyectos", (string)null);
-                });
-
             modelBuilder.Entity("Votify.Core.Models.Voto", b =>
                 {
                     b.Property<int>("Id")
@@ -467,7 +433,7 @@ namespace Votify.Persistence.Migrations
                 {
                     b.HasBaseType("Votify.Core.Models.Votacion");
 
-                    b.Property<int>("MaxSelecciones")
+                    b.Property<int>("MaxSelection")
                         .HasColumnType("integer");
 
                     b.HasDiscriminator().HasValue("Popular");
