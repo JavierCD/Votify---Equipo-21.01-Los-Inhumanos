@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Enums;
+using Votify.Core.Factories;
 using Votify.Core.Models;
 using Votify.Persistence.Context;
 
@@ -41,6 +42,7 @@ namespace Votify.Persistence.Context
 
             context.Miembros.AddRange(organizadorMock, juez, participante);
             context.SaveChanges();
+            /*
 
             var eventoDemo = new Evento
             {
@@ -50,9 +52,20 @@ namespace Votify.Persistence.Context
                 FechaFin = DateTime.UtcNow.AddDays(7),
                 OrganizadorId = organizadorMock.Id,
                 Organizador = organizadorMock,
-                Estado = EstadoEvento.Borrador,
-                CodigoAcceso = "ABCD12"
-            };
+                Estado = EstadoEvento.Borrador
+            };*/
+
+
+            EventoCreator creadorHackathon = new HackathonEventCreator();
+
+
+            Evento eventoDemo = creadorHackathon.CrearEvento(
+                "Hackathon de Innovación 2026",
+                DateTime.UtcNow.AddDays(5),
+                DateTime.UtcNow.AddDays(7),
+                organizadorMock.Id,
+                "Evento de prueba para verificar la creación y categorías."
+            );
 
             context.Eventos.Add(eventoDemo);
             context.SaveChanges();
