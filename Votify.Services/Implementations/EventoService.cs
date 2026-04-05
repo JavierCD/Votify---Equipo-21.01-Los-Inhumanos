@@ -101,5 +101,15 @@ namespace Votify.Services.Implementations
             var eventoDemo = await _repository.GetAllAsync();
             return eventoDemo.FirstOrDefault()?.OrganizadorId ?? 1; // Si no hay, devolvemos 1 por si acaso
         }
+
+        public async Task<Evento?> ObtenerEventoPorCodigoAsync(string codigo)
+        {
+            if (string.IsNullOrWhiteSpace(codigo)) return null;
+
+            return await _repository.GetWithIncludesAsync(
+                e => e.CodigoAcceso.ToUpper() == codigo.ToUpper(),
+                e => e.CategoriasEvento
+            );
+        }
     }
 }

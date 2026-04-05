@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Models;
-using Votify.Core.Models;
 using Votify.Core.Enums;
 
 
@@ -174,6 +173,7 @@ namespace Votify.Persistence.Context
                 entity.ToTable("Proyectos");
                 entity.HasKey(p => p.Id);
                 entity.Property(p => p.Name).IsRequired().HasMaxLength(200);
+                //entity.Property(p => p.Description).HasMaxLength(500);
 
                 entity.HasOne(p => p.Participante)
                       .WithOne(p => p.Proyecto)
