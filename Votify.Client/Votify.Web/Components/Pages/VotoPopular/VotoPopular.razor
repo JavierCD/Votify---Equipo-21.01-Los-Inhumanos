@@ -1,0 +1,162 @@
+﻿@page "/voto-popular"
+@rendermode InteractiveServer
+@using Votify.Services.Interfaces
+@using Votify.Services.Models
+@inject IPopularService PopularService
+@inject ILogger<VotoPopular> Logger
+
+<div class="container py-4" style="max-width:620px">
+
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">
+            Nueva votación popular
+            <span class="badge bg-primary ms-2" style="font-size:0.7rem;vertical-align:middle">Admin</span>
+        </h2>
+        <p class="text-muted small mb-0">Configura los parámetros de la votación pública para una categoría.</p>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4 p-4">
+        <EditForm Model="@request" OnValidSubmit="CrearVotacionPopularAsync" FormName="crearVotacionPopularForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger small" />
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold small text-uppercase text-muted">ID de la categoría</label>
+                <InputNumber @bind-Value="request.CategoriaId" class="form-control" placeholder="Ej: 1" />
+                <ValidationMessage For="@(() => request.CategoriaId)" />
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de apertura</label>
+                    <InputDate @bind-Value="request.FechaApertura" class="form-control" />
+                    <ValidationMessage For="@(() => request.FechaApertura)" />
+                </div>
+                <div class="col">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de cierre</label>
+                    <InputDate @bind-Value="request.FechaCierre" class="form-control" />
+                    <ValidationMessage For="@(() => request.FechaCierre)" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold small text-uppercase text-muted">Estado</label>
+                <div class="d-flex gap-2">
+                    <button type="button"
+                            class="btn flex-fill @(request.Estado == "Abierta" ? "btn-success" : "btn-outline-success")"
+                            @onclick='() => request.Estado = "Abierta"'>
+                        ● Abierta
+                    </button>
+                    <button type="button"
+                            class="btn flex-fill @(request.Estado == "Cerrada" ? "btn-danger" : "btn-outline-danger")"
+                            @onclick='() => request.Estado = "Cerrada"'>
+                        ● Cerrada
+                    </button>
+                    <button type="button"
+                            class="btn flex-fill @(request.Estado == "Pausada" ? "btn-warning" : "btn-outline-warning")"
+                            @onclick='() => request.Estado = "Pausada"'>
+                        ● Pausada
+                    </button>
+                </div>
+                <ValidationMessage For="@(() => request.Estado)" />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold small text-uppercase text-muted">Máximo de selecciones</label>
+                <InputNumber @bind-Value="request.MaxSelection" class="form-control" placeholder="Ej: 3" />
+                <ValidationMessage For="@(() => request.MaxSelection)" />
+            </div>
+
+            <hr class="my-3" />
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    <span>Guardando...</span>
+                }
+                else
+                {
+                    <span>Crear votación</span>
+                }
+            </button>
+        </EditForm>
+
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="alert alert-success d-flex align-items-center gap-2 mt-3 rounded-3">
+                <span>✓</span>
+                <span>@successMessage</span>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 rounded-3">
+                <span>✕</span>
+                <span>@errorMessage</span>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private CrearVotacionPopularRequest request = new()
+    {
+        CategoriaId = 1,
+        FechaApertura = DateTime.Today,
+        FechaCierre = DateTime.Today.AddDays(1),
+        Estado = "Abierta",
+        MaxSelection = 1
+    };
+
+    private bool isLoading = false;
+    private string? successMessage;
+    private string? errorMessage;
+
+    private async Task CrearVotacionPopularAsync()
+    {
+        isLoading = true;
+        successMessage = null;
+        errorMessage = null;
+
+        try
+        {
+            var response = await PopularService.CrearVotacionPopularAsync(request);
+            successMessage = $"Votación popular creada correctamente con ID {response.Id}.";
+            LimpiarFormulario();
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogWarning(ex, "Error de validación al crear votación popular.");
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogWarning(ex, "Error de operación al crear votación popular.");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.InnerException is not null
+                ? $"Error inesperado: {ex.Message} | Detalle: {ex.InnerException.Message}"
+                : $"Error inesperado: {ex.Message}";
+            Logger.LogError(ex, "Error inesperado al crear votación popular.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void LimpiarFormulario()
+    {
+        request = new CrearVotacionPopularRequest
+        {
+            FechaApertura = DateTime.Today,
+            FechaCierre = DateTime.Today.AddDays(1),
+            Estado = "Abierta",
+            MaxSelection = 1
+        };
+    }
+}

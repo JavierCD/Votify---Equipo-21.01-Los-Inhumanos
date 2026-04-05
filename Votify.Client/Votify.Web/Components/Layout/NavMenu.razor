@@ -1,4 +1,5 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@rendermode InteractiveServer
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Votify.Web</a>
     </div>
@@ -19,6 +20,41 @@
                 <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> Participantes
             </NavLink>
         </div>
+        <div class="nav-item px-3">
+            <button class="nav-link w-100 text-start"
+                    @onclick="ToggleVotaciones"
+                    style="background:none; border:none; color:#d7d7d7; display:flex; align-items:center; justify-content:space-between; padding: 0 0.5rem;">
+                <span>
+                    <span class="bi bi-ballot-fill-nav-menu" aria-hidden="true"></span> Votaciones
+                </span>
+                <span style="font-size:0.7rem; opacity:0.7">@(votacionesExpanded ? "▲" : "▼")</span>
+            </button>
+        </div>
+
+        @if (votacionesExpanded)
+        {
+            <div class="nav-item px-3 ps-4" style="padding-left:2.5rem!important">
+                <NavLink class="nav-link" href="voto-popular" style="font-size:0.85rem; padding-left:1.5rem">
+                    ▸ Popular (Admin)
+                </NavLink>
+            </div>
+            <div class="nav-item px-3" style="padding-left:2.5rem!important">
+                <NavLink class="nav-link" href="voto-popular-usuario" style="font-size:0.85rem; padding-left:1.5rem">
+                    ▸ Popular (Votante)
+                </NavLink>
+            </div>
+        }
+
     </nav>
 </div>
+
+@code {
+    private bool votacionesExpanded = false;
+
+    private void ToggleVotaciones()
+    {
+        votacionesExpanded = !votacionesExpanded;
+    }
+}
+  
 

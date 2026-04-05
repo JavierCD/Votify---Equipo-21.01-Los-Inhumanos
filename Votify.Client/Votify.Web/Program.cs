@@ -44,17 +44,14 @@ builder.Services.AddCors(options =>
 
 // --- Inyección de Dependencias (Core, Persistence, Services) ---
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
 //builder.Services.AddScoped<IVotanteRepository, VotanteRepository>();
-// builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
-// 2. Registramos el servicio de Eventos que acabamos de crear
-builder.Services.AddScoped<IEventoService, EventoService>();
-
 builder.Services.AddScoped<IPopularService, PopularService>();
 builder.Services.AddScoped<IPopularRepository, PopularRepository>();
-
-//LOGIN
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IVotoPopularRepository, VotoPopularRepository>();
+builder.Services.AddScoped<IVotoPopularService, VotoPopularService>();
+builder.Services.AddScoped<IEventoService, EventoService>();
+// builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
+builder.Services.AddScoped<IEventoService, EventoService>(); 
 
 // 3. Registramos el servicio de Participantes 
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
