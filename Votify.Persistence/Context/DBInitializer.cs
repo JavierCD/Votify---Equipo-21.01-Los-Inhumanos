@@ -50,7 +50,8 @@ namespace Votify.Persistence.Context
                 FechaFin = DateTime.UtcNow.AddDays(7),
                 OrganizadorId = organizadorMock.Id,
                 Organizador = organizadorMock,
-                Estado = EstadoEvento.Borrador
+                Estado = EstadoEvento.Borrador,
+                CodigoAcceso = "ABCD12"
             };
 
             context.Eventos.Add(eventoDemo);
