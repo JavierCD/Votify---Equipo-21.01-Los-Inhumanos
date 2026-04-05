@@ -49,7 +49,7 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 // 2. Registramos el servicio de Eventos que acabamos de crear
 builder.Services.AddScoped<IEventoService, EventoService>();
-
+builder.Services.AddScoped<IProyectoService, ProyectoService>();
 builder.Services.AddScoped<IPopularService, PopularService>();
 builder.Services.AddScoped<IPopularRepository, PopularRepository>();
 
