@@ -9,7 +9,7 @@ using Votify.Core.Enums;
 
 namespace Votify.Core.Models
 {
-    public class Evento
+    public abstract class Evento
     {
         public int Id { get; set; }
 
@@ -95,5 +95,7 @@ namespace Votify.Core.Models
 
 
         }
+
+        public abstract string Modalidad();
     }
 }

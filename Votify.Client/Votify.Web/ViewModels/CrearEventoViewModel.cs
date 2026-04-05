@@ -18,6 +18,9 @@ namespace Votify.Web.ViewModels
 
         public string? Descripcion { get; set; }
 
+        [Required(ErrorMessage = "El tipo de evento es obligatorio")]
+        public string TipoEvento { get; set; } = "Hackathon"; // Valor por defecto
+
         [Required(ErrorMessage = "La fecha de inicio es obligatoria")]
         public DateTime FechaInicio { get; set; } = DateTime.Today;
 

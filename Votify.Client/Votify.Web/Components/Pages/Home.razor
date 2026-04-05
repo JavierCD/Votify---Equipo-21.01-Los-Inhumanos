@@ -1,6 +1,7 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 
+@using Votify.Core.Factories
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
 @inject NavigationManager NavigationManager
@@ -39,9 +40,62 @@
 }
 else if (RolActual == "Participante")
 {
-    <div class="container text-center mt-5">
-        <h2 class="mb-4">Regístrate en un Evento para poder participar</h2>
-        <button class="btn btn-primary btn-lg">Inscribirse en un evento</button>
+    <div class="container mt-5" style="max-width: 600px;">
+        <div class="card p-4 shadow-sm text-center">
+            <h3 class="mb-3">Inscripción de Proyecto</h3>
+            <p class="text-muted mb-4">Introduce el código del evento al que fuiste invitado.</p>
+
+            @if (eventoEncontrado == null)
+            {
+                <input type="text" @bind="codigoBusqueda" placeholder="Ej: HACK26" class="form-control mb-3 fs-5 text-center text-uppercase mx-auto" style="max-width: 300px;" />
+                <button class="btn btn-primary px-5" @onclick="BuscarEvento">Buscar Evento</button>
+
+                @if (!string.IsNullOrEmpty(mensajeErrorParticipante))
+                {
+                    <div class="alert alert-danger mt-3">@mensajeErrorParticipante</div>
+                }
+                @if (!string.IsNullOrEmpty(mensajeExitoParticipante))
+                {
+                    <div class="alert alert-success mt-3">@mensajeExitoParticipante</div>
+                }
+            }
+            else
+            {
+                <div class="alert alert-success d-flex align-items-center justify-content-center">
+                    <strong>Evento Encontrado: @eventoEncontrado.Name</strong>
+                </div>
+
+                <div class="text-start mt-4">
+                    <label class="fw-bold mb-1">Nombre de tu Proyecto *</label>
+                    <input type="text" @bind="nombreProyecto" class="form-control mb-3" />
+
+                    <label class="fw-bold mb-1">Especialidad del Proyecto *</label>
+                    <select @bind="tipoProyectoSeleccionado" class="form-select mb-3">
+                        @foreach (var opcion in opcionesTipoProyecto)
+                        {
+                            <option value="@opcion">@opcion</option>
+                        }
+                    </select>
+
+                    <label class="fw-bold mb-1">Categoría en la que compites *</label>
+                    <select @bind="categoriaSeleccionadaId" class="form-select mb-4">
+                        <option value="0">Selecciona una categoría...</option>
+                        @if (eventoEncontrado.CategoriasEvento != null)
+                        {
+                            @foreach (var cat in eventoEncontrado.CategoriasEvento)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        }
+                    </select>
+
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-light" @onclick="() => eventoEncontrado = null">Cancelar</button>
+                        <button class="btn btn-secondary" @onclick="InscribirProyecto">Inscribir Proyecto</button>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 }
 else if (RolActual == "Organizador")
@@ -139,6 +193,9 @@ else if (RolActual == "Jurado")
     private string nombreProyecto = "";
     private string? descripcionProyecto; // Opcional, depende de si lo pusiste en tu UI
     private int categoriaSeleccionadaId;
+    // Añade esto junto a tus otras variables del participante
+    private string tipoProyectoSeleccionado = "IA";
+    private List<string> opcionesTipoProyecto = new List<string> { "IA", "Sostenibilidad", "Ciberseguridad" };
 
     protected override async Task OnInitializedAsync()
     {
@@ -216,7 +273,29 @@ else if (RolActual == "Jurado")
             int participanteMockId = 3;
 
             // 2. Instanciamos tu Proyecto usando el constructor blindado
-            var nuevoProyecto = new Proyecto(nombreProyecto, participanteMockId);
+            ProyectoCreator creator;
+
+            // 1. Elegimos la fábrica correcta según lo que seleccionó el usuario
+            if (tipoProyectoSeleccionado == "IA")
+            {
+                creator = new AiProjectCreator();
+            }
+            else if (tipoProyectoSeleccionado == "Sostenibilidad")
+            {
+                creator = new SustainabilityProjectCreator();
+            }
+            else if (tipoProyectoSeleccionado == "Ciberseguridad")
+            {
+                creator = new CybersecurityProjectCreator();
+            }
+            else
+            {
+                creator = new AiProjectCreator(); // Fallback por seguridad
+            }
+
+            // 2. Usamos el método de la fábrica para instanciar el proyecto concreto
+            // Fíjate que devolvemos un 'Proyecto' abstracto, ocultando la complejidad
+            Proyecto nuevoProyecto = creator.CrearProyecto(nombreProyecto, participanteMockId);
 
             // (Si le añadiste la descripción al proyecto, la asignarías aquí si la necesitas)
 
