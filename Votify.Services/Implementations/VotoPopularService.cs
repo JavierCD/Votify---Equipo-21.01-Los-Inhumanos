@@ -76,6 +76,9 @@ namespace Votify.Services.Implementations
             if (votante == null)
                 throw new ArgumentException("El votante no existe.");
 
+            if (await _votoPopularRepository.YaVotoEnEstaVotacionAsync(request.VotanteId, request.VotacionId))
+                throw new InvalidOperationException("Este votante ya ha emitido su voto en esta votación.");
+
             if (request.ProyectosSeleccionadosIds == null || !request.ProyectosSeleccionadosIds.Any())
                 throw new ArgumentException("Debes seleccionar al menos un proyecto.");
 

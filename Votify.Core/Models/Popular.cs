@@ -7,6 +7,6 @@ using System.Threading.Tasks;
 namespace Votify.Core.Models
 {
     public class Popular:Votacion{
-        public int MaxSelecciones { get; set; }
+        public int MaxSelection { get; set; }
     }
 }
