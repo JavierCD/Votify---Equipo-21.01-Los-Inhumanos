@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Radzen;
 using Votify.Core.Interfaces;
 using Votify.Persistence.Context;
 using Votify.Persistence.Repositories;
@@ -7,6 +6,7 @@ using Votify.Services.Implementations;
 using Votify.Services.Interfaces;
 using Votify.UI;
 using Votify.Web.Components;
+using Radzen;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -43,7 +43,6 @@ builder.Services.AddCors(options =>
 });
 
 // --- Inyección de Dependencias (Core, Persistence, Services) ---
-// Registrar el Repositorio Genérico para todas las entidades
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 //builder.Services.AddScoped<IVotanteRepository, VotanteRepository>();
 builder.Services.AddScoped<IPopularService, PopularService>();
