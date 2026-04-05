@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Votify.Persistence.Context;
@@ -11,9 +12,11 @@ using Votify.Persistence.Context;
 namespace Votify.Persistence.Migrations
 {
     [DbContext(typeof(VotifyContext))]
-    partial class VotifyContextModelSnapshot : ModelSnapshot
+    [Migration("20260405131551_AddEventoIdToVotacion")]
+    partial class AddEventoIdToVotacion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,10 +147,6 @@ namespace Votify.Persistence.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CodigoAcceso")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -345,36 +344,6 @@ namespace Votify.Persistence.Migrations
                     b.ToTable("Votantes", (string)null);
                 });
 
-            modelBuilder.Entity("Votify.Core.Models.Proyecto", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("FechaRegistro")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("ParticipanteId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Visible")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParticipanteId")
-                        .IsUnique();
-
-                    b.ToTable("Proyectos", (string)null);
-                });
-
             modelBuilder.Entity("Votify.Core.Models.Voto", b =>
                 {
                     b.Property<int>("Id")
@@ -467,7 +436,7 @@ namespace Votify.Persistence.Migrations
                 {
                     b.HasBaseType("Votify.Core.Models.Votacion");
 
-                    b.Property<int>("MaxSelecciones")
+                    b.Property<int>("MaxSelection")
                         .HasColumnType("integer");
 
                     b.HasDiscriminator().HasValue("Popular");
