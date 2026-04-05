@@ -11,7 +11,7 @@ namespace Votify.Persistence.Context
             var optionsBuilder = new DbContextOptionsBuilder<VotifyContext>();
 
             // Aquí ponemos la cadena de conexión de forma directa (cambia los datos por los tuyos)
-            var connectionString = "Host=localhost;Database=VotifyDB;Username=postgres;Password=menta123";
+            var connectionString = "Host=localhost;Database=VotifyDB;Username=postgres;Password=PASSWORD";
 
             optionsBuilder.UseNpgsql(connectionString);
 
