@@ -144,6 +144,16 @@ namespace Votify.Persistence.Context
                       .WithMany(e => e.CategoriasEvento) // Enganchamos con la lista de Evento
                       .HasForeignKey(c => c.EventoId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(c => c.Votacion)
+                      .WithOne(v => v.Categoria)
+                      .HasForeignKey<Votacion>(v => v.CategoriaId)
+                      .IsRequired(false);
+
+                entity.HasMany(c => c.Premios)
+                      .WithOne(p => p.Categoria)
+                      .HasForeignKey(p => p.CategoriaId)
+                      .IsRequired(false);
             });
 
             // 6. CONFIGURACIÓN DE CRITERIO
