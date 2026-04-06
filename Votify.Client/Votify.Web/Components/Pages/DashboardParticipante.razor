@@ -111,10 +111,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // De momento usamos el método que ya tenemos.
-        // OJO: Este método NO trae el Proyecto ni los Eventos todavía, 
-        // así que la parte de "Mi Proyecto" saldrá como vacía.
-        participante = await ParticipanteService.ObtenerPorIdAsync(Id);
+        participante = await ParticipanteService.ObtenerDashboardAsync(Id);
         cargando = false;
     }
 
