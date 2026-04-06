@@ -1,0 +1,134 @@
+﻿@page "/eventos/editar/{EventoId:int}"
+@using Votify.Core.Factories
+@using Votify.Web.ViewModels
+@using Votify.Core.Interfaces
+@using Votify.Core.Models
+@inject NavigationManager NavigationManager
+@inject IEventoService EventoService
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Modificar Evento: <span class="text-primary">@evento?.Name</span></h2>
+        <button class="btn btn-outline-secondary" @onclick='() => NavigationManager.NavigateTo("/")'>Volver al Dashboard</button>
+    </div>
+
+    @if (evento == null)
+    {
+        <p>Cargando evento...</p>
+    }
+    else
+    {
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link" href="#">Datos Generales</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="#">Categorías y Votaciones</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Participantes</a>
+            </li>
+        </ul>
+
+        <div class="row">
+            <div class="col-12">
+                <h4 class="mb-3">Configuración de Categorías</h4>
+                <p class="text-muted">Define qué tipo de votación tendrá cada categoría y qué premios se entregarán.</p>
+
+                @foreach (var categoria in evento.CategoriasEvento)
+                {
+                    <div class="card mb-4 shadow-sm border-start border-primary border-4">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">@categoria.Name</h5>
+                            <span class="badge bg-secondary">@categoria.Proyectos.Count Proyectos</span>
+                        </div>
+                        <div class="card-body row">
+
+                            <div class="col-md-6 border-end">
+                                <h6><RadzenIcon Icon="how_to_vote" class="me-1" /> Configurar Votación</h6>
+
+                                @if (categoria.Votacion == null)
+                                {
+                                    <div class="alert alert-warning p-2 mt-3 text-center">
+                                        <small>Esta categoría aún no tiene una votación asignada.</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-primary w-100 mt-2" @onclick="() => AbrirModalVotacion(categoria.Id)">
+                                        Crear Votación
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="p-3 bg-light rounded mt-3">
+                                        <p class="mb-1"><strong>Tipo:</strong> @categoria.Votacion</p>
+                                        <p class="mb-0 small text-muted">
+                                            Inicio: @categoria.Votacion.FechaApertura.ToShortDateString() <br />
+                                            Fin: @categoria.Votacion.FechaCierre.ToShortDateString()
+                                        </p>
+                                        <button class="btn btn-sm btn-outline-primary mt-2">Editar Votación</button>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="col-md-6 ps-4">
+                                <h6><RadzenIcon Icon="emoji_events" class="me-1" /> Lista de Premios</h6>
+
+                                @if (!categoria.Premios.Any())
+                                {
+                                    <p class="text-muted small mt-3">No hay premios definidos para esta categoría.</p>
+                                }
+                                else
+                                {
+                                    <ul class="list-group list-group-flush mt-3 mb-3">
+                                        @foreach (var premio in categoria.Premios)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                <span><strong>@premio.Name:</strong> @premio.Descripcion</span>
+                                                <button class="btn btn-sm btn-outline-danger border-0"><RadzenIcon Icon="delete" /></button>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+
+                                <div class="input-group input-group-sm mt-2">
+                                    <input type="text" class="form-control" placeholder="Ej: 1er Puesto - 500€" @bind="nuevoPremioNombre" />
+                                    <button class="btn btn-success" @onclick="() => AgregarPremioRapido(categoria.Id)">Añadir</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int EventoId { get; set; }
+
+    private Evento? evento;
+    private string nuevoPremioNombre = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Aquí debes cargar el evento con TODAS sus relaciones usando tu servicio
+        evento = await EventoService.ObtenerEventoConDetallesAsync(EventoId);
+    }
+
+    private void AbrirModalVotacion(int categoriaId)
+    {
+        // Aquí puedes abrir un Modal (dialog) para pedir las fechas y el tipo de votación,
+        // o simplemente crear una votación por defecto y guardarla en la BD.
+        Console.WriteLine($"Crear votación para categoría: {categoriaId}");
+    }
+
+    private void AgregarPremioRapido(int categoriaId)
+    {
+        if (string.IsNullOrWhiteSpace(nuevoPremioNombre)) return;
+
+        // Aquí buscarías la categoría, instanciarías el Premio y lo guardarías en BD
+        Console.WriteLine($"Añadiendo premio '{nuevoPremioNombre}' a categoría: {categoriaId}");
+        nuevoPremioNombre = ""; // Limpiar el input
+    }
+}

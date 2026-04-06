@@ -12,7 +12,7 @@ using Votify.Persistence.Context;
 namespace Votify.Persistence.Migrations
 {
     [DbContext(typeof(VotifyContext))]
-    [Migration("20260405191831_InitialCreate")]
+    [Migration("20260406131841_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -657,8 +657,7 @@ namespace Votify.Persistence.Migrations
                     b.HasOne("Votify.Core.Models.Categoria", "Categoria")
                         .WithMany("Premios")
                         .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Categoria");
                 });
@@ -679,8 +678,7 @@ namespace Votify.Persistence.Migrations
                     b.HasOne("Votify.Core.Models.Categoria", "Categoria")
                         .WithOne("Votacion")
                         .HasForeignKey("Votify.Core.Models.Votacion", "CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Categoria");
                 });

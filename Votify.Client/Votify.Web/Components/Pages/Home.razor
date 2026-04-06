@@ -136,7 +136,8 @@ else if (RolActual == "Organizador")
                             </div>
                         </div>
                         <div class="d-flex gap-2">
-                            <RadzenButton Text="Modificar" ButtonStyle="ButtonStyle.Light" class="w-100" />
+                            <RadzenButton Text="Modificar" ButtonStyle="ButtonStyle.Light" class="w-100" 
+                                          Click="@(() => NavigationManager.NavigateTo($"/eventos/editar/{ev.Id}"))" />
                             <RadzenButton Text="Publicar" ButtonStyle="ButtonStyle.Primary" class="w-100" />
                         </div>
                     </RadzenCard>

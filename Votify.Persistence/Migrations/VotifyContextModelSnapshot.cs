@@ -654,8 +654,7 @@ namespace Votify.Persistence.Migrations
                     b.HasOne("Votify.Core.Models.Categoria", "Categoria")
                         .WithMany("Premios")
                         .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Categoria");
                 });
@@ -676,8 +675,7 @@ namespace Votify.Persistence.Migrations
                     b.HasOne("Votify.Core.Models.Categoria", "Categoria")
                         .WithOne("Votacion")
                         .HasForeignKey("Votify.Core.Models.Votacion", "CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Categoria");
                 });
