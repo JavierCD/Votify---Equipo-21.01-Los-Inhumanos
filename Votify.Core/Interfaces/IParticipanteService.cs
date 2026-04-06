@@ -17,6 +17,8 @@ namespace Votify.Core.Interfaces
         Task ActualizarFichaAsync(Participante participante);
         Task CambiarEstadoAsync(int id, string nuevoEstado);
         Task CambiarVisibilidadAsync(int id, bool visible);
+        Task<Participante?> ObtenerDashboardAsync(int id);
+
 
         // El futuro método para la IA (lo dejamos preparado)
         // Task<string> GenerarHojaDeRutaIAAsync(int id);

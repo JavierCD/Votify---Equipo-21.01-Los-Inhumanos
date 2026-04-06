@@ -70,5 +70,17 @@ namespace Votify.Services.Implementations
 
             await _repository.UpdateAsync(participante);
         }
+
+        public async Task<Participante?> ObtenerDashboardAsync(int id)
+        {
+            // Usamos el GetWithIncludesAsync del GenericRepository.
+            // El primer parámetro es el "WHERE" (p => p.Id == id).
+            // El segundo parámetro es el "INCLUDE" (p => p.Proyecto).
+            return await _repository.GetWithIncludesAsync(
+                p => p.Id == id,
+                p => p.Proyecto
+            );
+        }
+
     }
 }
