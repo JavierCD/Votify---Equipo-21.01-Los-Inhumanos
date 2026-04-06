@@ -58,5 +58,13 @@ namespace Votify.Core.Models
                 Premios.Add(premio);
             }
         }
+
+        public void EliminarPremio(Premio premio)
+        {
+            if(premio!=null && Premios.Contains(premio))
+            {
+                Premios.Remove(premio);
+            }
+        }
     }
 }

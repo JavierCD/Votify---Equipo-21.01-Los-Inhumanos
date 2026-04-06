@@ -1,105 +1,206 @@
 ﻿@page "/eventos/editar/{EventoId:int}"
+@rendermode InteractiveServer
 @using Votify.Core.Factories
 @using Votify.Web.ViewModels
 @using Votify.Core.Interfaces
 @using Votify.Core.Models
 @inject NavigationManager NavigationManager
 @inject IEventoService EventoService
+@inject ICategoriaService CategoriaService
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Modificar Evento: <span class="text-primary">@evento?.Name</span></h2>
+        <h2>Gestión del Evento: <span class="text-primary">@(evento?.Name ?? "Cargando...")</span></h2>
         <button class="btn btn-outline-secondary" @onclick='() => NavigationManager.NavigateTo("/")'>Volver al Dashboard</button>
     </div>
 
     @if (evento == null)
     {
-        <p>Cargando evento...</p>
+        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>
     }
     else
     {
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
-                <a class="nav-link" href="#">Datos Generales</a>
+                <a class="nav-link @(tabActivo == "Generales" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Generales"' style="cursor:pointer">
+                    <RadzenIcon Icon="edit_note" class="me-1" /> Datos Generales
+                </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link active" href="#">Categorías y Votaciones</a>
+                <a class="nav-link @(tabActivo == "Categorias" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Categorias"' style="cursor:pointer">
+                    <RadzenIcon Icon="category" class="me-1" /> Categorías y Votaciones
+                </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">Participantes</a>
+                <a class="nav-link @(tabActivo == "Participantes" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Participantes"' style="cursor:pointer">
+                    <RadzenIcon Icon="groups" class="me-1" /> Participantes
+                </a>
             </li>
         </ul>
 
-        <div class="row">
-            <div class="col-12">
-                <h4 class="mb-3">Configuración de Categorías</h4>
-                <p class="text-muted">Define qué tipo de votación tendrá cada categoría y qué premios se entregarán.</p>
+        @if (tabActivo == "Generales")
+        {
 
-                @foreach (var categoria in evento.CategoriasEvento)
+            <div class="card shadow-sm p-4" style="max-width: 600px;">
+                <h4 class="mb-4">Información Principal</h4>
+                @if (!string.IsNullOrEmpty(mensajeExito))
                 {
-                    <div class="card mb-4 shadow-sm border-start border-primary border-4">
-                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">@categoria.Name</h5>
-                            <span class="badge bg-secondary">@categoria.Proyectos.Count Proyectos</span>
-                        </div>
-                        <div class="card-body row">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <RadzenIcon Icon="check_circle" class="me-1" /> @mensajeExito
+                        <button type="button" class="btn-close" @onclick="() => mensajeExito = null"></button>
+                    </div>
+                }
 
-                            <div class="col-md-6 border-end">
-                                <h6><RadzenIcon Icon="how_to_vote" class="me-1" /> Configurar Votación</h6>
+                @if (!string.IsNullOrEmpty(mensajeError))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <RadzenIcon Icon="error" class="me-1" /> @mensajeError
+                        <button type="button" class="btn-close" @onclick="() => mensajeError = null"></button>
+                    </div>
+                }
 
-                                @if (categoria.Votacion == null)
-                                {
-                                    <div class="alert alert-warning p-2 mt-3 text-center">
-                                        <small>Esta categoría aún no tiene una votación asignada.</small>
-                                    </div>
-                                    <button class="btn btn-sm btn-primary w-100 mt-2" @onclick="() => AbrirModalVotacion(categoria.Id)">
-                                        Crear Votación
-                                    </button>
-                                }
-                                else
-                                {
-                                    <div class="p-3 bg-light rounded mt-3">
-                                        <p class="mb-1"><strong>Tipo:</strong> @categoria.Votacion</p>
-                                        <p class="mb-0 small text-muted">
-                                            Inicio: @categoria.Votacion.FechaApertura.ToShortDateString() <br />
-                                            Fin: @categoria.Votacion.FechaCierre.ToShortDateString()
-                                        </p>
-                                        <button class="btn btn-sm btn-outline-primary mt-2">Editar Votación</button>
-                                    </div>
-                                }
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nombre del Evento</label>
+                    <input type="text" class="form-control" @bind="evento.Name" />
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label class="form-label fw-bold">Fecha de Inicio</label>
+                        <input type="date" class="form-control" @bind="fechaInicioTemp" />
+                    </div>
+                    <div class="col">
+                        <label class="form-label fw-bold">Fecha de Fin</label>
+                        <input type="date" class="form-control" @bind="fechaFinTemp" />
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Descripción / Reglas</label>
+                    <textarea class="form-control" rows="4" @bind="evento.Description"></textarea>
+                </div>
+                <button class="btn btn-primary" @onclick="GuardarDatosGenerales">Guardar Cambios</button>
+            </div>
+        }
+
+        else if (tabActivo == "Categorias")
+        {
+            <div class="row">
+                <div class="col-12">
+                    @foreach (var categoria in evento.CategoriasEvento)
+                    {
+                        <div class="card mb-4 shadow-sm border-start border-primary border-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">@categoria.Name</h5>
                             </div>
+                            <div class="card-body row">
 
-                            <div class="col-md-6 ps-4">
-                                <h6><RadzenIcon Icon="emoji_events" class="me-1" /> Lista de Premios</h6>
+                                <div class="col-md-5 border-end">
+                                    <h6>Votación Activa</h6>
+                                    @if (categoria.Votacion == null)
+                                    {
+                                        <p class="text-muted small">Aún no hay votación configurada.</p>
+                                        <button class="btn btn-sm btn-outline-primary w-100">Configurar Votación</button>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-success p-2 small">Votación en curso</div>
+                                    }
+                                </div>
 
-                                @if (!categoria.Premios.Any())
-                                {
-                                    <p class="text-muted small mt-3">No hay premios definidos para esta categoría.</p>
-                                }
-                                else
-                                {
-                                    <ul class="list-group list-group-flush mt-3 mb-3">
-                                        @foreach (var premio in categoria.Premios)
+                                <div class="col-md-7 ps-4">
+                                    <h6>Premios de la Categoría</h6>
+
+                                    <ul class="list-group mb-3">
+                                        @foreach (var premio in categoria.Premios.OrderBy(p => p.Posicion))
                                         {
-                                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                                <span><strong>@premio.Name:</strong> @premio.Descripcion</span>
-                                                <button class="btn btn-sm btn-outline-danger border-0"><RadzenIcon Icon="delete" /></button>
+                                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <span class="badge bg-warning text-dark me-2">#@premio.Posicion</span>
+                                                    <strong>@premio.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(premio.Descripcion))
+                                                    {
+                                                        <div class="text-muted small mt-1">@premio.Descripcion</div>
+                                                    }
+                                                </div>
+                                                <button class="btn btn-sm text-danger border-0" @onclick="() => EliminarPremioConcreto(categoria.Id, premio)">
+                                                    <RadzenIcon Icon="delete" />
+                                                </button>
                                             </li>
                                         }
                                     </ul>
-                                }
 
-                                <div class="input-group input-group-sm mt-2">
-                                    <input type="text" class="form-control" placeholder="Ej: 1er Puesto - 500€" @bind="nuevoPremioNombre" />
-                                    <button class="btn btn-success" @onclick="() => AgregarPremioRapido(categoria.Id)">Añadir</button>
+                                    <div class="bg-light p-3 rounded">
+                                        <span class="fw-bold small d-block mb-2">Añadir Nuevo Premio</span>
+                                        <div class="row g-2">
+                                            <div class="col-3">
+                                                <input type="number" class="form-control form-control-sm" placeholder="Puesto" @bind="nuevoPremioPuesto" min="1" />
+                                            </div>
+                                            <div class="col-9">
+                                                <input type="text" class="form-control form-control-sm" placeholder="Nombre (Ej: Cheque 500€)" @bind="nuevoPremioNombre" />
+                                            </div>
+                                            <div class="col-12">
+                                                <input type="text" class="form-control form-control-sm" placeholder="Descripción breve (opcional)" @bind="nuevoPremioDesc" />
+                                            </div>
+                                            <div class="col-12 text-end mt-2">
+                                                <button class="btn btn-sm btn-success px-3" @onclick="() => AgregarPremioConcreto(categoria.Id)">Añadir Premio</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
+                            </div>
                         </div>
+                    }
+                </div>
+            </div>
+        }
+
+        else if (tabActivo == "Participantes")
+        {
+            <div class="card shadow-sm p-4">
+                <h4 class="mb-4">Participantes y Proyectos</h4>
+
+                @foreach (var categoria in evento.CategoriasEvento)
+                {
+                    <div class="mb-5">
+                        <h5 class="text-primary border-bottom pb-2 mb-3">
+                            <RadzenIcon Icon="label" class="fs-5 me-1" /> @categoria.Name
+                            <span class="badge bg-secondary ms-2 fs-6">@categoria.Proyectos.Count inscritos</span>
+                        </h5>
+
+                        @if (!categoria.Proyectos.Any())
+                        {
+                            <p class="text-muted fst-italic">Aún no hay proyectos inscritos en esta categoría.</p>
+                        }
+                        else
+                        {
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nombre del Proyecto</th>
+                                        <th>Tipo (Factory)</th>
+                                        <th>Fecha Inscripción</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var proyecto in categoria.Proyectos)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold">@proyecto.Name</td>
+                                            <td><span class="badge bg-info text-dark">@proyecto.CategoriaEspecialidad()</span></td>
+                                            <td>@proyecto.FechaRegistro.ToShortDateString()</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-danger">Descalificar</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
                     </div>
                 }
             </div>
-        </div>
+        }
     }
 </div>
 
@@ -107,13 +208,34 @@
     [Parameter]
     public int EventoId { get; set; }
 
+    // Control de pestañas
+    private string tabActivo = "Generales";
+
+    // Objeto principal
     private Evento? evento;
+
+    // Variables temporales para fechas en HTML
+    private DateTime fechaInicioTemp;
+    private DateTime fechaFinTemp;
+
+    // Variables para el formulario de premios
     private string nuevoPremioNombre = "";
+    private string nuevoPremioDesc = "";
+    private int nuevoPremioPuesto = 1;
+
+    private string? mensajeExito;
+    private string? mensajeError;
 
     protected override async Task OnInitializedAsync()
     {
         // 1. Aquí debes cargar el evento con TODAS sus relaciones usando tu servicio
         evento = await EventoService.ObtenerEventoConDetallesAsync(EventoId);
+
+        if (evento != null)
+        {
+            fechaInicioTemp = evento.FechaInicio;
+            fechaFinTemp = evento.FechaFin;
+        }
     }
 
     private void AbrirModalVotacion(int categoriaId)
@@ -123,12 +245,68 @@
         Console.WriteLine($"Crear votación para categoría: {categoriaId}");
     }
 
-    private void AgregarPremioRapido(int categoriaId)
+    private async void AgregarPremioConcreto(int categoriaId)
     {
         if (string.IsNullOrWhiteSpace(nuevoPremioNombre)) return;
 
-        // Aquí buscarías la categoría, instanciarías el Premio y lo guardarías en BD
-        Console.WriteLine($"Añadiendo premio '{nuevoPremioNombre}' a categoría: {categoriaId}");
-        nuevoPremioNombre = ""; // Limpiar el input
+        // Buscamos la categoría en la lista cargada
+        var categoria = evento!.CategoriasEvento.First(c => c.Id == categoriaId);
+
+        // Creamos el premio con el nuevo constructor
+        var premio = new Premio(nuevoPremioNombre, nuevoPremioDesc, nuevoPremioPuesto);
+        categoria.AsignarPremio(premio);
+
+        // AQUÍ GUARDARÍAS EN BASE DE DATOS:
+        await CategoriaService.UpdateAsync(categoria);
+
+        // Limpiar el formulario
+        nuevoPremioNombre = "";
+        nuevoPremioDesc = "";
+        nuevoPremioPuesto++; // Autoincrementamos el puesto por comodidad
+    }
+
+    private async Task GuardarDatosGenerales()
+    {
+        mensajeExito = null;
+        mensajeError = null;
+
+        try
+        {
+            if (evento == null) return;
+
+            evento.ActualizarDatosGenerales(
+                evento.Name,
+                fechaInicioTemp,
+                fechaFinTemp,
+                evento.Description
+            );
+
+
+            await EventoService.ActualizarAsync(evento);
+
+            mensajeExito = "Los datos generales del evento se han actualizado correctamente.";
+        }
+        catch (ArgumentException ex)
+        {
+            // Mensaje de error (ej: la fecha fin es incorrecta)
+            mensajeError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            // Error de base de datos o servidor
+            mensajeError = $"Error inesperado al guardar: {ex.Message}";
+        }
+    }
+
+    private async Task EliminarPremioConcreto(int categoriaId, Premio premio)
+    {
+        // 1. Buscamos la categoría en la lista que tenemos cargada en memoria
+        var categoria = evento!.CategoriasEvento.First(c => c.Id == categoriaId);
+
+        // 2. Usamos el método de dominio que acabamos de crear
+        categoria.EliminarPremio(premio);
+
+        // 3. Guardamos los cambios en la base de datos
+        await CategoriaService.UpdateAsync(categoria);
     }
 }

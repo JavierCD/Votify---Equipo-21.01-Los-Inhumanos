@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Votify.Core.Enums;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Votify.Core.Models
 {
@@ -94,6 +95,20 @@ namespace Votify.Core.Models
             CategoriasEvento.Add(nuevaCat);
 
 
+        }
+
+        public void ActualizarDatosGenerales(string nombre, DateTime fechaInicio, DateTime fechaFin, string desc)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre del evento es obligatorio.", nameof(nombre));
+
+            if (fechaFin < fechaInicio)
+                throw new ArgumentException("La fecha de fin no puede ser anterior a la de inicio.");
+
+            Name = nombre;
+            Description = desc;
+            FechaInicio = fechaInicio;
+            FechaFin = fechaFin;
         }
 
         public abstract string Modalidad();
