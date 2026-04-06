@@ -43,5 +43,20 @@ namespace Votify.Core.Models
             Name = newName;
             Descripcion = descripcion;
         }
+
+        public void AsignarVotacion(Votacion votacion)
+        {
+            Votacion = votacion ?? throw new ArgumentNullException(nameof(votacion));
+        }
+
+        public void AsignarPremio(Premio premio)
+        {
+            if(premio == null) throw new ArgumentNullException(nameof(premio));
+
+            if (!Premios.Contains(premio))
+            {
+                Premios.Add(premio);
+            }
+        }
     }
 }
