@@ -113,17 +113,17 @@ namespace Votify.Services.Implementations
 
             // 2. Ahora usamos la fábrica elegida para crear cada voto
             var votos = request.ProyectosSeleccionadosIds.Select(proyectoId =>
-
-                // Llamamos al método CrearVoto de la fábrica, pasándole los parámetros en orden
-                creadorVoto.CrearVoto(
+            {
+                var voto = creadorVoto.CrearVoto(
                     votacion.Id,
                     proyectoId,
                     puntuacionBaseEmitida,
                     votante.Anonimo,
-                    null // (Pásale null si en este punto no lo tienes)
-                )
-
-            ).ToList();
+                    null
+                );
+                voto.AssignId(votante.Id);
+                return voto;
+            }).ToList();
 
             await _votoPopularRepository.GuardarVotosAsync(votos);
         }
