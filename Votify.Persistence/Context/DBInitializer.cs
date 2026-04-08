@@ -99,7 +99,7 @@ namespace Votify.Persistence.Context
             context.Miembros.AddRange(organizadorMock, juez, juez2, participante, participante2, participante3, participante4, participante5, participante6, participante7, participante8);
             context.SaveChanges();
 
-            // 2. Eventos (usando Factory pattern)
+            // 2. Eventos 
             EventoCreator creadorHackathon = new HackathonEventCreator();
             Evento eventoDemo = creadorHackathon.CrearEvento(
                 "Hackathon de Innovación 2026",
