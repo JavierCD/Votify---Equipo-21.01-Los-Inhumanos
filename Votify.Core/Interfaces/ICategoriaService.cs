@@ -8,5 +8,6 @@ namespace Votify.Core.Interfaces
         Task CrearAsync(Categoria categoria);
         Task UpdateAsync(Categoria categoria);
         Task DeleteAsync(int id);
+
     }
 }
