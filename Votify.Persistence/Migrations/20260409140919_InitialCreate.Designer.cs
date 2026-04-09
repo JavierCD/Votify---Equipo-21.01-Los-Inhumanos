@@ -12,7 +12,7 @@ using Votify.Persistence.Context;
 namespace Votify.Persistence.Migrations
 {
     [DbContext(typeof(VotifyContext))]
-    [Migration("20260406131841_InitialCreate")]
+    [Migration("20260409140919_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -298,8 +298,7 @@ namespace Votify.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParticipanteId")
-                        .IsUnique();
+                    b.HasIndex("ParticipanteId");
 
                     b.ToTable("Proyectos", (string)null);
 
@@ -665,8 +664,8 @@ namespace Votify.Persistence.Migrations
             modelBuilder.Entity("Votify.Core.Models.Proyecto", b =>
                 {
                     b.HasOne("Votify.Core.Models.Participante", "Participante")
-                        .WithOne("Proyecto")
-                        .HasForeignKey("Votify.Core.Models.Proyecto", "ParticipanteId")
+                        .WithMany("Proyectos")
+                        .HasForeignKey("ParticipanteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -735,7 +734,7 @@ namespace Votify.Persistence.Migrations
 
             modelBuilder.Entity("Votify.Core.Models.Participante", b =>
                 {
-                    b.Navigation("Proyecto");
+                    b.Navigation("Proyectos");
                 });
 
             modelBuilder.Entity("Votify.Core.Models.Multicriterio", b =>

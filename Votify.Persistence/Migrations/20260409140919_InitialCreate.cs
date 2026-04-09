@@ -362,8 +362,7 @@ namespace Votify.Persistence.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Proyectos_ParticipanteId",
                 table: "Proyectos",
-                column: "ParticipanteId",
-                unique: true);
+                column: "ParticipanteId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProyectosCategorias_ProyectosId",

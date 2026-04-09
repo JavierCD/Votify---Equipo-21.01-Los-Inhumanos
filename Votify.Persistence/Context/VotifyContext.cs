@@ -191,8 +191,8 @@ namespace Votify.Persistence.Context
                 //entity.Property(p => p.Description).HasMaxLength(500);
 
                 entity.HasOne(p => p.Participante)
-                      .WithOne(p => p.Proyecto)
-                      .HasForeignKey<Proyecto>(p => p.ParticipanteId)
+                      .WithMany(p => p.Proyectos)
+                      .HasForeignKey(p => p.ParticipanteId)
                       .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasMany(p => p.Categorias)
