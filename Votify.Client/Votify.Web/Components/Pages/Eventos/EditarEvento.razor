@@ -177,6 +177,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Nombre del Proyecto</th>
+                                        <th>Creador</th>
                                         <th>Tipo de Proyecto</th>
                                         <th>Fecha Inscripción</th>
                                         <th>Acciones</th>
@@ -187,6 +188,14 @@
                                     {
                                         <tr>
                                             <td class="fw-bold">@proyecto.Name</td>
+
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <RadzenIcon Icon="person" class="me-1 text-secondary" />
+                                                    @(proyecto.Participante?.Name ?? "Desconocido")
+                                                </div>
+                                            </td>
+
                                             <td><span class="badge bg-info text-dark">@proyecto.CategoriaEspecialidad()</span></td>
                                             <td>@proyecto.FechaRegistro.ToShortDateString()</td>
                                             <td>
