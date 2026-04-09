@@ -1,5 +1,6 @@
 ﻿@page "/login"
 @inject Votify.Services.Interfaces.IAuthService AuthService
+@inject Votify.Web.Services.UserSession Session
 @inject NavigationManager Navigation
 
 <h3>Login</h3>
@@ -23,6 +24,7 @@
 
     private async Task HandleLogin()
     {
+        
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
             mensaje = "Rellena todos los campos";
@@ -31,9 +33,9 @@
         try
         {
             var user = await AuthService.Login(email, password);
-
+            Session.Usuario = user;
             //mensaje = "Login correcto";
-            Navigation.NavigateTo("/");
+            Navigation.NavigateTo("/", false);
             // siguiente paso → redirigir según rol
         }
         catch (Exception ex)

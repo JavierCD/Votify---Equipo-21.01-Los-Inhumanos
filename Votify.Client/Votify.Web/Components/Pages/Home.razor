@@ -7,27 +7,18 @@
 @inject NavigationManager NavigationManager
 @inject IEventoService EventoService
 @inject IProyectoService ProyectoService
+@inject Votify.Web.Services.UserSession Session
 
 <PageTitle>Inicio - Votify</PageTitle>
 
-@* ==========================================
-   HERRAMIENTA DE DESARROLLO (MOCK LOGIN)
-   ========================================== *@
-<div class="alert alert-warning py-2 mb-4 d-flex align-items-center justify-content-between">
-    <span class="fw-bold">🛠️ Modo Dev (Selector de Roles):</span>
-    <select class="form-select w-auto" @bind="RolActual">
-        <option value="Votante">Votante (Anónimo/Público)</option>
-        <option value="Participante">Participante</option>
-        <option value="Organizador">Organizador</option>
-        <option value="Jurado">Jurado</option>
-    </select>
-</div>
+
+
 
 @* ==========================================
    CONTENIDO DINÁMICO SEGÚN EL ROL
    ========================================== *@
 
-@if (RolActual == "Votante")
+@if (Session.Usuario is Votante)
 {
     <div class="container d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
         <h2 class="mb-4">Accede como votante a una votación</h2>
@@ -38,7 +29,7 @@
         </div>
     </div>
 }
-else if (RolActual == "Participante")
+else if (Session.Usuario is Participante)
 {
     <div class="container mt-5" style="max-width: 600px;">
         <div class="card p-4 shadow-sm text-center">
@@ -98,7 +89,7 @@ else if (RolActual == "Participante")
         </div>
     </div>
 }
-else if (RolActual == "Organizador")
+else if (Session.Usuario is Organizador)
 {
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -146,7 +137,7 @@ else if (RolActual == "Organizador")
         </div>
     </div>
 }
-else if (RolActual == "Jurado")
+else if (Session.Usuario is Juez)
 {
     <div class="container mt-4">
         <h2 class="mb-4">Hola, Nombre de usuario</h2>
