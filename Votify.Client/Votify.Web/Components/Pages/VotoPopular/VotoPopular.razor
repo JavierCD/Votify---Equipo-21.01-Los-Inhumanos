@@ -1,4 +1,4 @@
-﻿@page "/voto-popular"
+﻿@page "/voto-popular/{CategoriaId:int}"
 @rendermode InteractiveServer
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
@@ -10,7 +10,28 @@
     <div class="mb-4">
         <h2 class="fw-bold mb-1">
             Nueva votación popular
-            <span class="badge bg-primary ms-2" style="font-size:0.7rem;vertical-align:middle">Admin</span>
+            <div class="mb-4">
+                <label class="form-label fw-semibold small text-uppercase text-muted">Tipo de votación</label>
+                <div class="d-flex gap-2">
+                    <button type="button"
+                            class="btn flex-fill @(tipoVotacion == "Popular" ? "btn-primary" : "btn-outline-primary")"
+                            @onclick='() => tipoVotacion = "Popular"'>
+                        🗳️ Popular
+                    </button>
+                    <button type="button"
+                            class="btn flex-fill @(tipoVotacion == "Multicriterio" ? "btn-primary" : "btn-outline-primary")"
+                            @onclick='() => tipoVotacion = "Multicriterio"'>
+                        ⚖️ Multicriterio
+                    </button>
+                </div>
+            </div>
+
+            @if (tipoVotacion == "Multicriterio")
+            {
+                <div class="alert alert-info">La votación multicriterio estará disponible próximamente.</div>
+            }
+
+    <span class="badge bg-primary ms-2" style="font-size:0.7rem;vertical-align:middle">Admin</span>
         </h2>
         <p class="text-muted small mb-0">Configura los parámetros de la votación pública para una categoría.</p>
     </div>
@@ -19,12 +40,6 @@
         <EditForm Model="@request" OnValidSubmit="CrearVotacionPopularAsync" FormName="crearVotacionPopularForm">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger small" />
-
-            <div class="mb-3">
-                <label class="form-label fw-semibold small text-uppercase text-muted">ID de la categoría</label>
-                <InputNumber @bind-Value="request.CategoriaId" class="form-control" placeholder="Ej: 1" />
-                <ValidationMessage For="@(() => request.CategoriaId)" />
-            </div>
 
             <div class="row g-3 mb-3">
                 <div class="col">
@@ -101,14 +116,18 @@
 </div>
 
 @code {
-    private CrearVotacionPopularRequest request = new()
+    private string tipoVotacion = "Popular";
+    [Parameter]
+    public int CategoriaId { get; set; }
+
+    private CrearVotacionPopularRequest request = new();
+    protected override async Task OnInitializedAsync()
     {
-        CategoriaId = 1,
-        FechaApertura = DateTime.Today,
-        FechaCierre = DateTime.Today.AddDays(1),
-        Estado = "Abierta",
-        MaxSelection = 1
-    };
+        request.CategoriaId = CategoriaId;
+        request.FechaApertura = DateTime.Today;
+        request.FechaCierre = DateTime.Today.AddDays(1);
+    }
+
 
     private bool isLoading = false;
     private string? successMessage;
@@ -153,6 +172,7 @@
     {
         request = new CrearVotacionPopularRequest
         {
+            CategoriaId = CategoriaId,
             FechaApertura = DateTime.Today,
             FechaCierre = DateTime.Today.AddDays(1),
             Estado = "Abierta",
