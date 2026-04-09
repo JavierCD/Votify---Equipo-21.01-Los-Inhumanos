@@ -15,8 +15,16 @@ namespace Votify.Persistence.Context
     {
         public static void Initialize(VotifyContext context)
         {
-            context.Database.EnsureDeleted();
+            //context.Database.EnsureDeleted();
+            
+            
+            
             context.Database.Migrate();
+
+            if (context.Eventos.Any())
+            {
+                return;
+            }
 
             // 1. Miembros
             var organizadorMock = new Organizador
@@ -138,56 +146,69 @@ namespace Votify.Persistence.Context
             context.SaveChanges();
 
             // 4. Proyectos asociados a categorías
+            
             var proyecto1 = new SustainabilityProject("AgroTech Social", participante.Id)
             {
                 Visible = true,
-                Categorias = new List<Categoria> { categoria1 }
+                
             };
 
             var proyecto2 = new SustainabilityProject("EduAccess", participante2.Id)
             {
                 Visible = true,
-                Categorias = new List<Categoria> { categoria1 }
+                
             };
 
             var proyecto3 = new SustainabilityProject("GreenCity", participante3.Id)
             {
                 Visible = true,
-                Categorias = new List<Categoria> { categoria1 }
+                
             };
+
+            proyecto1.Categorias.Add(categoria1);
+            proyecto2.Categorias.Add(categoria1);
+            proyecto3.Categorias.Add(categoria1);
 
             var proyecto4 = new AiProject("HealthBot AI", participante4.Id)
             {
                 Visible = true,
-                Categorias = new List<Categoria> { categoria2 }
+                
             };
 
             var proyecto5 = new AiProject("SmartCity Assistant", participante5.Id)
             {
                 Visible = true,
-                Categorias = new List<Categoria> { categoria2 }
+                
             };
 
             var proyecto6 = new AiProject("EduBot", participante6.Id)
             {
                 Visible = true,
-                Categorias = new List<Categoria> { categoria2 }
+                
             };
+
+            proyecto4.Categorias.Add(categoria2);
+            proyecto5.Categorias.Add(categoria2);
+            proyecto6.Categorias.Add(categoria2);
 
             var proyecto7 = new CybersecurityProject("SecureVote", participante7.Id)
             {
                 Visible = true,
-                Categorias = new List<Categoria> { categoria3 }
+
             };
 
             var proyecto8 = new CybersecurityProject("CryptoShield", participante8.Id)
             {
                 Visible = true,
-                Categorias = new List<Categoria> { categoria3 }
+
             };
+
+            proyecto7.Categorias.Add(categoria3); 
+            proyecto8.Categorias.Add(categoria3);
 
             context.Proyectos.AddRange(proyecto1, proyecto2, proyecto3, proyecto4, proyecto5, proyecto6, proyecto7, proyecto8);
             context.SaveChanges();
+            
 
             // 5. Votantes
             var votante1 = new Votante { Email = "votante1@votify.com", Anonimo = false, Rol = "PUBLIC" };

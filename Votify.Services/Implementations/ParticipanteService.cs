@@ -19,7 +19,9 @@ namespace Votify.Services.Implementations
 
         public async Task<Participante?> ObtenerPorIdAsync(int id)
         {
-            return await _repository.GetByIdAsync(id);
+            return await _repository.GetWithIncludesAsync(
+                p => p.Id == id,
+                p => p.Proyectos);
         }
 
         public async Task<IEnumerable<Participante>> ObtenerTodosAsync()

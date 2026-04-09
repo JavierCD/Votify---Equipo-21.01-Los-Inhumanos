@@ -12,9 +12,9 @@ namespace Votify.Services.Implementations
 {
     public class EventoService : IEventoService
     {
-        private readonly IGenericRepository<Evento> _repository;
+        private readonly IEventoRepository _repository;
 
-        public EventoService(IGenericRepository<Evento> repository)
+        public EventoService(IEventoRepository repository)
         {
             _repository = repository;
         }
@@ -44,11 +44,7 @@ namespace Votify.Services.Implementations
 
         public async Task<Evento?> ObtenerEventoConDetallesAsync(int id)
         {
-            return await _repository.GetWithIncludesAsync(
-                e => e.Id == id,
-                e => e.CategoriasEvento,
-                e => e.Participantes,
-                e => e.Organizador);
+            return await _repository.ObtenerEventoConDetallesAsync(id);
         }
 
         public async Task<Evento> CrearAsync(Evento evento)

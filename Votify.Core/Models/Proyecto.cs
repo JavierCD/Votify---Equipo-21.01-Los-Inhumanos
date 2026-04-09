@@ -35,7 +35,7 @@ namespace Votify.Core.Models
 
         public Proyecto() { }
 
-        public Proyecto(string nombre, int idParticipante, double criterioA = 0, double criterioB = 0, bool visible = true, string? desc = null)
+        public Proyecto(string nombre, int idParticipante, double criterioA = 0, double criterioB = 0, string? desc = null)
         {
                 if (string.IsNullOrWhiteSpace(nombre))
                     throw new ArgumentException("El nombre del proyecto no puede estar vacío", nameof(nombre));
@@ -47,7 +47,7 @@ namespace Votify.Core.Models
             ParticipanteId = idParticipante;
             CriterioA = criterioA;
             CriterioB = criterioB;
-                Visible = visible;
+                Visible = true;
                 Description = desc;
         }
 
