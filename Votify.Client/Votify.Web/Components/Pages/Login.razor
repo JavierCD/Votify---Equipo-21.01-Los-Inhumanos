@@ -23,6 +23,11 @@
 
     private async Task HandleLogin()
     {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            mensaje = "Rellena todos los campos";
+            return;
+        }
         try
         {
             var user = await AuthService.Login(email, password);

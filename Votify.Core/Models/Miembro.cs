@@ -20,5 +20,7 @@ namespace Votify.Core.Models
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
         
+
+
     }
 }
