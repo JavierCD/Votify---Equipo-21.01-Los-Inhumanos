@@ -4,9 +4,13 @@
 @using Votify.Core.Factories
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
+@using Votify.Services.Interfaces
+@using Votify.Services.Models
 @inject NavigationManager NavigationManager
 @inject IEventoService EventoService
 @inject IProyectoService ProyectoService
+@inject IVotoPopularService VotoPopularService
+@inject IVotoPuntuacionService VotoPuntuacionService
 
 <PageTitle>Inicio - Votify</PageTitle>
 
@@ -188,15 +192,39 @@ else if (RolActual == "Jurado")
     private string codigoVotacion = "";
     private string? mensajeErrorVotante;
 
-    private void AccederVotacion()
+    private async Task AccederVotacion()
     {
         mensajeErrorVotante = null;
+
         if (string.IsNullOrWhiteSpace(codigoVotacion))
         {
             mensajeErrorVotante = "Introduce un código de votación.";
             return;
         }
-        NavigationManager.NavigateTo($"/voto-popular-usuario/{codigoVotacion}");
+
+        if (!int.TryParse(codigoVotacion, out int id))
+        {
+            mensajeErrorVotante = "El código debe ser un número.";
+            return;
+        }
+
+        try
+        {
+            await VotoPopularService.ObtenerDetallePorIdAsync(id);
+            NavigationManager.NavigateTo($"/voto-popular-usuario/{id}");
+            return;
+        }
+        catch { }
+
+        try
+        {
+            await VotoPuntuacionService.ObtenerDetallePorIdAsync(id);
+            NavigationManager.NavigateTo($"/voto-puntuacion-usuario/{id}");
+            return;
+        }
+        catch { }
+
+        mensajeErrorVotante = "No se encontró ninguna votación con ese código.";
     }
     private string _rolActual = "Votante";
     private string RolActual

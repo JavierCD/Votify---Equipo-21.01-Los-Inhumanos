@@ -1,0 +1,254 @@
+﻿@page "/voto-popular/{CategoriaId:int}"
+@rendermode InteractiveServer
+@using Votify.Services.Interfaces
+@using Votify.Services.Models
+@using Votify.Services.Interfaces
+@inject IPuntuacionService PuntuacionService
+@inject NavigationManager NavigationManager
+@inject IPopularService PopularService
+@inject ILogger<VotoPopular> Logger
+
+<div class="container py-4" style="max-width:620px">
+
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">
+            Nueva votación popular
+            <div class="mb-4">
+                <label class="form-label fw-semibold small text-uppercase text-muted">Tipo de votación</label>
+                <div class="d-flex gap-2">
+                    <button type="button"
+                            class="btn flex-fill @(tipoVotacion == "Popular" ? "btn-primary" : "btn-outline-primary")"
+                            @onclick='() => tipoVotacion = "Popular"'>
+                        🗳️ Popular
+                    </button>
+                    <button type="button"
+                            class="btn flex-fill @(tipoVotacion == "Multicriterio" ? "btn-primary" : "btn-outline-primary")"
+                            @onclick='() => tipoVotacion = "Multicriterio"'>
+                        ⚖️ Multicriterio
+                    </button>
+                    <button type="button"
+                            class="btn flex-fill @(tipoVotacion == "Puntuacion" ? "btn-primary" : "btn-outline-primary")"
+                            @onclick='() => tipoVotacion = "Puntuacion"'>
+                        🏅 Puntuación
+                    </button>
+                </div>
+            </div>
+
+            @if (tipoVotacion == "Multicriterio")
+            {
+                <div class="alert alert-info">La votación multicriterio estará disponible próximamente.</div>
+            }
+
+    <span class="badge bg-primary ms-2" style="font-size:0.7rem;vertical-align:middle">Admin</span>
+        </h2>
+        <p class="text-muted small mb-0">Configura los parámetros de la votación pública para una categoría.</p>
+    </div>
+
+    @if (tipoVotacion == "Popular")
+    {
+        <div class="card shadow-sm border-0 rounded-4 p-4">
+            <EditForm Model="@request" OnValidSubmit="CrearVotacionPopularAsync" FormName="crearVotacionPopularForm">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger small" />
+                <div class="row g-3 mb-3">
+                    <div class="col">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de apertura</label>
+                        <InputDate @bind-Value="request.FechaApertura" class="form-control" />
+                    </div>
+                    <div class="col">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de cierre</label>
+                        <InputDate @bind-Value="request.FechaCierre" class="form-control" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Estado</label>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn flex-fill @(request.Estado == "Abierta" ? "btn-success" : "btn-outline-success")" @onclick='() => request.Estado = "Abierta"'>● Abierta</button>
+                        <button type="button" class="btn flex-fill @(request.Estado == "Cerrada" ? "btn-danger" : "btn-outline-danger")" @onclick='() => request.Estado = "Cerrada"'>● Cerrada</button>
+                        <button type="button" class="btn flex-fill @(request.Estado == "Pausada" ? "btn-warning" : "btn-outline-warning")" @onclick='() => request.Estado = "Pausada"'>● Pausada</button>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Máximo de selecciones</label>
+                    <InputNumber @bind-Value="request.MaxSelection" class="form-control" placeholder="Ej: 3" />
+                </div>
+                <hr class="my-3" />
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        <span>Guardando...</span>
+     }
+                    else
+                    {
+                        <span>Crear votación</span>
+                    }
+                </button>
+            </EditForm>
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success d-flex align-items-center gap-2 mt-3 rounded-3"><span>✓</span><span>@successMessage</span></div>
+            }
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 rounded-3"><span>✕</span><span>@errorMessage</span></div>
+            }
+        </div>
+    }
+    else if (tipoVotacion == "Puntuacion")
+    {
+        <div class="card shadow-sm border-0 rounded-4 p-4">
+            <EditForm Model="@requestPuntuacion" OnValidSubmit="CrearVotacionPuntuacionAsync" FormName="crearVotacionPuntuacionForm">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger small" />
+                <div class="row g-3 mb-3">
+                    <div class="col">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de apertura</label>
+                        <InputDate @bind-Value="requestPuntuacion.FechaApertura" class="form-control" />
+                    </div>
+                    <div class="col">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de cierre</label>
+                        <InputDate @bind-Value="requestPuntuacion.FechaCierre" class="form-control" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Estado</label>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn flex-fill @(requestPuntuacion.Estado == "Abierta" ? "btn-success" : "btn-outline-success")" @onclick='() => requestPuntuacion.Estado = "Abierta"'>● Abierta</button>
+                        <button type="button" class="btn flex-fill @(requestPuntuacion.Estado == "Cerrada" ? "btn-danger" : "btn-outline-danger")" @onclick='() => requestPuntuacion.Estado = "Cerrada"'>● Cerrada</button>
+                        <button type="button" class="btn flex-fill @(requestPuntuacion.Estado == "Pausada" ? "btn-warning" : "btn-outline-warning")" @onclick='() => requestPuntuacion.Estado = "Pausada"'>● Pausada</button>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Valor máximo de puntuación</label>
+                    <InputNumber @bind-Value="requestPuntuacion.ValorMax" class="form-control" placeholder="Ej: 10" />
+                </div>
+                <hr class="my-3" />
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        <span>Guardando...</span>
+     }
+                    else
+                    {
+                        <span>Crear votación</span>
+                    }
+                </button>
+            </EditForm>
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success d-flex align-items-center gap-2 mt-3 rounded-3"><span>✓</span><span>@successMessage</span></div>
+            }
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 rounded-3"><span>✕</span><span>@errorMessage</span></div>
+            }
+        </div>
+    }
+    else if (tipoVotacion == "Multicriterio")
+    {
+        <div class="alert alert-info">La votación multicriterio estará disponible próximamente.</div>
+    }
+</div>
+
+@code {
+    private string tipoVotacion = "Popular";
+    [Parameter]
+    public int CategoriaId { get; set; }
+
+    private CrearVotacionPopularRequest request = new();
+ 
+    private bool isLoading = false;
+    private string? successMessage;
+    private string? errorMessage;
+
+    private async Task CrearVotacionPopularAsync()
+    {
+        isLoading = true;
+        successMessage = null;
+        errorMessage = null;
+
+        try
+        {
+            var response = await PopularService.CrearVotacionPopularAsync(request);
+            successMessage = $"Votación popular creada correctamente con ID {response.Id}.";
+            LimpiarFormulario();
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogWarning(ex, "Error de validación al crear votación popular.");
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogWarning(ex, "Error de operación al crear votación popular.");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.InnerException is not null
+                ? $"Error inesperado: {ex.Message} | Detalle: {ex.InnerException.Message}"
+                : $"Error inesperado: {ex.Message}";
+            Logger.LogError(ex, "Error inesperado al crear votación popular.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+   
+
+    private CrearVotacionPuntuacionRequest requestPuntuacion = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        request.CategoriaId = CategoriaId;
+        request.FechaApertura = DateTime.Today;
+        request.FechaCierre = DateTime.Today.AddDays(1);
+        request.Estado = "Abierta";
+
+        requestPuntuacion.CategoriaId = CategoriaId;
+        requestPuntuacion.FechaApertura = DateTime.Today;
+        requestPuntuacion.FechaCierre = DateTime.Today.AddDays(1);
+        requestPuntuacion.Estado = "Abierta";
+        requestPuntuacion.ValorMax = 10;
+    }
+
+    private async Task CrearVotacionPuntuacionAsync()
+    {
+        isLoading = true;
+        successMessage = null;
+        errorMessage = null;
+
+        try
+        {
+            var response = await PuntuacionService.CrearVotacionPuntuacionAsync(requestPuntuacion);
+            successMessage = $"Votación por puntuación creada correctamente con ID {response.Id}.";
+            requestPuntuacion = new CrearVotacionPuntuacionRequest
+            {
+                CategoriaId = CategoriaId,
+                FechaApertura = DateTime.Today,
+                FechaCierre = DateTime.Today.AddDays(1),
+                Estado = "Abierta",
+                ValorMax = 10
+            };
+        }
+        catch (ArgumentException ex) { errorMessage = ex.Message; }
+        catch (InvalidOperationException ex) { errorMessage = ex.Message; }
+        catch (Exception ex) { errorMessage = $"Error inesperado: {ex.Message}"; }
+        finally { isLoading = false; }
+    }
+
+    private void LimpiarFormulario()
+    {
+        request = new CrearVotacionPopularRequest
+        {
+            CategoriaId = CategoriaId,
+            FechaApertura = DateTime.Today,
+            FechaCierre = DateTime.Today.AddDays(1),
+            Estado = "Abierta",
+            MaxSelection = 1
+        };
+    }
+}
