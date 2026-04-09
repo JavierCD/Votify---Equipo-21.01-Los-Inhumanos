@@ -1,4 +1,4 @@
-﻿@page "/voto-popular-usuario"
+﻿@page "/voto-popular-usuario/{VotacionId:int}"
 @rendermode InteractiveServer
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
@@ -57,10 +57,6 @@
     else
     {
         @* ── PASO 2: detalle con proyectos y formulario ── *@
-
-        <button class="btn btn-link ps-0 mb-3 text-decoration-none" @onclick="Volver">
-            ← Volver a la lista
-        </button>
 
         <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
             <div class="d-flex justify-content-between align-items-center">
@@ -152,6 +148,8 @@
 </div>
 
 @code {
+    [Parameter]
+    public int VotacionId { get; set; }
     private List<VotacionPopularDisponibleResponse> listaVotaciones = new();
     private VotacionPopularDisponibleResponse? votacionSeleccionada;
     private FormVotoPopularModel formModel = new();
@@ -166,12 +164,12 @@
     {
         try
         {
-            listaVotaciones = await VotoPopularService.ObtenerVotacionesPopularesDisponiblesAsync();
+            votacionSeleccionada = await VotoPopularService.ObtenerDetallePorIdAsync(VotacionId);
         }
         catch (Exception ex)
         {
             errorMessage = ex.Message;
-            Logger.LogError(ex, "Error cargando votaciones populares.");
+            Logger.LogError(ex, "Error cargando votación popular.");
         }
         finally
         {
