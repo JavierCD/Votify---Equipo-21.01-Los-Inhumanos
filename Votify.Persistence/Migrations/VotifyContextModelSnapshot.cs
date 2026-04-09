@@ -295,8 +295,7 @@ namespace Votify.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParticipanteId")
-                        .IsUnique();
+                    b.HasIndex("ParticipanteId");
 
                     b.ToTable("Proyectos", (string)null);
 
@@ -662,8 +661,8 @@ namespace Votify.Persistence.Migrations
             modelBuilder.Entity("Votify.Core.Models.Proyecto", b =>
                 {
                     b.HasOne("Votify.Core.Models.Participante", "Participante")
-                        .WithOne("Proyecto")
-                        .HasForeignKey("Votify.Core.Models.Proyecto", "ParticipanteId")
+                        .WithMany("Proyectos")
+                        .HasForeignKey("ParticipanteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -732,7 +731,7 @@ namespace Votify.Persistence.Migrations
 
             modelBuilder.Entity("Votify.Core.Models.Participante", b =>
                 {
-                    b.Navigation("Proyecto");
+                    b.Navigation("Proyectos");
                 });
 
             modelBuilder.Entity("Votify.Core.Models.Multicriterio", b =>

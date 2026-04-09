@@ -18,7 +18,7 @@ namespace Votify.Core.Models
         public string Estado { get; set; } = "Pendiente";
 
         // Propiedad de navegación pura
-        public Proyecto? Proyecto { get; set; }
+        public ICollection<Proyecto> Proyectos { get; set; } = new List<Proyecto>();
 
         // Constructor vacío necesario para Entity Framework
         public Participante():base() { }
