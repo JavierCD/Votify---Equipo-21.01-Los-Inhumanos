@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Votify.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InicialLimpia : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,7 +21,7 @@ namespace Votify.Persistence.Migrations
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     Password = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    FechaRegistro = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    FechaRegistro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     TipoDeMiembro = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
                     Descripcion = table.Column<string>(type: "text", nullable: true),
                     Visible = table.Column<bool>(type: "boolean", nullable: true),
@@ -39,7 +39,8 @@ namespace Votify.Persistence.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    Anonimo = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                    Anonimo = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    Rol = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -54,10 +55,12 @@ namespace Votify.Persistence.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
-                    FechaInicio = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    FechaFin = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CodigoAcceso = table.Column<string>(type: "text", nullable: false),
+                    FechaInicio = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    FechaFin = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Estado = table.Column<string>(type: "text", nullable: false, defaultValue: "Borrador"),
-                    OrganizadorId = table.Column<int>(type: "integer", nullable: false)
+                    OrganizadorId = table.Column<int>(type: "integer", nullable: false),
+                    Discriminador = table.Column<string>(type: "character varying(21)", maxLength: 21, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -77,9 +80,13 @@ namespace Votify.Persistence.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    FechaRegistro = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    FechaRegistro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Visible = table.Column<bool>(type: "boolean", nullable: false),
-                    ParticipanteId = table.Column<int>(type: "integer", nullable: false)
+                    ParticipanteId = table.Column<int>(type: "integer", nullable: false),
+                    CriterioA = table.Column<double>(type: "double precision", nullable: false),
+                    CriterioB = table.Column<double>(type: "double precision", nullable: false),
+                    TipoProyecto = table.Column<string>(type: "character varying(21)", maxLength: 21, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -237,8 +244,9 @@ namespace Votify.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    FechaApertura = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    FechaCierre = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EventoId = table.Column<int>(type: "integer", nullable: false),
+                    FechaApertura = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    FechaCierre = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Estado = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "Cerrada"),
                     CategoriaId = table.Column<int>(type: "integer", nullable: false),
                     TipoVotacion = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
@@ -285,23 +293,18 @@ namespace Votify.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Fecha = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Fecha = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Anonimo = table.Column<bool>(type: "boolean", nullable: false),
                     HashAnonimo = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    JuezId = table.Column<int>(type: "integer", nullable: true),
-                    VotanteId = table.Column<int>(type: "integer", nullable: true),
+                    PuntuacionBase = table.Column<double>(type: "double precision", nullable: false),
+                    votanteId = table.Column<int>(type: "integer", nullable: true),
                     VotacionId = table.Column<int>(type: "integer", nullable: false),
-                    ProyectoId = table.Column<int>(type: "integer", nullable: false)
+                    ProyectoId = table.Column<int>(type: "integer", nullable: false),
+                    TipoVoto = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Votos", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Votos_Miembros_JuezId",
-                        column: x => x.JuezId,
-                        principalTable: "Miembros",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_Votos_Proyectos_ProyectoId",
                         column: x => x.ProyectoId,
@@ -315,11 +318,10 @@ namespace Votify.Persistence.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Votos_Votantes_VotanteId",
-                        column: x => x.VotanteId,
+                        name: "FK_Votos_Votantes_votanteId",
+                        column: x => x.votanteId,
                         principalTable: "Votantes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -375,11 +377,6 @@ namespace Votify.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Votos_JuezId",
-                table: "Votos",
-                column: "JuezId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Votos_ProyectoId",
                 table: "Votos",
                 column: "ProyectoId");
@@ -390,9 +387,9 @@ namespace Votify.Persistence.Migrations
                 column: "VotacionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Votos_VotanteId",
+                name: "IX_Votos_votanteId",
                 table: "Votos",
-                column: "VotanteId");
+                column: "votanteId");
         }
 
         /// <inheritdoc />

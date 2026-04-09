@@ -12,8 +12,8 @@ using Votify.Persistence.Context;
 namespace Votify.Persistence.Migrations
 {
     [DbContext(typeof(VotifyContext))]
-    [Migration("20260319192602_InicialLimpia")]
-    partial class InicialLimpia
+    [Migration("20260406131841_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -148,8 +148,17 @@ namespace Votify.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CodigoAcceso")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<string>("Discriminador")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)");
 
                     b.Property<string>("Estado")
                         .IsRequired()
@@ -158,10 +167,10 @@ namespace Votify.Persistence.Migrations
                         .HasDefaultValue("Borrador");
 
                     b.Property<DateTime>("FechaFin")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("FechaInicio")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -176,6 +185,10 @@ namespace Votify.Persistence.Migrations
                     b.HasIndex("OrganizadorId");
 
                     b.ToTable("Eventos", (string)null);
+
+                    b.HasDiscriminator<string>("Discriminador").HasValue("Evento");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Votify.Core.Models.Miembro", b =>
@@ -192,7 +205,7 @@ namespace Votify.Persistence.Migrations
                         .HasColumnType("character varying(150)");
 
                     b.Property<DateTime>("FechaRegistro")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -247,6 +260,54 @@ namespace Votify.Persistence.Migrations
                     b.ToTable("Premios", (string)null);
                 });
 
+            modelBuilder.Entity("Votify.Core.Models.Proyecto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("CriterioA")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("CriterioB")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("FechaRegistro")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("ParticipanteId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TipoProyecto")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)");
+
+                    b.Property<bool>("Visible")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParticipanteId")
+                        .IsUnique();
+
+                    b.ToTable("Proyectos", (string)null);
+
+                    b.HasDiscriminator<string>("TipoProyecto").HasValue("Proyecto");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("Votify.Core.Models.Votacion", b =>
                 {
                     b.Property<int>("Id")
@@ -265,11 +326,14 @@ namespace Votify.Persistence.Migrations
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("Cerrada");
 
+                    b.Property<int>("EventoId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("FechaApertura")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("FechaCierre")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("TipoVotacion")
                         .IsRequired()
@@ -306,39 +370,13 @@ namespace Votify.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("Votantes", (string)null);
-                });
-
-            modelBuilder.Entity("Votify.Core.Models.Votify.Core.Models.Proyecto", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("FechaRegistro")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("ParticipanteId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Visible")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParticipanteId")
-                        .IsUnique();
-
-                    b.ToTable("Proyectos", (string)null);
                 });
 
             modelBuilder.Entity("Votify.Core.Models.Voto", b =>
@@ -353,35 +391,63 @@ namespace Votify.Persistence.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("Fecha")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("HashAnonimo")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<int?>("JuezId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("ProyectoId")
                         .HasColumnType("integer");
+
+                    b.Property<double>("PuntuacionBase")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("TipoVoto")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<int>("VotacionId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("VotanteId")
+                    b.Property<int?>("votanteId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("JuezId");
 
                     b.HasIndex("ProyectoId");
 
                     b.HasIndex("VotacionId");
 
-                    b.HasIndex("VotanteId");
+                    b.HasIndex("votanteId");
 
                     b.ToTable("Votos", (string)null);
+
+                    b.HasDiscriminator<string>("TipoVoto").HasValue("Voto");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("Votify.Core.Models.ESportsEvent", b =>
+                {
+                    b.HasBaseType("Votify.Core.Models.Evento");
+
+                    b.HasDiscriminator().HasValue("ESport");
+                });
+
+            modelBuilder.Entity("Votify.Core.Models.HackathonEvent", b =>
+                {
+                    b.HasBaseType("Votify.Core.Models.Evento");
+
+                    b.HasDiscriminator().HasValue("Hackathon");
+                });
+
+            modelBuilder.Entity("Votify.Core.Models.InnovationFairEvent", b =>
+                {
+                    b.HasBaseType("Votify.Core.Models.Evento");
+
+                    b.HasDiscriminator().HasValue("FeriaInnovacion");
                 });
 
             modelBuilder.Entity("Votify.Core.Models.Juez", b =>
@@ -415,6 +481,27 @@ namespace Votify.Persistence.Migrations
                         .HasColumnType("boolean");
 
                     b.HasDiscriminator().HasValue("Participante");
+                });
+
+            modelBuilder.Entity("Votify.Core.Models.AiProject", b =>
+                {
+                    b.HasBaseType("Votify.Core.Models.Proyecto");
+
+                    b.HasDiscriminator().HasValue("AI");
+                });
+
+            modelBuilder.Entity("Votify.Core.Models.CybersecurityProject", b =>
+                {
+                    b.HasBaseType("Votify.Core.Models.Proyecto");
+
+                    b.HasDiscriminator().HasValue("Ciberseguridad");
+                });
+
+            modelBuilder.Entity("Votify.Core.Models.SustainabilityProject", b =>
+                {
+                    b.HasBaseType("Votify.Core.Models.Proyecto");
+
+                    b.HasDiscriminator().HasValue("Sostenibilidad");
                 });
 
             modelBuilder.Entity("Votify.Core.Models.Multicriterio", b =>
@@ -451,6 +538,27 @@ namespace Votify.Persistence.Migrations
                     b.HasDiscriminator().HasValue("Puntuacion");
                 });
 
+            modelBuilder.Entity("Votify.Core.Models.VotoExperto", b =>
+                {
+                    b.HasBaseType("Votify.Core.Models.Voto");
+
+                    b.HasDiscriminator().HasValue("Experto");
+                });
+
+            modelBuilder.Entity("Votify.Core.Models.VotoPublico", b =>
+                {
+                    b.HasBaseType("Votify.Core.Models.Voto");
+
+                    b.HasDiscriminator().HasValue("Publico");
+                });
+
+            modelBuilder.Entity("Votify.Core.Models.VotoSponsor", b =>
+                {
+                    b.HasBaseType("Votify.Core.Models.Voto");
+
+                    b.HasDiscriminator().HasValue("Sponsor");
+                });
+
             modelBuilder.Entity("CategoriaProyecto", b =>
                 {
                     b.HasOne("Votify.Core.Models.Categoria", null)
@@ -459,7 +567,7 @@ namespace Votify.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Votify.Core.Models.Votify.Core.Models.Proyecto", null)
+                    b.HasOne("Votify.Core.Models.Proyecto", null)
                         .WithMany()
                         .HasForeignKey("ProyectosId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -549,10 +657,20 @@ namespace Votify.Persistence.Migrations
                     b.HasOne("Votify.Core.Models.Categoria", "Categoria")
                         .WithMany("Premios")
                         .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Categoria");
+                });
+
+            modelBuilder.Entity("Votify.Core.Models.Proyecto", b =>
+                {
+                    b.HasOne("Votify.Core.Models.Participante", "Participante")
+                        .WithOne("Proyecto")
+                        .HasForeignKey("Votify.Core.Models.Proyecto", "ParticipanteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Categoria");
+                    b.Navigation("Participante");
                 });
 
             modelBuilder.Entity("Votify.Core.Models.Votacion", b =>
@@ -560,31 +678,14 @@ namespace Votify.Persistence.Migrations
                     b.HasOne("Votify.Core.Models.Categoria", "Categoria")
                         .WithOne("Votacion")
                         .HasForeignKey("Votify.Core.Models.Votacion", "CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Categoria");
                 });
 
-            modelBuilder.Entity("Votify.Core.Models.Votify.Core.Models.Proyecto", b =>
-                {
-                    b.HasOne("Votify.Core.Models.Participante", "Participante")
-                        .WithOne("Proyecto")
-                        .HasForeignKey("Votify.Core.Models.Votify.Core.Models.Proyecto", "ParticipanteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Participante");
-                });
-
             modelBuilder.Entity("Votify.Core.Models.Voto", b =>
                 {
-                    b.HasOne("Votify.Core.Models.Juez", "Juez")
-                        .WithMany()
-                        .HasForeignKey("JuezId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Votify.Core.Models.Votify.Core.Models.Proyecto", "Proyecto")
+                    b.HasOne("Votify.Core.Models.Proyecto", "Proyecto")
                         .WithMany("Votos")
                         .HasForeignKey("ProyectoId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -596,18 +697,13 @@ namespace Votify.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Votify.Core.Models.Votante", "Votante")
+                    b.HasOne("Votify.Core.Models.Votante", null)
                         .WithMany("Votos")
-                        .HasForeignKey("VotanteId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Juez");
+                        .HasForeignKey("votanteId");
 
                     b.Navigation("Proyecto");
 
                     b.Navigation("Votacion");
-
-                    b.Navigation("Votante");
                 });
 
             modelBuilder.Entity("Votify.Core.Models.Categoria", b =>
@@ -622,17 +718,17 @@ namespace Votify.Persistence.Migrations
                     b.Navigation("CategoriasEvento");
                 });
 
+            modelBuilder.Entity("Votify.Core.Models.Proyecto", b =>
+                {
+                    b.Navigation("Votos");
+                });
+
             modelBuilder.Entity("Votify.Core.Models.Votacion", b =>
                 {
                     b.Navigation("Votos");
                 });
 
             modelBuilder.Entity("Votify.Core.Models.Votante", b =>
-                {
-                    b.Navigation("Votos");
-                });
-
-            modelBuilder.Entity("Votify.Core.Models.Votify.Core.Models.Proyecto", b =>
                 {
                     b.Navigation("Votos");
                 });

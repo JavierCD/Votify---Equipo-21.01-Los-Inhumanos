@@ -3,30 +3,47 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Votify.Core.Models.Votify.Core.Models;
+using Votify.Core.Models;
 
 namespace Votify.Core.Models
 {
-    public class Voto
+    public abstract class Voto
     {
         public int Id { get; set; }
         public DateTime Fecha { get; set; } = DateTime.UtcNow;
         public bool Anonimo { get; set; }
         public string? HashAnonimo { get; set; }
 
-        // El autor del voto (Opcionales: o vota un Juez o un Votante)
-        public int? JuezId { get; set; }
-        public Juez? Juez { get; set; }
-
-        public int? VotanteId { get; set; }
-        public Votante? Votante { get; set; }
+        public double PuntuacionBase { get; set; }
 
         // La votación en la que se emite (Obligatorio)
+        public int? votanteId { get; set; }
         public int VotacionId { get; set; }
         public Votacion? Votacion { get; set; }
 
         // ---> ¡LO NUEVO! El proyecto al que se le da el voto (Obligatorio) <---
         public int ProyectoId { get; set; }
         public Proyecto? Proyecto { get; set; }
+
+        protected Voto() { }
+
+        protected Voto(int votacionId, int proyectoId, double puntuacionBase, bool anonimo = false, string? hashAnonimo = null)
+        {
+            VotacionId = votacionId;
+            ProyectoId = proyectoId;
+            PuntuacionBase = puntuacionBase;
+            Anonimo = anonimo;
+            HashAnonimo = hashAnonimo;
+            Fecha = DateTime.UtcNow;
+        }
+
+        public void AssignId(int id)
+        {
+            votanteId = id;
+        }
+
+        public abstract double CalcularPuntuacionNormalizada(); 
+        public abstract string RolVotante();
+
     }
 }
