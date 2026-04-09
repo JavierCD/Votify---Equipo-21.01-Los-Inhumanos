@@ -6,16 +6,19 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Votify.Core.Enums;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Votify.Core.Models
 {
-    public class Evento
+    public abstract class Evento
     {
         public int Id { get; set; }
 
         public string Name { get; set; }
 
         public string? Description { get; set; }
+
+        public string CodigoAcceso { get; set; }
 
         public DateTime FechaInicio { get; set; }
 
@@ -49,6 +52,14 @@ namespace Votify.Core.Models
             OrganizadorId = orgaId;
             Description = desc;
             Estado = EstadoEvento.Borrador;
+            CodigoAcceso = GenerarCodigoAcceso();
+        }
+
+        private string GenerarCodigoAcceso()
+        {
+            var chars = "ABCDEFGIJKLMNOPQRSTUWXYZ0123456789";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, 6).Select(s=> s[random.Next(s.Length)]).ToArray());
         }
 
         public void ModificarVentanaDeTiempo(DateTime nuevaInicio, DateTime nuevaFim)
@@ -85,5 +96,21 @@ namespace Votify.Core.Models
 
 
         }
+
+        public void ActualizarDatosGenerales(string nombre, DateTime fechaInicio, DateTime fechaFin, string desc)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre del evento es obligatorio.", nameof(nombre));
+
+            if (fechaFin < fechaInicio)
+                throw new ArgumentException("La fecha de fin no puede ser anterior a la de inicio.");
+
+            Name = nombre;
+            Description = desc;
+            FechaInicio = fechaInicio;
+            FechaFin = fechaFin;
+        }
+
+        public abstract string Modalidad();
     }
 }

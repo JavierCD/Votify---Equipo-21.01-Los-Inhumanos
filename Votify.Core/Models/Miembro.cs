@@ -19,6 +19,18 @@ namespace Votify.Core.Models
 
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
+        public Miembro()
+        {
+
+        }
+
+        public Miembro(string name, string email, string password)
+        {
+            this.Name = name;
+            this.Email = email;
+            this.Password = password;
+        }
+
         
 
 

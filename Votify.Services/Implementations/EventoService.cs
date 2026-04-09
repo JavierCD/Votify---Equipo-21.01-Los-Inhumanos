@@ -42,6 +42,15 @@ namespace Votify.Services.Implementations
 
         }
 
+        public async Task<Evento?> ObtenerEventoConDetallesAsync(int id)
+        {
+            return await _repository.GetWithIncludesAsync(
+                e => e.Id == id,
+                e => e.CategoriasEvento,
+                e => e.Participantes,
+                e => e.Organizador);
+        }
+
         public async Task<Evento> CrearAsync(Evento evento)
         {
             if (evento.FechaFin <= evento.FechaInicio)
@@ -75,6 +84,32 @@ namespace Votify.Services.Implementations
         public async Task<IEnumerable<Evento>> ObtenerTodosAsync()
         {
             return await _repository.GetAllAsync();
+        }
+        public async Task<IEnumerable<Evento>> ObtenerEventosPorOrganizadorAsync(int organizadorId)
+        {
+            // Traemos todos los eventos incluyendo sus categorías
+            var eventos = await _repository.GetAllWithIncludesAsync(e => e.CategoriasEvento);
+
+            // Filtramos por el organizador y devolvemos
+            return eventos.Where(e => e.OrganizadorId == organizadorId);
+        }
+
+        public async Task<int> ObtenerOrganizadorMockIdAsync()
+        {
+            // Buscamos cualquier evento que ya exista (el del Seeder) y le "robamos" el ID del organizador.
+            // Es un hack inofensivo que no toca la tabla de Usuarios directamente.
+            var eventoDemo = await _repository.GetAllAsync();
+            return eventoDemo.FirstOrDefault()?.OrganizadorId ?? 1; // Si no hay, devolvemos 1 por si acaso
+        }
+
+        public async Task<Evento?> ObtenerEventoPorCodigoAsync(string codigo)
+        {
+            if (string.IsNullOrWhiteSpace(codigo)) return null;
+
+            return await _repository.GetWithIncludesAsync(
+                e => e.CodigoAcceso.ToUpper() == codigo.ToUpper(),
+                e => e.CategoriasEvento
+            );
         }
     }
 }

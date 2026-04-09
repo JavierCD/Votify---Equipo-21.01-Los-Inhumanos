@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Votify.Core.Models.Votify.Core.Models;
+using Votify.Core.Models;
 
 namespace Votify.Core.Models
 {
@@ -42,6 +42,29 @@ namespace Votify.Core.Models
 
             Name = newName;
             Descripcion = descripcion;
+        }
+
+        public void AsignarVotacion(Votacion votacion)
+        {
+            Votacion = votacion ?? throw new ArgumentNullException(nameof(votacion));
+        }
+
+        public void AsignarPremio(Premio premio)
+        {
+            if(premio == null) throw new ArgumentNullException(nameof(premio));
+
+            if (!Premios.Contains(premio))
+            {
+                Premios.Add(premio);
+            }
+        }
+
+        public void EliminarPremio(Premio premio)
+        {
+            if(premio!=null && Premios.Contains(premio))
+            {
+                Premios.Remove(premio);
+            }
         }
     }
 }

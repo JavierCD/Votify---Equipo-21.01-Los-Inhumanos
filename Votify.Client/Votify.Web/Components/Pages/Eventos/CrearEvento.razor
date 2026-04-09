@@ -1,0 +1,171 @@
+﻿@page "/eventos/crear"
+@rendermode InteractiveServer
+
+@using Votify.Core.Factories
+@using Votify.Web.ViewModels
+@using Votify.Core.Interfaces
+@using Votify.Core.Models
+@inject IEventoService EventoService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Nuevo Evento - Votify</PageTitle>
+
+<div class="container mt-4 mb-5">
+    <h2>Crear Nuevo Evento</h2>
+    <hr />
+
+    <EditForm Model="@modelo" OnValidSubmit="GuardarEventoDefinitivo" FormName="formCrearEvento">
+        <DataAnnotationsValidator />
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light fw-bold">1. Información General</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nombre del Evento *</label>
+                    <InputText @bind-Value="modelo.Nombre" class="form-control" />
+                    <ValidationMessage For="@(() => modelo.Nombre)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Modalidad del Evento *</label>
+                    <InputSelect @bind-Value="modelo.TipoEvento" class="form-select">
+                        <option value="Hackathon">Hackathon</option>
+                        <option value="Feria de Innovación">Feria de Innovación</option>
+                        <option value="E-Sports">Competición de E-Sports</option>
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Descripción</label>
+                    <InputTextArea @bind-Value="modelo.Descripcion" class="form-control" rows="3" />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Fecha de Apertura *</label>
+                        <InputDate @bind-Value="modelo.FechaInicio" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Fecha de Cierre *</label>
+                        <InputDate @bind-Value="modelo.FechaFin" class="form-control" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <span class="fw-bold">2. Categorías de Competición</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="AgregarCategoriaTemporal">+ Añadir Categoría</button>
+            </div>
+            <div class="card-body">
+                @if (modelo.Categorias.Count == 0)
+                {
+                    <div class="text-muted text-center py-3">No hay categorías añadidas. Añade al menos una.</div>
+                }
+
+                @foreach (var cat in modelo.Categorias)
+                {
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-md-4">
+                            <InputText @bind-Value="cat.Nombre" class="form-control" placeholder="Nombre (ej. Mejor Diseño)" />
+                        </div>
+                        <div class="col-md-7">
+                            <InputText @bind-Value="cat.Descripcion" class="form-control" placeholder="Descripción breve" />
+                        </div>
+                        <div class="col-md-1 text-end">
+                            <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => modelo.Categorias.Remove(cat))">X</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="alert alert-danger">@mensajeError</div>
+        }
+
+        <div class="text-end">
+            <button type="button" class="btn btn-light me-2" @onclick="@(() => NavigationManager.NavigateTo("/"))">Cancelar</button>
+            <button type="submit" class="btn btn-primary px-5">Guardar Evento Definitivo</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private CrearEventoViewModel modelo = new();
+    private string? mensajeError;
+
+    private void AgregarCategoriaTemporal()
+    {
+        modelo.Categorias.Add(new CategoriaViewModel());
+    }
+
+    private async Task GuardarEventoDefinitivo()
+    {
+        mensajeError = null;
+
+        if (modelo.Categorias.Any(c => string.IsNullOrWhiteSpace(c.Nombre)))
+        {
+            mensajeError = "Las categorías añadidas deben tener al menos un nombre.";
+            return;
+        }
+
+        try
+        {
+            int organizadorRealId = await EventoService.ObtenerOrganizadorMockIdAsync();
+
+            // --- APLICACIÓN DEL FACTORY METHOD EN EL CLIENTE ---
+
+            EventoCreator creator;
+
+
+            if (modelo.TipoEvento == "Hackathon")
+            {
+                creator = new HackathonEventCreator();
+            }
+            else if (modelo.TipoEvento == "Feria de Innovación")
+            {
+                creator = new InnovationFairEventCreator();
+            }
+            else if (modelo.TipoEvento == "E-Sports")
+            {
+                creator = new ESportsEventCreator();
+            }
+            else
+            {
+                creator = new HackathonEventCreator(); // Fallback por seguridad
+            }
+
+
+            Evento nuevoEvento = creator.CrearEvento(
+                modelo.Nombre,
+                modelo.FechaInicio.ToUniversalTime(),
+                modelo.FechaFin.ToUniversalTime(),
+                organizadorRealId,
+                modelo.Descripcion
+            );
+
+            // 3. Añadimos las categorías a la entidad
+            foreach (var cat in modelo.Categorias)
+            {
+                nuevoEvento.AgregarCategoria(cat.Nombre, cat.Descripcion);
+            }
+
+            // 4. Guardamos en la base de datos
+            await EventoService.CrearAsync(nuevoEvento);
+
+            // 5. Volvemos al Dashboard
+            NavigationManager.NavigateTo("/");
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeError = ex.Message; // Reglas de negocio (fechas mal, etc.)
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error interno: {ex.Message}";
+        }
+    }
+}
