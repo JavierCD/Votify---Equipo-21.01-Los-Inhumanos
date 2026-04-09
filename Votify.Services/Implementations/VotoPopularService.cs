@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Votify.Core.Factories;
 using Votify.Core.Interfaces;
@@ -69,17 +70,19 @@ namespace Votify.Services.Implementations
             if (votacion == null)
                 throw new ArgumentException("La votación popular no existe.");
 
-            if (request.VotanteId <= 0)
-                throw new ArgumentException("El votante no es válido.");
+            if (!request.Anonimo)
+            {
+                if (request.VotanteId <= 0)
+                    throw new ArgumentException("El votante no es válido.");
 
-            var votante = await _votoPopularRepository.ObtenerVotantePorIdAsync(request.VotanteId);
+                var votante = await _votoPopularRepository.ObtenerVotantePorIdAsync(request.VotanteId);
 
-            if (votante == null)
-                throw new ArgumentException("El votante no existe.");
+                if (votante == null)
+                    throw new ArgumentException("El votante no existe.");
 
-            if (await _votoPopularRepository.YaVotoEnEstaVotacionAsync(request.VotanteId, request.VotacionId))
-                throw new InvalidOperationException("Este votante ya ha emitido su voto en esta votación.");
-
+                if (await _votoPopularRepository.YaVotoEnEstaVotacionAsync(request.VotanteId, request.VotacionId))
+                    throw new InvalidOperationException("Este votante ya ha emitido su voto en esta votación.");
+            }
             if (request.ProyectosSeleccionadosIds == null || !request.ProyectosSeleccionadosIds.Any())
                 throw new ArgumentException("Debes seleccionar al menos un proyecto.");
 
@@ -92,21 +95,7 @@ namespace Votify.Services.Implementations
             if (request.ProyectosSeleccionadosIds.Any(id => !proyectosValidosIds.Contains(id)))
                 throw new ArgumentException("Uno o más proyectos no pertenecen a la categoría de la votación.");
 
-            VotoCreator creadorVoto;
-
-            if (votante.Rol == "EXPERT")
-            {
-                creadorVoto = new VotoExpertoCreator();
-            }
-            else if (votante.Rol == "SPONSOR")
-            {
-                creadorVoto = new VotoSponsorCreator();
-            }
-            else
-            {
-                // Asumimos que si no es experto ni sponsor, es el público general
-                creadorVoto = new VotoPublicoCreator();
-            }
+            var creadorVoto = new VotoPublicoCreator();
 
             // Suponiendo que tienes una puntuación base que el usuario acaba de emitir (ej. 10 puntos)
             double puntuacionBaseEmitida = 10.0; // ¡Cámbialo por la variable de puntuación real de tu request!
@@ -114,14 +103,27 @@ namespace Votify.Services.Implementations
             // 2. Ahora usamos la fábrica elegida para crear cada voto
             var votos = request.ProyectosSeleccionadosIds.Select(proyectoId =>
             {
+                string? hash = null;
+                if (request.Anonimo)
+                {
+                    hash = Convert.ToHexString(
+                        SHA256.HashData(
+                            Encoding.UTF8.GetBytes($"{request.VotacionId}-{proyectoId}-{DateTime.UtcNow.Ticks}")
+                        )
+                    ).Substring(0, 16);
+                }
+
                 var voto = creadorVoto.CrearVoto(
                     votacion.Id,
                     proyectoId,
                     puntuacionBaseEmitida,
-                    votante.Anonimo,
-                    null
+                    request.Anonimo,
+                    hash
                 );
-                voto.AssignId(votante.Id);
+
+                if (!request.Anonimo)
+                    voto.AssignId(request.VotanteId);
+
                 return voto;
             }).ToList();
 

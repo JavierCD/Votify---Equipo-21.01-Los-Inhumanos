@@ -93,9 +93,19 @@
                     <DataAnnotationsValidator />
                     <ValidationSummary class="text-danger small" />
 
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">ID del votante</label>
-                        <InputNumber @bind-Value="formModel.VotanteId" class="form-control" placeholder="Introduce tu ID" />
+
+                    @if (!formModel.Anonimo)
+                    {
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small text-uppercase text-muted">ID del votante</label>
+                            <InputNumber @bind-Value="formModel.VotanteId" class="form-control" placeholder="Introduce tu ID" />
+                        </div>
+                    }
+
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="chkAnonimo"
+                               @bind="formModel.Anonimo" />
+                        <label class="form-check-label" for="chkAnonimo">Votar de forma anónima</label>
                     </div>
 
                     <div class="mb-4">
@@ -129,6 +139,7 @@
                     </div>
 
                     <hr class="my-3" />
+
 
                     <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@enviando">
                         @if (enviando)
@@ -245,6 +256,7 @@
             {
                 VotacionId = votacionSeleccionada.VotacionId,
                 VotanteId = formModel.VotanteId,
+                Anonimo = formModel.Anonimo,
                 ProyectosSeleccionadosIds = proyectosSeleccionados.ToList()
             };
 
@@ -268,5 +280,6 @@
     public class FormVotoPopularModel
     {
         public int VotanteId { get; set; }
+        public bool Anonimo { get; set; } = false;
     }
 }
