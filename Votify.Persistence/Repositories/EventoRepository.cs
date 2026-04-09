@@ -24,7 +24,8 @@ namespace Votify.Persistence.Repositories
                 .Include(e => e.CategoriasEvento)
                     .ThenInclude(c => c.Premios)    
                 .Include(e => e.CategoriasEvento)
-                    .ThenInclude(c => c.Proyectos)   
+                    .ThenInclude(c => c.Proyectos)
+                        .ThenInclude(p => p.Participante)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
     }
