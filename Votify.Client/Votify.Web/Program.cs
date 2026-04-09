@@ -55,6 +55,10 @@ builder.Services.AddScoped<IPopularService, PopularService>();
 builder.Services.AddScoped<IPopularRepository, PopularRepository>();
 builder.Services.AddScoped<IVotoPopularRepository, VotoPopularRepository>();
 builder.Services.AddScoped<IVotoPopularService, VotoPopularService>();
+builder.Services.AddScoped<IPuntuacionService, PuntuacionService>();
+builder.Services.AddScoped<IPuntuacionRepository, PuntuacionRepository>();
+builder.Services.AddScoped<IVotoPuntuacionService, VotoPuntuacionService>();
+builder.Services.AddScoped<IVotoPuntuacionRepository, VotoPuntuacionRepository>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites

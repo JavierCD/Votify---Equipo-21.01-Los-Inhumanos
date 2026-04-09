@@ -1,43 +1,22 @@
-﻿@page "/voto-popular/{CategoriaId:int}"
+﻿@page "/configurar-puntuacion/{CategoriaId:int}"
 @rendermode InteractiveServer
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
-@inject IPopularService PopularService
-@inject ILogger<VotoPopular> Logger
+@inject IPuntuacionService PuntuacionService
+@inject ILogger<ConfigurarPuntuacion> Logger
 
 <div class="container py-4" style="max-width:620px">
 
     <div class="mb-4">
         <h2 class="fw-bold mb-1">
-            Nueva votación popular
-            <div class="mb-4">
-                <label class="form-label fw-semibold small text-uppercase text-muted">Tipo de votación</label>
-                <div class="d-flex gap-2">
-                    <button type="button"
-                            class="btn flex-fill @(tipoVotacion == "Popular" ? "btn-primary" : "btn-outline-primary")"
-                            @onclick='() => tipoVotacion = "Popular"'>
-                        🗳️ Popular
-                    </button>
-                    <button type="button"
-                            class="btn flex-fill @(tipoVotacion == "Multicriterio" ? "btn-primary" : "btn-outline-primary")"
-                            @onclick='() => tipoVotacion = "Multicriterio"'>
-                        ⚖️ Multicriterio
-                    </button>
-                </div>
-            </div>
-
-            @if (tipoVotacion == "Multicriterio")
-            {
-                <div class="alert alert-info">La votación multicriterio estará disponible próximamente.</div>
-            }
-
-    <span class="badge bg-primary ms-2" style="font-size:0.7rem;vertical-align:middle">Admin</span>
+            Nueva votación por puntuación
+            <span class="badge bg-primary ms-2" style="font-size:0.7rem;vertical-align:middle">Admin</span>
         </h2>
-        <p class="text-muted small mb-0">Configura los parámetros de la votación pública para una categoría.</p>
+        <p class="text-muted small mb-0">Configura los parámetros de la votación por puntuación para una categoría.</p>
     </div>
 
     <div class="card shadow-sm border-0 rounded-4 p-4">
-        <EditForm Model="@request" OnValidSubmit="CrearVotacionPopularAsync" FormName="crearVotacionPopularForm">
+        <EditForm Model="@request" OnValidSubmit="CrearVotacionPuntuacionAsync" FormName="crearVotacionPuntuacionForm">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger small" />
 
@@ -45,12 +24,10 @@
                 <div class="col">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de apertura</label>
                     <InputDate @bind-Value="request.FechaApertura" class="form-control" />
-                    <ValidationMessage For="@(() => request.FechaApertura)" />
                 </div>
                 <div class="col">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de cierre</label>
                     <InputDate @bind-Value="request.FechaCierre" class="form-control" />
-                    <ValidationMessage For="@(() => request.FechaCierre)" />
                 </div>
             </div>
 
@@ -73,13 +50,11 @@
                         ● Pausada
                     </button>
                 </div>
-                <ValidationMessage For="@(() => request.Estado)" />
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-semibold small text-uppercase text-muted">Máximo de selecciones</label>
-                <InputNumber @bind-Value="request.MaxSelection" class="form-control" placeholder="Ej: 3" />
-                <ValidationMessage For="@(() => request.MaxSelection)" />
+                <label class="form-label fw-semibold small text-uppercase text-muted">Valor máximo de puntuación</label>
+                <InputNumber @bind-Value="request.ValorMax" class="form-control" placeholder="Ej: 10" />
             </div>
 
             <hr class="my-3" />
@@ -116,24 +91,24 @@
 </div>
 
 @code {
-    private string tipoVotacion = "Popular";
     [Parameter]
     public int CategoriaId { get; set; }
 
-    private CrearVotacionPopularRequest request = new();
+    private CrearVotacionPuntuacionRequest request = new();
+
     protected override async Task OnInitializedAsync()
     {
         request.CategoriaId = CategoriaId;
         request.FechaApertura = DateTime.Today;
         request.FechaCierre = DateTime.Today.AddDays(1);
+        request.Estado = "Abierta";
     }
-
 
     private bool isLoading = false;
     private string? successMessage;
     private string? errorMessage;
 
-    private async Task CrearVotacionPopularAsync()
+    private async Task CrearVotacionPuntuacionAsync()
     {
         isLoading = true;
         successMessage = null;
@@ -141,26 +116,26 @@
 
         try
         {
-            var response = await PopularService.CrearVotacionPopularAsync(request);
-            successMessage = $"Votación popular creada correctamente con ID {response.Id}.";
+            var response = await PuntuacionService.CrearVotacionPuntuacionAsync(request);
+            successMessage = $"Votación por puntuación creada correctamente con ID {response.Id}.";
             LimpiarFormulario();
         }
         catch (ArgumentException ex)
         {
             errorMessage = ex.Message;
-            Logger.LogWarning(ex, "Error de validación al crear votación popular.");
+            Logger.LogWarning(ex, "Error de validación al crear votación por puntuación.");
         }
         catch (InvalidOperationException ex)
         {
             errorMessage = ex.Message;
-            Logger.LogWarning(ex, "Error de operación al crear votación popular.");
+            Logger.LogWarning(ex, "Error de operación al crear votación por puntuación.");
         }
         catch (Exception ex)
         {
             errorMessage = ex.InnerException is not null
                 ? $"Error inesperado: {ex.Message} | Detalle: {ex.InnerException.Message}"
                 : $"Error inesperado: {ex.Message}";
-            Logger.LogError(ex, "Error inesperado al crear votación popular.");
+            Logger.LogError(ex, "Error inesperado al crear votación por puntuación.");
         }
         finally
         {
@@ -170,13 +145,13 @@
 
     private void LimpiarFormulario()
     {
-        request = new CrearVotacionPopularRequest
+        request = new CrearVotacionPuntuacionRequest
         {
             CategoriaId = CategoriaId,
             FechaApertura = DateTime.Today,
             FechaCierre = DateTime.Today.AddDays(1),
             Estado = "Abierta",
-            MaxSelection = 1
+            ValorMax = 10
         };
     }
 }
