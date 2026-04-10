@@ -21,9 +21,9 @@
 @* ==========================================
    CONTENIDO DINÁMICO SEGÚN EL ROL
    ========================================== *@
-
+@*
 @if (Session.Usuario is Votante)
-{
+{*@
     <div class="container d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
         <h2 class="mb-4">Accede como votante a una votación</h2>
         <div class="card shadow-sm p-4 text-center" style="max-width: 400px; width: 100%;">
@@ -32,8 +32,8 @@
             <button class="btn btn-primary w-100">Continuar</button>
         </div>
     </div>
-}
-else if (Session.Usuario is Participante)
+
+@if (Session.Usuario is Participante)
 {
     <div class="container mt-5" style="max-width: 600px;">
         <div class="card p-4 shadow-sm text-center">
