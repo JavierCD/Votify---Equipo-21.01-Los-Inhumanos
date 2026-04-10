@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Radzen;
 using Votify.Core.Interfaces;
 using Votify.Persistence.Context;
 using Votify.Persistence.Repositories;
@@ -6,7 +7,7 @@ using Votify.Services.Implementations;
 using Votify.Services.Interfaces;
 using Votify.UI;
 using Votify.Web.Components;
-using Radzen;
+using Votify.Web.Services;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -22,6 +23,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
     
 builder.Services.AddRadzenComponents();
+builder.Services.AddSingleton<UserSession>();
 
 // --- API y Swagger ---
 builder.Services.AddControllers();
@@ -49,8 +51,8 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 // 2. Registramos el servicio de Eventos que acabamos de crear
 builder.Services.AddScoped<IProyectoService, ProyectoService>();
-
-
+builder.Services.AddScoped<UserSession>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPopularService, PopularService>();
 builder.Services.AddScoped<IPopularRepository, PopularRepository>();
 builder.Services.AddScoped<IVotoPopularRepository, VotoPopularRepository>();
