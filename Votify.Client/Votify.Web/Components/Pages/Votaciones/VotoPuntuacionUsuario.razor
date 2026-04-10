@@ -1,0 +1,192 @@
+﻿@page "/voto-puntuacion-usuario/{VotacionId:int}"
+@rendermode InteractiveServer
+@using Votify.Services.Interfaces
+@using Votify.Services.Models
+@inject IVotoPuntuacionService VotoPuntuacionService
+@inject ILogger<VotoPuntuacionUsuario> Logger
+
+<div class="container py-4" style="max-width:680px">
+
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Votación por Puntuación</h2>
+        <p class="text-muted small mb-0">Asigna una puntuación a cada proyecto.</p>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="d-flex align-items-center gap-2 text-muted">
+            <span class="spinner-border spinner-border-sm"></span>
+            <span>Cargando...</span>
+        </div>
+    }
+    else if (votacion is null)
+    {
+        <div class="alert alert-danger rounded-3">@errorMessage</div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="fw-bold mb-1">@votacion.CategoriaNombre</h4>
+                    <span class="badge bg-success-subtle text-success me-2">@votacion.Estado</span>
+                    <span class="badge bg-primary-subtle text-primary">Máx. @votacion.ValorMax puntos</span>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert alert-danger rounded-3 d-flex align-items-center gap-2">
+                <span>✕</span><span>@errorMessage</span>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="alert alert-success rounded-3 d-flex align-items-center gap-2">
+                <span>✓</span><span>@successMessage</span>
+            </div>
+        }
+
+        @if (string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoAsync">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger small" />
+
+                    @if (!formModel.Anonimo)
+                    {
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small text-uppercase text-muted">ID del votante</label>
+                            <InputNumber @bind-Value="formModel.VotanteId" class="form-control" placeholder="Introduce tu ID" />
+                        </div>
+                    }
+
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="chkAnonimo"
+                               @bind="formModel.Anonimo" />
+                        <label class="form-check-label" for="chkAnonimo">Votar de forma anónima</label>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Puntúa los proyectos</label>
+                        @foreach (var proyecto in votacion.Proyectos)
+                        {
+                            <div class="card mb-2 border rounded-3 p-3 bg-light">
+                                <div class="d-flex align-items-center justify-content-between gap-3">
+                                    <span class="fw-semibold">@proyecto.Name</span>
+                                    <input type="number"
+                                           class="form-control"
+                                           style="max-width: 100px;"
+                                           min="0"
+                                           max="@votacion.ValorMax"
+                                           value="@ObtenerPuntuacion(proyecto.Id)"
+                                           @onchange="e => ActualizarPuntuacion(proyecto.Id, e.Value?.ToString())" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <hr class="my-3" />
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@enviando">
+                        @if (enviando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <span>Enviando...</span>
+                        }
+                        else
+                        {
+                            <span>Enviar voto</span>
+                        }
+                    </button>
+                </EditForm>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int VotacionId { get; set; }
+
+    private VotacionPuntuacionDetalleResponse? votacion;
+    private FormVotoPuntuacionModel formModel = new();
+    private Dictionary<int, int> puntuaciones = new();
+
+    private bool cargando = true;
+    private bool enviando = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            votacion = await VotoPuntuacionService.ObtenerDetallePorIdAsync(VotacionId);
+            foreach (var p in votacion.Proyectos)
+                puntuaciones[p.Id] = 0;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogError(ex, "Error cargando votación por puntuación.");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private int ObtenerPuntuacion(int proyectoId)
+    {
+        return puntuaciones.TryGetValue(proyectoId, out var val) ? val : 0;
+    }
+
+    private void ActualizarPuntuacion(int proyectoId, string? valor)
+    {
+        if (int.TryParse(valor, out var num))
+            puntuaciones[proyectoId] = num;
+    }
+
+    private async Task EmitirVotoAsync()
+    {
+        errorMessage = null;
+        successMessage = null;
+        enviando = true;
+
+        try
+        {
+            var request = new EmitirVotoPuntuacionRequest
+            {
+                VotacionId = VotacionId,
+                VotanteId = formModel.VotanteId,
+                Anonimo = formModel.Anonimo,
+                PuntuacionesPorProyecto = puntuaciones
+            };
+
+            await VotoPuntuacionService.EmitirVotoPuntuacionAsync(request);
+            successMessage = "¡Voto emitido correctamente!";
+            foreach (var key in puntuaciones.Keys.ToList())
+                puntuaciones[key] = 0;
+            formModel = new FormVotoPuntuacionModel();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogError(ex, "Error emitiendo voto por puntuación.");
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+
+    public class FormVotoPuntuacionModel
+    {
+        public int VotanteId { get; set; }
+        public bool Anonimo { get; set; } = false;
+    }
+}
