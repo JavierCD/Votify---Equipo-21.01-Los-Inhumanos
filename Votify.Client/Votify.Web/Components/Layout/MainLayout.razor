@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@inject Votify.Web.Services.UserSession Session
+@inject NavigationManager Navigation
 
 <RadzenComponents/>
 
@@ -8,8 +10,30 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="top-row px-4 d-flex justify-content-end align-items-center gap-3">
+
+            @if (Session.Usuario != null)
+            {
+                <div class="user-menu">
+                    <img src="images/monigotevotify.png" style="width:40px; height:40px;" @onclick="ToggleMenu" />
+
+                    @if (mostrarMenu)
+                    {
+                        <div class="dropdown">
+                            <p>@Session.Usuario.Email</p>
+                            <button @onclick="Logout">Cerrar sesión</button>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <a class="btn btn-primary" href="/login">Iniciar sesión</a>
+                <a class="btn btn-outline-primary" href="/register">Crear cuenta</a>
+            }
+
+            
+
         </div>
 
         <article class="content px-4">
@@ -23,3 +47,18 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private bool mostrarMenu = false;
+
+    void ToggleMenu()
+    {
+        mostrarMenu = !mostrarMenu;
+    }
+
+    void Logout()
+    {
+        Session.Usuario = null;
+        Navigation.NavigateTo("/");
+    }
+}

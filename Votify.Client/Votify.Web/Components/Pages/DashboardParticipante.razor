@@ -56,15 +56,15 @@ else
                     </RadzenText>
                 </RadzenCard>
 
-                @* TARJETA 2: MI PROYECTO *@
+                @* TARJETA 2: MIS PROYECTOS (Actualizado a 1:N) *@
                 <RadzenCard class="rz-shadow-3">
                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" class="rz-mb-3">
-                        <RadzenText TextStyle="TextStyle.H6" class="rz-m-0"><RadzenIcon Icon="rocket_launch" class="rz-mr-1" /> Mi Proyecto</RadzenText>
-                        <RadzenButton Icon="edit" Text="Gestionar Proyecto" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" />
+                        <RadzenText TextStyle="TextStyle.H6" class="rz-m-0"><RadzenIcon Icon="rocket_launch" class="rz-mr-1" /> Mis Proyectos</RadzenText>
+                        <RadzenButton Icon="edit" Text="Gestionar Proyectos" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" />
                     </RadzenStack>
 
-                    @* Aquí simulamos qué pasaría si no tiene proyecto (porque aún no lo hemos cargado de BD) *@
-                    @if (participante.Proyecto == null)
+                    @* Comprobamos si la colección está vacía *@
+                    @if (participante.Proyectos == null || !participante.Proyectos.Any())
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" class="rz-m-0">
                             Aún no has registrado ningún proyecto. ¡Anímate y presenta tu idea!
@@ -72,8 +72,16 @@ else
                     }
                     else
                     {
-                        <RadzenText TextStyle="TextStyle.Subtitle1"><b>@participante.Proyecto.Name</b></RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2">Registrado el: @participante.Proyecto.FechaRegistro.ToString("dd/MM/yyyy")</RadzenText>
+                        @* Si tiene proyectos, los mostramos en una pequeña lista *@
+                        <RadzenStack Gap="1rem">
+                            @foreach (var proyecto in participante.Proyectos)
+                            {
+                                <div class="rz-p-2" style="border-left: 3px solid var(--rz-secondary); background-color: var(--rz-secondary-lighter);">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0"><b>@proyecto.Name</b></RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-m-0 text-muted">Registrado el: @proyecto.FechaRegistro.ToString("dd/MM/yyyy")</RadzenText>
+                                </div>
+                            }
+                        </RadzenStack>
                     }
                 </RadzenCard>
 
@@ -87,9 +95,11 @@ else
                     <RadzenText TextStyle="TextStyle.H6" class="rz-mb-3"><RadzenIcon Icon="event" class="rz-mr-1" /> Mis Eventos</RadzenText>
                     
                     <RadzenStack AlignItems="AlignItems.Center" class="rz-py-4">
-                        @* Este número es inventado hasta que conectemos el backend *@
-                        <RadzenText TextStyle="TextStyle.H1" class="rz-color-secondary rz-m-0" Style="font-size: 4rem;">0</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-color-secondary-dark">Eventos inscritos</RadzenText>
+                        @* Actualizamos el número para que cuente los proyectos reales si existen *@
+                        <RadzenText TextStyle="TextStyle.H1" class="rz-color-secondary rz-m-0" Style="font-size: 4rem;">
+                            @(participante.Proyectos?.Count ?? 0)
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-color-secondary-dark">Proyectos inscritos</RadzenText>
                     </RadzenStack>
 
                     <RadzenDivider class="rz-my-3" />
@@ -112,6 +122,9 @@ else
     protected override async Task OnInitializedAsync()
     {
         participante = await ParticipanteService.ObtenerDashboardAsync(Id);
+        // OJO: Este método NO trae el Proyecto ni los Eventos todavía, 
+        // así que la parte de "Mi Proyecto" saldrá como vacía.
+        participante = await ParticipanteService.ObtenerPorIdAsync(Id);
         cargando = false;
     }
 

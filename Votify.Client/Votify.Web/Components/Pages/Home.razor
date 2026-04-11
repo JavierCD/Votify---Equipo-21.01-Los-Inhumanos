@@ -4,31 +4,26 @@
 @using Votify.Core.Factories
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
+@using Votify.Services.Interfaces
+@using Votify.Services.Models
 @inject NavigationManager NavigationManager
 @inject IEventoService EventoService
 @inject IProyectoService ProyectoService
+@inject Votify.Web.Services.UserSession Session
+@inject IVotoPopularService VotoPopularService
+@inject IVotoPuntuacionService VotoPuntuacionService
 
 <PageTitle>Inicio - Votify</PageTitle>
 
-@* ==========================================
-   HERRAMIENTA DE DESARROLLO (MOCK LOGIN)
-   ========================================== *@
-<div class="alert alert-warning py-2 mb-4 d-flex align-items-center justify-content-between">
-    <span class="fw-bold">🛠️ Modo Dev (Selector de Roles):</span>
-    <select class="form-select w-auto" @bind="RolActual">
-        <option value="Votante">Votante (Anónimo/Público)</option>
-        <option value="Participante">Participante</option>
-        <option value="Organizador">Organizador</option>
-        <option value="Jurado">Jurado</option>
-    </select>
-</div>
+
+
 
 @* ==========================================
    CONTENIDO DINÁMICO SEGÚN EL ROL
    ========================================== *@
-
-@if (RolActual == "Votante")
-{
+@*
+@if (Session.Usuario is Votante)
+{*@
     <div class="container d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
         <h2 class="mb-4">Accede como votante a una votación</h2>
         <div class="card shadow-sm p-4 text-center" style="max-width: 400px; width: 100%;">
@@ -37,37 +32,40 @@
             <button class="btn btn-primary w-100">Continuar</button>
         </div>
     </div>
-}
-else if (RolActual == "Participante")
+
+@if (Session.Usuario is Participante)
 {
     <div class="container mt-5" style="max-width: 600px;">
         <div class="card p-4 shadow-sm text-center">
             <h3 class="mb-3">Inscripción de Proyecto</h3>
             <p class="text-muted mb-4">Introduce el código del evento al que fuiste invitado.</p>
 
+            @if (!string.IsNullOrEmpty(mensajeErrorParticipante))
+            {
+                <div class="alert alert-danger mt-3">
+                    <RadzenIcon Icon="error" class="me-1" /> @mensajeErrorParticipante
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(mensajeExitoParticipante))
+            {
+                <div class="alert alert-success mt-3">
+                    <RadzenIcon Icon="check_circle" class="me-1" /> @mensajeExitoParticipante
+                </div>
+            }
+
             @if (eventoEncontrado == null)
             {
                 <input type="text" @bind="codigoBusqueda" placeholder="Ej: HACK26" class="form-control mb-3 fs-5 text-center text-uppercase mx-auto" style="max-width: 300px;" />
                 <button class="btn btn-primary px-5" @onclick="BuscarEvento">Buscar Evento</button>
-
-                @if (!string.IsNullOrEmpty(mensajeErrorParticipante))
-                {
-                    <div class="alert alert-danger mt-3">@mensajeErrorParticipante</div>
-                }
-                @if (!string.IsNullOrEmpty(mensajeExitoParticipante))
-                {
-                    <div class="alert alert-success mt-3">@mensajeExitoParticipante</div>
-                }
             }
             else
             {
-                <div class="alert alert-success d-flex align-items-center justify-content-center">
-                    <strong>Evento Encontrado: @eventoEncontrado.Name</strong>
-                </div>
-
                 <div class="text-start mt-4">
                     <label class="fw-bold mb-1">Nombre de tu Proyecto *</label>
                     <input type="text" @bind="nombreProyecto" class="form-control mb-3" />
+
+                    <label class="fw-bold mb-1">Descripción del Proyecto</label>
+                    <textarea @bind="descripcionProyecto" class="form-control mb-3" rows="3" placeholder="Explica brevemente qué hace tu proyecto..."></textarea>
 
                     <label class="fw-bold mb-1">Especialidad del Proyecto *</label>
                     <select @bind="tipoProyectoSeleccionado" class="form-select mb-3">
@@ -89,16 +87,21 @@ else if (RolActual == "Participante")
                         }
                     </select>
 
-                    <div class="d-flex justify-content-between">
-                        <button class="btn btn-light" @onclick="() => eventoEncontrado = null">Cancelar</button>
-                        <button class="btn btn-secondary" @onclick="InscribirProyecto">Inscribir Proyecto</button>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <button class="btn btn-link text-muted text-decoration-none" @onclick="() => eventoEncontrado = null">
+                            Cancelar
+                        </button>
+
+                        <button class="btn btn-primary btn-lg" @onclick="InscribirProyecto">
+                            <RadzenIcon Icon="rocket_launch" class="me-2" /> Completar Inscripción
+                        </button>
                     </div>
                 </div>
             }
         </div>
     </div>
 }
-else if (RolActual == "Organizador")
+else if (Session.Usuario is Organizador)
 {
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -146,7 +149,7 @@ else if (RolActual == "Organizador")
         </div>
     </div>
 }
-else if (RolActual == "Jurado")
+else if (Session.Usuario is Juez)
 {
     <div class="container mt-4">
         <h2 class="mb-4">Hola, Nombre de usuario</h2>
@@ -176,6 +179,43 @@ else if (RolActual == "Jurado")
 }
 
 @code {
+    private string codigoVotacion = "";
+    private string? mensajeErrorVotante;
+
+    private async Task AccederVotacion()
+    {
+        mensajeErrorVotante = null;
+
+        if (string.IsNullOrWhiteSpace(codigoVotacion))
+        {
+            mensajeErrorVotante = "Introduce un código de votación.";
+            return;
+        }
+
+        if (!int.TryParse(codigoVotacion, out int id))
+        {
+            mensajeErrorVotante = "El código debe ser un número.";
+            return;
+        }
+
+        try
+        {
+            await VotoPopularService.ObtenerDetallePorIdAsync(id);
+            NavigationManager.NavigateTo($"/voto-popular-usuario/{id}");
+            return;
+        }
+        catch { }
+
+        try
+        {
+            await VotoPuntuacionService.ObtenerDetallePorIdAsync(id);
+            NavigationManager.NavigateTo($"/voto-puntuacion-usuario/{id}");
+            return;
+        }
+        catch { }
+
+        mensajeErrorVotante = "No se encontró ninguna votación con ese código.";
+    }
     private string _rolActual = "Votante";
     private string RolActual
     {
@@ -192,9 +232,9 @@ else if (RolActual == "Jurado")
     private string? mensajeExitoParticipante;
 
     private string nombreProyecto = "";
-    private string? descripcionProyecto; // Opcional, depende de si lo pusiste en tu UI
+    private string? descripcionProyecto; 
     private int categoriaSeleccionadaId;
-    // Añade esto junto a tus otras variables del participante
+
     private string tipoProyectoSeleccionado = "IA";
     private List<string> opcionesTipoProyecto = new List<string> { "IA", "Sostenibilidad", "Ciberseguridad" };
 
@@ -220,15 +260,14 @@ else if (RolActual == "Jurado")
     {
         if (RolActual == "Organizador")
         {
-            NombreUsuario = "Alan Brito"; // El nombre que pusimos en el Seeder
-            // Hardcodeamos el ID 1 que es el del primer organizador del Seeder
+            NombreUsuario = "Alan Brito"; 
             int miOrgaId = await EventoService.ObtenerOrganizadorMockIdAsync();
             misEventos = await EventoService.ObtenerEventosPorOrganizadorAsync(miOrgaId);
         }
         else if (RolActual == "Participante")
         {
             misEventos = new List<Evento>();
-            NombreUsuario = "Participante Demo"; // Para que el saludo de arriba cambie
+            NombreUsuario = "Participante Demo"; 
         }
         else if (RolActual == "Jurado")
         {
@@ -247,7 +286,11 @@ else if (RolActual == "Jurado")
         mensajeErrorParticipante = null;
         mensajeExitoParticipante = null;
 
-        if (string.IsNullOrWhiteSpace(codigoBusqueda)) return;
+        if (string.IsNullOrWhiteSpace(codigoBusqueda))
+        {
+            mensajeErrorParticipante = "Introduce un código de evento.";
+            return;
+        }
 
         eventoEncontrado = await EventoService.ObtenerEventoPorCodigoAsync(codigoBusqueda);
 
@@ -270,13 +313,12 @@ else if (RolActual == "Jurado")
         try
         {
             // 1. Mockeamos el ID del participante (suponiendo que en tu Seeder es el ID 3)
-            // TODO: Cambiar esto cuando tu compañero acabe el Login (UT 3616)
-            int participanteMockId = 3;
+            // TODO: Cambiar esto cuando tu compañero acabe el Login (UT 3616) Si se quiere probar comentar la parte del DBInit que está relacionada con los proyectos
+            int participanteMockId = 7;
 
             // 2. Instanciamos tu Proyecto usando el constructor blindado
             ProyectoCreator creator;
 
-            // 1. Elegimos la fábrica correcta según lo que seleccionó el usuario
             if (tipoProyectoSeleccionado == "IA")
             {
                 creator = new AiProjectCreator();
@@ -294,11 +336,8 @@ else if (RolActual == "Jurado")
                 creator = new AiProjectCreator(); // Fallback por seguridad
             }
 
-            // 2. Usamos el método de la fábrica para instanciar el proyecto concreto
-            // Fíjate que devolvemos un 'Proyecto' abstracto, ocultando la complejidad
-            Proyecto nuevoProyecto = creator.CrearProyecto(nombreProyecto, participanteMockId);
 
-            // (Si le añadiste la descripción al proyecto, la asignarías aquí si la necesitas)
+            Proyecto nuevoProyecto = creator.CrearProyecto(nombreProyecto, participanteMockId, default, default ,descripcionProyecto);
 
             // 3. Lo guardamos a través del servicio
             await ProyectoService.CrearProyectoConCategoriaAsync(nuevoProyecto, categoriaSeleccionadaId);
