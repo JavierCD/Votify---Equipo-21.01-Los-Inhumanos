@@ -181,8 +181,14 @@ else
         <h2 class="mb-4">Accede como votante a una votación</h2>
         <div class="card shadow-sm p-4 text-center" style="max-width: 400px; width: 100%;">
             <label class="form-label mb-3">Introduce el código de la votación</label>
-            <input type="text" class="form-control mb-3 text-center fs-4" placeholder="Ej: AB123C" />
-            <button class="btn btn-primary w-100">Continuar</button>
+            <input type="number" class="form-control mb-3 text-center fs-4"
+                   placeholder="Ej: 1"
+                   @bind="codigoVotacion" />
+            @if (!string.IsNullOrEmpty(mensajeErrorVotante))
+            {
+                <div class="alert alert-danger small">@mensajeErrorVotante</div>
+            }
+            <button class="btn btn-primary w-100" @onclick="AccederVotacion">Continuar</button>
         </div>
     </div>
 }
