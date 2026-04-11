@@ -21,17 +21,6 @@
 @* ==========================================
    CONTENIDO DINÁMICO SEGÚN EL ROL
    ========================================== *@
-@*
-@if (Session.Usuario is Votante)
-{*@
-    <div class="container d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
-        <h2 class="mb-4">Accede como votante a una votación</h2>
-        <div class="card shadow-sm p-4 text-center" style="max-width: 400px; width: 100%;">
-            <label class="form-label mb-3">Introduce el código de la votación</label>
-            <input type="text" class="form-control mb-3 text-center fs-4" placeholder="Ej: AB123C" />
-            <button class="btn btn-primary w-100">Continuar</button>
-        </div>
-    </div>
 
 @if (Session.Usuario is Participante)
 {
@@ -98,6 +87,15 @@
                     </div>
                 </div>
             }
+        </div>
+    </div>
+
+    <div class="container d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
+        <h2 class="mb-4">Accede como votante a una votación</h2>
+        <div class="card shadow-sm p-4 text-center" style="max-width: 400px; width: 100%;">
+            <label class="form-label mb-3">Introduce el código de la votación</label>
+            <input type="text" class="form-control mb-3 text-center fs-4" placeholder="Ej: AB123C" />
+            <button class="btn btn-primary w-100">Continuar</button>
         </div>
     </div>
 }
@@ -174,6 +172,23 @@ else if (Session.Usuario is Juez)
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
+        <h2 class="mb-4">Accede como votante a una votación</h2>
+        <div class="card shadow-sm p-4 text-center" style="max-width: 400px; width: 100%;">
+            <label class="form-label mb-3">Introduce el código de la votación</label>
+            <input type="number" class="form-control mb-3 text-center fs-4"
+                   placeholder="Ej: 1"
+                   @bind="codigoVotacion" />
+            @if (!string.IsNullOrEmpty(mensajeErrorVotante))
+            {
+                <div class="alert alert-danger small">@mensajeErrorVotante</div>
+            }
+            <button class="btn btn-primary w-100" @onclick="AccederVotacion">Continuar</button>
         </div>
     </div>
 }
@@ -258,26 +273,26 @@ else if (Session.Usuario is Juez)
 
     private async Task CargarDatosSegunRol()
     {
-        if (RolActual == "Organizador")
+        if (Session.Usuario is Organizador)
         {
-            NombreUsuario = "Alan Brito"; 
+            NombreUsuario = Session.Usuario.Name; 
             int miOrgaId = await EventoService.ObtenerOrganizadorMockIdAsync();
             misEventos = await EventoService.ObtenerEventosPorOrganizadorAsync(miOrgaId);
         }
-        else if (RolActual == "Participante")
+        else if (Session.Usuario is Participante)
         {
-            misEventos = new List<Evento>();
-            NombreUsuario = "Participante Demo"; 
+            misEventos = new List<Evento>(); // Falta método en el EventoService
+            NombreUsuario = Session.Usuario.Name; 
         }
-        else if (RolActual == "Jurado")
+        else if (Session.Usuario is Juez)
         {
             misEventos = new List<Evento>();
-            NombreUsuario = "Jurado Demo";
+            NombreUsuario = Session.Usuario.Name;
         }
         else
         {
             misEventos = new List<Evento>();
-            NombreUsuario = "Usuario Demo";
+            NombreUsuario = "Votante";
         }
     }
 
