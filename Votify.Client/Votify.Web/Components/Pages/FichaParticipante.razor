@@ -4,9 +4,11 @@
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
 
+@inject IJSRuntime JSRuntime
 @inject IParticipanteService ParticipanteService
 @* 1. Inyectamos el NavManager para poder hacer el botón de Volver *@
 @inject NavigationManager NavManager
+@inject Votify.Web.Services.UserSession Session
 
 <PageTitle>Ficha de Participante - Votify</PageTitle>
 
@@ -95,8 +97,8 @@ else
 
             <RadzenDivider class="rz-my-4" />
 
-            @* BOTONES DE ESTADO (Solo los vemos si no estamos editando) *@
-            @if (!modoEdicion)
+            @* BOTONES DE ESTADO (Solo los vemos si no estamos editando Y si NO somos un participante) *@
+            @if (!modoEdicion && !(Session.Usuario is Participante))
             {
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
                     @if (participante.Estado != "Rechazado")
@@ -132,9 +134,10 @@ else
     }
 
     // --- NAVEGACIÓN ---
-    private void Volver()
+    private async Task Volver()
     {
-        NavManager.NavigateTo("/participantes");
+        // Esto simula darle a la flecha de "Atrás" del navegador
+        await JSRuntime.InvokeVoidAsync("history.back");
     }
 
     // --- MODO EDICIÓN ---

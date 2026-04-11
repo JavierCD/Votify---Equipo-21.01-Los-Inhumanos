@@ -202,6 +202,13 @@
                                             <td><span class="badge bg-info text-dark">@proyecto.CategoriaEspecialidad()</span></td>
                                             <td>@proyecto.FechaRegistro.ToShortDateString()</td>
                                             <td>
+                                                @if (proyecto.Participante != null)
+                                                {
+                                                    <button class="btn btn-sm btn-outline-info me-1" title="Ver ficha del participante"
+                                                            @onclick='() => NavigationManager.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
+                                                        <RadzenIcon Icon="visibility" Style="font-size: 16px;" /> Ver Ficha
+                                                    </button>
+                                                }
                                                 <button class="btn btn-sm btn-outline-danger">Descalificar</button>
                                             </td>
                                         </tr>

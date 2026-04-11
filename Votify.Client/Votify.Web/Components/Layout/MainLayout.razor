@@ -14,14 +14,34 @@
 
             @if (Session.Usuario != null)
             {
-                <div class="user-menu">
-                    <img src="images/monigotevotify.png" style="width:40px; height:40px;" @onclick="ToggleMenu" />
+                @* AÑADIMOS position-relative AL CONTENEDOR PADRE *@
+                <div class="user-menu position-relative">
+                    @* AÑADIMOS cursor: pointer AL MONIGOTE *@
+                    <img src="images/monigotevotify.png" class="rounded-circle border" style="width:40px; height:40px; cursor: pointer;" @onclick="ToggleMenu" title="Abrir menú de usuario" />
 
                     @if (mostrarMenu)
                     {
-                        <div class="dropdown">
-                            <p>@Session.Usuario.Email</p>
-                            <button @onclick="Logout">Cerrar sesión</button>
+                        <div class="dropdown-menu show position-absolute shadow p-0" style="right: 0; top: 45px; z-index: 1000; min-width: 220px; border-radius: 8px; overflow: hidden;">
+
+                            @* CABECERA DEL MENÚ (Email) *@
+                            <div class="bg-light px-3 py-2 border-bottom text-center">
+                                <small class="text-muted fw-bold d-block text-truncate">@Session.Usuario.Email</small>
+                            </div>
+
+                            @* ZONA DE BOTONES *@
+                            <div class="p-2">
+                                @if (Session.Usuario is Votify.Core.Models.Participante p)
+                                {
+                                    <a class="btn btn-light w-100 text-start mb-2 d-flex align-items-center" href="/ficha-participante/@p.Id">
+                                        <RadzenIcon Icon="manage_accounts" class="me-2" Style="font-size: 18px;" /> Mi Perfil
+                                    </a>
+                                }
+
+                                <button class="btn btn-outline-danger w-100 text-start d-flex align-items-center" @onclick="Logout">
+                                    <RadzenIcon Icon="logout" class="me-2" Style="font-size: 18px;" /> Cerrar sesión
+                                </button>
+                            </div>
+
                         </div>
                     }
                 </div>

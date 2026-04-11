@@ -80,7 +80,7 @@ namespace Votify.Services.Implementations
             // El segundo parámetro es el "INCLUDE" (p => p.Proyecto).
             return await _repository.GetWithIncludesAsync(
                 p => p.Id == id,
-                p => p.Proyecto
+                p => p.Proyectos
             );
         }
 
