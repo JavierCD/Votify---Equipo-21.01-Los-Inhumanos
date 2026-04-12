@@ -10,9 +10,9 @@ namespace Votify.Services.Implementations
 {
     public class ParticipanteService : IParticipanteService
     {
-        private readonly IGenericRepository<Participante> _repository;
+        private readonly IParticipanteRepository _repository;
 
-        public ParticipanteService(IGenericRepository<Participante> repository)
+        public ParticipanteService(IParticipanteRepository repository)
         {
             _repository = repository;
         }
@@ -78,10 +78,7 @@ namespace Votify.Services.Implementations
             // Usamos el GetWithIncludesAsync del GenericRepository.
             // El primer parámetro es el "WHERE" (p => p.Id == id).
             // El segundo parámetro es el "INCLUDE" (p => p.Proyecto).
-            return await _repository.GetWithIncludesAsync(
-                p => p.Id == id,
-                p => p.Proyectos
-            );
+            return await _repository.ObtenerConDetallesDashboardAsync(id);
         }
 
     }

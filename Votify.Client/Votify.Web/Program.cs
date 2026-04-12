@@ -69,6 +69,7 @@ builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 
 // 3. Registramos el servicio de Participantes 
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
+builder.Services.AddScoped<IParticipanteRepository, ParticipanteRepository>();
 
 
 var app = builder.Build();
