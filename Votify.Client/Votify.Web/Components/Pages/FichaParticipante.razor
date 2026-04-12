@@ -6,8 +6,8 @@
 
 @inject IParticipanteService ParticipanteService
 @inject NavigationManager NavManager
-@* Inyectamos JSRuntime para poder usar el history.back() del navegador *@
 @inject IJSRuntime JSRuntime
+@inject Votify.Web.Services.UserSession Session
 
 <PageTitle>Mi Perfil - Votify</PageTitle>
 
@@ -28,15 +28,12 @@ else
 {
     <div class="container rz-mt-4 rz-mb-5">
 
-        @* NUEVO BOTÓN DE VOLVER: Más visible y con historial dinámico *@
         <RadzenButton Text="Volver" Icon="arrow_back" ButtonStyle="ButtonStyle.Dark" class="rz-mb-4 rz-shadow-2" Click="VolverAtras" />
-
         <RadzenRow Gap="2rem">
             @* COLUMNA IZQUIERDA: TARJETA DE IDENTIDAD *@
             <RadzenColumn Size="12" SizeMD="4">
                 <RadzenCard class="rz-shadow-3 rz-p-0" Style="overflow: hidden; border-radius: 12px;">
 
-                    @* EL SALVAVIDAS: Si lo dejan en blanco, usamos el azul por defecto *@
                     @{
                         var colorSeguro = string.IsNullOrWhiteSpace(participante.ColorFondo) ? "#479cc8" : participante.ColorFondo;
                     }
@@ -59,23 +56,28 @@ else
                         <RadzenText TextStyle="TextStyle.H5" class="fw-bold rz-mt-3 rz-mb-0 text-center">@participante.Name</RadzenText>
                         <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mb-3 text-center">@participante.Email</RadzenText>
 
-                        @if (!modoEdicion)
+                        @* Verificar Identidad *@
+                        @if (esMiPropioPerfil)
                         {
-                            <RadzenButton Text="Editar Perfil" Icon="edit" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" class="w-100 rz-mt-2" Click="ActivarEdicion" />
-                        }
-                        else
-                        {
-                            <RadzenButton Text="Guardar Cambios" Icon="save" ButtonStyle="ButtonStyle.Success" class="w-100 rz-mt-2" Click="GuardarPerfil" />
-                            <RadzenButton Text="Cancelar" Icon="cancel" ButtonStyle="ButtonStyle.Light" class="w-100 rz-mt-2" Click="CancelarEdicion" />
+                            @if (!modoEdicion)
+                            {
+                                <RadzenButton Text="Editar Perfil" Icon="edit" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" class="w-100 rz-mt-2" Click="ActivarEdicion" />
+                            }
+                            else
+                            {
+                                <RadzenButton Text="Guardar Cambios" Icon="save" ButtonStyle="ButtonStyle.Success" class="w-100 rz-mt-2" Click="GuardarPerfil" />
+                                <RadzenButton Text="Cancelar" Icon="cancel" ButtonStyle="ButtonStyle.Light" class="w-100 rz-mt-2" Click="CancelarEdicion" />
+                            }
                         }
                     </div>
                 </RadzenCard>
             </RadzenColumn>
 
-            @* COLUMNA DERECHA: INFORMACIÓN DETALLADA / FORMULARIO *@
+            @* COLUMNA DERECHA *@
             <RadzenColumn Size="12" SizeMD="8">
 
-                @if (modoEdicion)
+                @* --- DOBLE COMPROBACIÓN AQUÍ --- *@
+                @if (modoEdicion && esMiPropioPerfil)
                 {
                     @* --- MODO EDICIÓN --- *@
                     <RadzenCard class="rz-shadow-2 rz-mb-4" Style="border-top: 4px solid var(--rz-success);">
@@ -112,7 +114,7 @@ else
                 }
                 else
                 {
-                    @* --- MODO LECTURA (Lo que tenías antes) --- *@
+                    @* --- MODO LECTURA --- *@
                     <RadzenCard class="rz-shadow-2 rz-mb-4">
                         <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-mb-3 text-secondary">Sobre Mí</RadzenText>
                         @if (string.IsNullOrWhiteSpace(participante.Descripcion))
@@ -186,15 +188,11 @@ else
 }
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
-
+    [Parameter] public int Id { get; set; }
     private Participante? participante;
     private bool cargando = true;
-
-    // Bandera para controlar la vista
     private bool modoEdicion = false;
-
+    private bool esMiPropioPerfil => Session.Usuario != null && Session.Usuario.Id == Id;
     protected override async Task OnInitializedAsync()
     {
         await CargarDatos();
@@ -207,14 +205,14 @@ else
         cargando = false;
     }
 
-    // --- MÉTODOS DE NAVEGACIÓN ---
+    
     private async Task VolverAtras()
     {
-        // ¡Magia de JavaScript! Esto es como darle a la flecha de "Atrás" del navegador
+       
         await JSRuntime.InvokeVoidAsync("history.back");
     }
 
-    // --- MÉTODOS DE EDICIÓN ---
+   
     private void ActivarEdicion()
     {
         modoEdicion = true;
@@ -223,7 +221,6 @@ else
     private async Task CancelarEdicion()
     {
         modoEdicion = false;
-        // Recargamos los datos de la base de datos para descartar los cambios no guardados
         await CargarDatos();
     }
 
@@ -231,11 +228,8 @@ else
     {
         if (participante != null)
         {
-            // Llamamos al método que limpiamos antes en tu ParticipanteService
             await ParticipanteService.ActualizarFichaAsync(participante);
             modoEdicion = false;
-
-            // Opcional: Aquí podrías mostrar un RadzenNotification de "Guardado con éxito"
         }
     }
 
