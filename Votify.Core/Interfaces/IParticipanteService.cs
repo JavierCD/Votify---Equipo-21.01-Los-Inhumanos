@@ -15,8 +15,7 @@ namespace Votify.Core.Interfaces
 
         // Métodos específicos de la Ficha del Participante
         Task ActualizarFichaAsync(Participante participante);
-        Task CambiarEstadoAsync(int id, string nuevoEstado);
-        Task CambiarVisibilidadAsync(int id, bool visible);
+        
         Task<Participante?> ObtenerDashboardAsync(int id);
 
 

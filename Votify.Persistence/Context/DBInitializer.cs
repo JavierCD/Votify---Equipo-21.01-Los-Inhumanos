@@ -19,7 +19,7 @@ namespace Votify.Persistence.Context
             
             
             
-            context.Database.Migrate();
+            context.Database.EnsureCreated();
 
             if (context.Eventos.Any())
             {
