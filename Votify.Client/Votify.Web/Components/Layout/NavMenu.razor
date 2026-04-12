@@ -1,4 +1,7 @@
 ﻿@rendermode InteractiveServer
+@inject Votify.Web.Services.UserSession Session
+@implements IDisposable
+
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Votify.Web</a>
@@ -15,16 +18,31 @@
             </NavLink>
         </div>
 
+        @* ESTE ES EL BOTÓN OMNIPRESENTE PARA EL PARTICIPANTE *@
+        @if (Session.Usuario is Votify.Core.Models.Participante p)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="@($"/dashboard-participante/{p.Id}")">
+                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Mi Panel
+                </NavLink>
+            </div>
+        }
        
-       
-
-       
-
     </nav>
 </div>
 
 @code {
-    
+    protected override void OnInitialized()
+    {
+        // Le decimos al menú: "Cuando suene el timbre (OnChange), actualízate (StateHasChanged)"
+        Session.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        // Limpiamos el timbre si el menú se destruye para evitar errores de memoria
+        Session.OnChange -= StateHasChanged;
+    }
 }
   
 
