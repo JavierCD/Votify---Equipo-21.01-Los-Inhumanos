@@ -4,114 +4,184 @@
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
 
-@inject IJSRuntime JSRuntime
 @inject IParticipanteService ParticipanteService
-@* 1. Inyectamos el NavManager para poder hacer el botón de Volver *@
 @inject NavigationManager NavManager
-@inject Votify.Web.Services.UserSession Session
+@* Inyectamos JSRuntime para poder usar el history.back() del navegador *@
+@inject IJSRuntime JSRuntime
 
-<PageTitle>Ficha de Participante - Votify</PageTitle>
+<PageTitle>Mi Perfil - Votify</PageTitle>
 
 @if (cargando)
 {
-    <div class="container rz-mt-4 rz-text-align-center">
+    <div class="container rz-mt-5 rz-text-align-center">
         <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mt-4">Buscando en la base de datos...</RadzenText>
+        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mt-4">Cargando perfil...</RadzenText>
     </div>
 }
 else if (participante == null)
 {
-    <div class="container rz-mt-4">
-        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
-            No se ha encontrado ningún participante con el ID @Id.
-        </RadzenAlert>
-        <RadzenButton Text="Volver a la lista" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" class="rz-mt-3" Click="@Volver" />
+    <div class="container rz-mt-5">
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">No se encontró el perfil.</RadzenAlert>
     </div>
 }
 else
 {
-    <div class="container rz-mt-4">
-        @* Botón para volver atrás *@
-        <RadzenButton Text="Volver a la lista" Icon="arrow_back" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Text" class="rz-mb-4" Click="@Volver" />
-        <RadzenText TextStyle="TextStyle.H3">Ficha de Participante</RadzenText>
+    <div class="container rz-mt-4 rz-mb-5">
 
-        <RadzenCard class="rz-mt-2 rz-shadow-3" Style="max-width: 600px; border: 1px solid var(--rz-border-color);">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                <RadzenIcon Icon="account_circle" Style="font-size: 4rem; color: var(--rz-primary);" />
-                
-                <RadzenStack Gap="0">
-                    <RadzenText TextStyle="TextStyle.H5" class="rz-mb-0">@participante.Name</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" class="rz-color-primary-light">@participante.Email</RadzenText>
-                    
-                    <div class="rz-mt-2">
-                        <RadzenBadge BadgeStyle="ObtenerColorEstado(participante.Estado)" Text="@participante.Estado" IsPill="true" />
-                        
-                        @if(participante.Visible)
+        @* NUEVO BOTÓN DE VOLVER: Más visible y con historial dinámico *@
+        <RadzenButton Text="Volver" Icon="arrow_back" ButtonStyle="ButtonStyle.Dark" class="rz-mb-4 rz-shadow-2" Click="VolverAtras" />
+
+        <RadzenRow Gap="2rem">
+            @* COLUMNA IZQUIERDA: TARJETA DE IDENTIDAD *@
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenCard class="rz-shadow-3 rz-p-0" Style="overflow: hidden; border-radius: 12px;">
+
+                    @* EL SALVAVIDAS: Si lo dejan en blanco, usamos el azul por defecto *@
+                    @{
+                        var colorSeguro = string.IsNullOrWhiteSpace(participante.ColorFondo) ? "#479cc8" : participante.ColorFondo;
+                    }
+
+                    <div style="height: 120px; background-color: @colorSeguro;"></div>
+
+                    <div class="d-flex flex-column align-items-center rz-p-4" style="margin-top: -60px;">
+                        @if (!string.IsNullOrEmpty(participante.UrlFoto))
                         {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Visible" IsPill="true" class="rz-ml-2" />
+                            <img src="@participante.UrlFoto" alt="Foto de perfil" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid white; object-fit: cover;" />
                         }
                         else
                         {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Oculto" IsPill="true" class="rz-ml-2" />
+                            <div class="d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                                 style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid white; background-color: @colorSeguro; font-size: 2.5rem;">
+                                @ObtenerIniciales(participante.Name)
+                            </div>
+                        }
+
+                        <RadzenText TextStyle="TextStyle.H5" class="fw-bold rz-mt-3 rz-mb-0 text-center">@participante.Name</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mb-3 text-center">@participante.Email</RadzenText>
+
+                        @if (!modoEdicion)
+                        {
+                            <RadzenButton Text="Editar Perfil" Icon="edit" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" class="w-100 rz-mt-2" Click="ActivarEdicion" />
+                        }
+                        else
+                        {
+                            <RadzenButton Text="Guardar Cambios" Icon="save" ButtonStyle="ButtonStyle.Success" class="w-100 rz-mt-2" Click="GuardarPerfil" />
+                            <RadzenButton Text="Cancelar" Icon="cancel" ButtonStyle="ButtonStyle.Light" class="w-100 rz-mt-2" Click="CancelarEdicion" />
                         }
                     </div>
-                </RadzenStack>
-            </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
 
-            <RadzenDivider class="rz-my-4" />
+            @* COLUMNA DERECHA: INFORMACIÓN DETALLADA / FORMULARIO *@
+            <RadzenColumn Size="12" SizeMD="8">
 
-            @* ZONA DE EDICIÓN / VISTA *@
-            @if (modoEdicion)
-            {
-                <RadzenStack Gap="1rem">
-                    <div>
-                        <RadzenText TextStyle="TextStyle.Subtitle2"><b>Visibilidad del perfil</b></RadzenText>
-                        <RadzenSwitch @bind-Value="visibleEdit" />
-                        <RadzenText TextStyle="TextStyle.Caption" class="rz-ml-2">
-                            @(visibleEdit ? "El perfil es público" : "El perfil está oculto")
-                        </RadzenText>
-                    </div>
+                @if (modoEdicion)
+                {
+                    @* --- MODO EDICIÓN --- *@
+                    <RadzenCard class="rz-shadow-2 rz-mb-4" Style="border-top: 4px solid var(--rz-success);">
+                        <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-mb-3 text-success">Editando Perfil</RadzenText>
 
-                    <div>
-                        <RadzenText TextStyle="TextStyle.Subtitle2"><b>Descripción</b></RadzenText>
-                        <RadzenTextArea @bind-Value="descripcionEdit" class="w-100" Rows="4" Placeholder="Escribe una descripción..." />
-                    </div>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Subtitle2">Nombre Público</RadzenText>
+                                <RadzenTextBox @bind-Value="participante.Name" class="w-100" />
+                            </div>
 
-                    <RadzenStack Orientation="Orientation.Horizontal" class="rz-mt-2" Gap="1rem">
-                        <RadzenButton Text="Guardar Cambios" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@GuardarEdicion" />
-                        <RadzenButton Text="Cancelar" ButtonStyle="ButtonStyle.Light" Icon="cancel" Click="@CancelarEdicion" />
-                    </RadzenStack>
-                </RadzenStack>
-            }
-            else
-            {
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0"><b>Descripción</b></RadzenText>
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" Size="ButtonSize.Small" Text="Editar Ficha" Click="@ActivarEdicion" />
-                </RadzenStack>
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Subtitle2">Sobre Mí (Biografía)</RadzenText>
+                                <RadzenTextArea @bind-Value="participante.Descripcion" class="w-100" Rows="4" />
+                            </div>
 
-                <RadzenText TextStyle="TextStyle.Body1" class="rz-mt-2">
-                    @(string.IsNullOrWhiteSpace(participante.Descripcion) ? "El participante no ha proporcionado una descripción todavía." : participante.Descripcion)
-                </RadzenText>
-            }
+                            <RadzenRow>
+                                <RadzenColumn Size="12" SizeSM="6">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">Estudios / Institución</RadzenText>
+                                    <RadzenTextBox @bind-Value="participante.InstitucionEducativa" class="w-100" Placeholder="Ej: Univ. Complutense" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeSM="6">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">Intereses (Separados por coma)</RadzenText>
+                                    <RadzenTextBox @bind-Value="participante.Intereses" class="w-100" Placeholder="Ej: IA, C#, Diseño UX" />
+                                </RadzenColumn>
+                            </RadzenRow>
 
-            <RadzenDivider class="rz-my-4" />
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Subtitle2">Color de Fondo (Hexadecimal)</RadzenText>
+                                <RadzenColorPicker @bind-Value="participante.ColorFondo" ShowHSV="true" ShowRGBA="false" ShowColors="true" class="w-100" />
+                            </div>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+                else
+                {
+                    @* --- MODO LECTURA (Lo que tenías antes) --- *@
+                    <RadzenCard class="rz-shadow-2 rz-mb-4">
+                        <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-mb-3 text-secondary">Sobre Mí</RadzenText>
+                        @if (string.IsNullOrWhiteSpace(participante.Descripcion))
+                        {
+                            <RadzenText TextStyle="TextStyle.Body1" class="text-muted fst-italic">Aún no hay biografía disponible.</RadzenText>
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Body1">@participante.Descripcion</RadzenText>
+                        }
+                    </RadzenCard>
 
-            @* BOTONES DE ESTADO (Solo los vemos si no estamos editando Y si NO somos un participante) *@
-            @if (!modoEdicion && !(Session.Usuario is Participante))
-            {
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
-                    @if (participante.Estado != "Rechazado")
+                    <RadzenCard class="rz-shadow-2 rz-mb-4">
+                        <RadzenRow>
+                            <RadzenColumn Size="12" SizeSM="6">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mb-1"><RadzenIcon Icon="school" class="rz-mr-1" Style="font-size: 16px;" /> Estudios / Institución</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body1" class="fw-bold">
+                                    @(string.IsNullOrWhiteSpace(participante.InstitucionEducativa) ? "No especificado" : participante.InstitucionEducativa)
+                                </RadzenText>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeSM="6">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mb-2"><RadzenIcon Icon="local_offer" class="rz-mr-1" Style="font-size: 16px;" /> Áreas de Interés</RadzenText>
+
+                                @if (string.IsNullOrWhiteSpace(participante.Intereses))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" class="text-muted">Ningún interés añadido.</RadzenText>
+                                }
+                                else
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                                        @foreach (var interes in participante.Intereses.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@interes.Trim()" IsPill="true" class="border" />
+                                        }
+                                    </RadzenStack>
+                                }
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenCard>
+                }
+
+                @* Vitrina de Proyectos (Siempre visible) *@
+                <RadzenCard class="rz-shadow-2">
+                    <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-mb-3 text-secondary"><RadzenIcon Icon="emoji_events" class="rz-mr-1" /> Vitrina de Proyectos</RadzenText>
+                    @if (participante.Proyectos != null && participante.Proyectos.Any())
                     {
-                        <RadzenButton Text="Rechazar" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Outlined" Icon="cancel" Click="@(() => CambiarEstado("Rechazado"))" />
+                        <div class="row g-3">
+                            @foreach (var proyecto in participante.Proyectos)
+                            {
+                                <div class="col-12 col-md-6">
+                                    <div class="p-3 border rounded h-100 bg-light">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" class="fw-bold rz-m-0 rz-color-primary">@proyecto.Name</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" class="text-muted d-block rz-mb-2">Inscrito en @proyecto.FechaRegistro.Year</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" class="text-truncate">
+                                            @(string.IsNullOrWhiteSpace(proyecto.Description) ? "Sin descripción" : proyecto.Description)
+                                        </RadzenText>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     }
-                    @if (participante.Estado != "Aprobado")
+                    else
                     {
-                        <RadzenButton Text="Aprobar" ButtonStyle="ButtonStyle.Success" Icon="check_circle" Click="@(() => CambiarEstado("Aprobado"))" />
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">Este participante aún no tiene proyectos públicos en su portafolio.</RadzenAlert>
                     }
-                </RadzenStack>
-            }
-        </RadzenCard>
+                </RadzenCard>
+
+            </RadzenColumn>
+        </RadzenRow>
     </div>
 }
 
@@ -122,87 +192,56 @@ else
     private Participante? participante;
     private bool cargando = true;
 
-    // Variables para el modo edición
+    // Bandera para controlar la vista
     private bool modoEdicion = false;
-    private string? descripcionEdit;
-    private bool visibleEdit;
 
     protected override async Task OnInitializedAsync()
     {
-        participante = await ParticipanteService.ObtenerPorIdAsync(Id);
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        cargando = true;
+        participante = await ParticipanteService.ObtenerDashboardAsync(Id);
         cargando = false;
     }
 
-    // --- NAVEGACIÓN ---
-    private async Task Volver()
+    // --- MÉTODOS DE NAVEGACIÓN ---
+    private async Task VolverAtras()
     {
-        // Esto simula darle a la flecha de "Atrás" del navegador
+        // ¡Magia de JavaScript! Esto es como darle a la flecha de "Atrás" del navegador
         await JSRuntime.InvokeVoidAsync("history.back");
     }
 
-    // --- MODO EDICIÓN ---
+    // --- MÉTODOS DE EDICIÓN ---
     private void ActivarEdicion()
     {
-        // Copiamos los datos actuales a las variables temporales
-        descripcionEdit = participante!.Descripcion;
-        visibleEdit = participante.Visible;
         modoEdicion = true;
     }
 
-    private void CancelarEdicion()
+    private async Task CancelarEdicion()
     {
         modoEdicion = false;
+        // Recargamos los datos de la base de datos para descartar los cambios no guardados
+        await CargarDatos();
     }
 
-    private async Task GuardarEdicion()
+    private async Task GuardarPerfil()
     {
-        try
+        if (participante != null)
         {
-            // 1. Si ha cambiado la visibilidad, llamamos al servicio
-            if (participante!.Visible != visibleEdit)
-            {
-                await ParticipanteService.CambiarVisibilidadAsync(Id, visibleEdit);
-                participante.CambiarVisibilidad(visibleEdit); // Actualizamos la vista local
-            }
-
-            // 2. Si ha cambiado la descripción, llamamos al servicio
-            if (participante.Descripcion != descripcionEdit)
-            {
-                // Usamos la regla de dominio que creaste
-                participante.ActualizarFicha(descripcionEdit); 
-                await ParticipanteService.ActualizarFichaAsync(participante);
-            }
-
-            // Salimos del modo edición
+            // Llamamos al método que limpiamos antes en tu ParticipanteService
+            await ParticipanteService.ActualizarFichaAsync(participante);
             modoEdicion = false;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al guardar: {ex.Message}");
+
+            // Opcional: Aquí podrías mostrar un RadzenNotification de "Guardado con éxito"
         }
     }
 
-    // --- ESTADO ---
-    private async Task CambiarEstado(string nuevoEstado)
+    private string ObtenerIniciales(string nombre)
     {
-        try
-        {
-            await ParticipanteService.CambiarEstadoAsync(Id, nuevoEstado);
-            participante!.EvaluarEstado(nuevoEstado); 
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al cambiar estado: {ex.Message}");
-        }
-    }
-
-    private BadgeStyle ObtenerColorEstado(string estado)
-    {
-        return estado switch
-        {
-            "Aprobado" => BadgeStyle.Success,
-            "Rechazado" => BadgeStyle.Danger,
-            _ => BadgeStyle.Warning
-        };
+        if (string.IsNullOrWhiteSpace(nombre)) return "?";
+        return nombre.Substring(0, 1).ToUpper();
     }
 }
