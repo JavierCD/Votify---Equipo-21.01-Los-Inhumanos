@@ -10,6 +10,7 @@ namespace Votify.Services.Interfaces
     
     public interface IAuthService {
         Task <Miembro> Login (string email, string password);
+        Task<Miembro> Register(string name, string email, string password, string role);
     }
     
 }
