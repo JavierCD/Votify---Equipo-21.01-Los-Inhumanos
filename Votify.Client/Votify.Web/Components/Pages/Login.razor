@@ -3,19 +3,36 @@
 @inject Votify.Web.Services.UserSession Session
 @inject NavigationManager Navigation
 
-<h3>Login</h3>
+<div class="d-flex justify-content-center align-items-center" style="height: 80vh;">
 
-<div>
-    <input @bind="email" placeholder="Email" />
+    <div class="card shadow p-4" style="width: 350px;">
+
+        <h3 class="text-center mb-4">Iniciar sesión</h3>
+
+        <div class="mb-3">
+            <label>Email</label>
+            <input @bind="email" class="form-control" placeholder="Email" />
+        </div>
+
+        <div class="mb-3">
+            <label>Contraseña</label>
+            <input @bind="password" type="password" class="form-control" placeholder="Contraseña" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(mensaje))
+        {
+            <div class="alert alert-danger">
+                @mensaje
+            </div>
+        }
+
+        <button @onclick="HandleLogin" class="btn btn-primary w-100">
+            Iniciar sesión
+        </button>
+
+    </div>
+
 </div>
-
-<div>
-    <input @bind="password" type="password" placeholder="Contraseña" />
-</div>
-
-<button @onclick=" HandleLogin">Iniciar sesión</button>
-
-<p style="color:red">@mensaje</p>
 
 @code {
     private string email;
@@ -24,34 +41,29 @@
 
     private async Task HandleLogin()
     {
-        
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
             mensaje = "Rellena todos los campos";
             return;
         }
+
         try
         {
             var user = await AuthService.Login(email, password);
             Session.Usuario = user;
-            //mensaje = "Login correcto";
 
-            // Redirección según el tipo de miembro
             if (user is Votify.Core.Models.Participante p)
             {
                 Navigation.NavigateTo($"/dashboard-participante/{p.Id}", false);
             }
             else
             {
-                // Si es Organizador o Administrador, va a la página principal
                 Navigation.NavigateTo("/", false);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            //mensaje = ex.Message;
             mensaje = "Credenciales incorrectas";
         }
     }
-
 }
