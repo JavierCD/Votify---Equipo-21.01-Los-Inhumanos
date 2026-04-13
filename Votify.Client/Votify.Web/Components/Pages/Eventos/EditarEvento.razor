@@ -467,6 +467,8 @@
             string cuerpoCorreo = htmlBuilder.ToString();
             string asuntoCorreo = $"🏆 Resultados Finales: {categoria.Name}";
 
+
+
             // 4. RECOPILAMOS LOS CORREOS DE LOS VOTANTES (Sin duplicados)
             // Extraemos los correos de la tabla de Votos usando la nueva UT que hiciste en VotoPopularUsuario
             var correosVotantes = categoria.Votacion.Votos
@@ -474,6 +476,8 @@
                 .Select(v => v.Votante.Email)
                 .Distinct() // Evitamos enviar el correo dos veces a la misma persona
                 .ToList();
+
+            Console.WriteLine($"[DEBUG] Total de correos únicos listos para enviar: {correosVotantes.Count}");
 
             // 5. ENVIAMOS LOS CORREOS
             foreach (var email in correosVotantes)

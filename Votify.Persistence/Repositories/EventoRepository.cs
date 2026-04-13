@@ -17,7 +17,6 @@ namespace Votify.Persistence.Repositories
 
         public async Task<Evento?> ObtenerEventoConDetallesAsync(int id)
         {
-
             return await _context.Eventos
                 .Include(e => e.Participantes)
                 .Include(e => e.Organizador)
@@ -26,10 +25,11 @@ namespace Votify.Persistence.Repositories
                 .Include(e => e.CategoriasEvento)
                     .ThenInclude(c => c.Votacion)
                         .ThenInclude(v => v.Votos)
-                            .ThenInclude(v => v.Votante) 
+                            .ThenInclude(v => v.Votante)
                 .Include(e => e.CategoriasEvento)
                     .ThenInclude(c => c.Proyectos)
                         .ThenInclude(p => p.Participante)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
     }

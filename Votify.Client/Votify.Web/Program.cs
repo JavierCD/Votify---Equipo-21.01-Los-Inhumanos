@@ -67,6 +67,7 @@ builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IGenericRepository<Miembro>, GenericRepository<Miembro>>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IGenericRepository<Votante>, GenericRepository<Votante>>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 
 
