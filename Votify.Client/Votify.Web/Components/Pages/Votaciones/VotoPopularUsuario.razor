@@ -126,18 +126,8 @@
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger small" />
 
-                        @if (!formModel.Anonimo)
-                        {
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold small text-uppercase text-muted">ID del votante</label>
-                                <InputNumber @bind-Value="formModel.VotanteId" class="form-control" placeholder="Introduce tu ID" />
-                            </div>
-                        }
 
-                        <div class="mb-4 form-check">
-                            <input type="checkbox" class="form-check-input" id="chkAnonimo" @bind="formModel.Anonimo" />
-                            <label class="form-check-label" for="chkAnonimo">Votar de forma anónima</label>
-                        </div>
+                   
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold small text-uppercase text-muted">Selecciona los proyectos</label>
@@ -310,9 +300,8 @@
             var request = new EmitirVotoPopularRequest
             {
                 VotacionId = votacionSeleccionada.VotacionId,
-                VotanteId = formModel.VotanteId,
-                Anonimo = formModel.Anonimo,
-                Email = emailVotante,
+                VotanteId = 0,
+                Anonimo = true,
                 ProyectosSeleccionadosIds = proyectosSeleccionados.ToList()
             };
 
@@ -335,7 +324,7 @@
 
     public class FormVotoPopularModel
     {
-        public int VotanteId { get; set; }
-        public bool Anonimo { get; set; } = false;
+        public int VotanteId { get; set; } = 0;
+        public bool Anonimo { get; set; } = true;
     }
 }
