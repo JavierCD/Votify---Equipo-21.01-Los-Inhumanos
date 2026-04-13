@@ -46,7 +46,7 @@ namespace Votify.Services.Implementations
                         miembroId: juez.Id,
                         titulo: "¡Votación Abierta!",
                         mensaje: $"La evaluación para la categoría '{votacion.Categoria!.Name}' del evento '{evento.Name}' ha comenzado. ¡Ya puedes emitir tus votos!",
-                        urlAccion: $"/juez/evento/{evento.Id}/proyectos"
+                        urlAccion: $"/voto-popular-usuario/{votacion.Id}"
                     );
 
                     _context.Set<Notificacion>().Add(notificacion);
