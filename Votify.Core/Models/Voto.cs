@@ -13,6 +13,7 @@ namespace Votify.Core.Models
         public DateTime Fecha { get; set; } = DateTime.UtcNow;
         public bool Anonimo { get; set; }
         public string? HashAnonimo { get; set; }
+        public string? Comentario { get; set; }
 
         public double PuntuacionBase { get; set; }
 
@@ -27,13 +28,14 @@ namespace Votify.Core.Models
 
         protected Voto() { }
 
-        protected Voto(int votacionId, int proyectoId, double puntuacionBase, bool anonimo = false, string? hashAnonimo = null)
+        protected Voto(int votacionId, int proyectoId, double puntuacionBase, bool anonimo = false, string? hashAnonimo = null,string? comentario=null)
         {
             VotacionId = votacionId;
             ProyectoId = proyectoId;
             PuntuacionBase = puntuacionBase;
             Anonimo = anonimo;
             HashAnonimo = hashAnonimo;
+            Comentario = comentario;
             Fecha = DateTime.UtcNow;
         }
 
