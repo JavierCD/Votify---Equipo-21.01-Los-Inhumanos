@@ -20,6 +20,13 @@ namespace Votify.Core.Models
         public int CategoriaId { get; set; }
         //public Categoria? Categoria { get; set; }
 
+        // El organizador puede decidir si esta votación en concreto hace "ruido" o no al abrirse
+        public bool EnviarNotificacionApertura { get; set; } = true;
+
+        // Bandera de control interno (¡MUY IMPORTANTE!)
+        // Para que nuestro "Vigilante" no envíe 50 correos/notificaciones por minuto si la fecha coincide
+        public bool NotificacionAperturaEnviada { get; set; } = false;
+
         // Propiedad de navegación: Una votación tiene muchos votos
         //public List<Voto> Votos { get; set; } = new List<Voto>();
     }
