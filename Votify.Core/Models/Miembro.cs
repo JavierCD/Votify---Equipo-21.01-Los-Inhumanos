@@ -19,7 +19,13 @@ namespace Votify.Core.Models
 
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
-        
+        // Preferencias del usuario
+        public bool QuiereRecibirNotificaciones { get; set; } = true;
+
+        // Lista de notificaciones de este usuario
+        public ICollection<Notificacion> Notificaciones { get; set; } = new List<Notificacion>();
+
+
 
         public Miembro()
         {

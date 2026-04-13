@@ -66,10 +66,15 @@ builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 
-
 // 3. Registramos el servicio de Participantes 
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 builder.Services.AddScoped<IParticipanteRepository, ParticipanteRepository>();
+
+// 4. Registramos el servicio que contiene la lógica
+builder.Services.AddScoped<INotificacionCronService, NotificacionCronService>();
+
+// 5. Registramos el Vigilante para que .NET lo arranque en segundo plano
+builder.Services.AddHostedService<NoctificacionBackgroundService>();
 
 
 var app = builder.Build();
