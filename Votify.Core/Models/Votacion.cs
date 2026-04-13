@@ -20,7 +20,19 @@ namespace Votify.Core.Models
         public int CategoriaId { get; set; }
         //public Categoria? Categoria { get; set; }
 
-        // Propiedad de navegación: Una votación tiene muchos votos
-        //public List<Voto> Votos { get; set; } = new List<Voto>();
+        public bool EstaCerrada { get; set; } = false;
+        public bool ResultadosPublicados { get; set; } = false;
+
+        public void CerrarVotacion()
+        {
+            if (EstaCerrada) throw new InvalidOperationException("La votación ya está cerrada");
+            EstaCerrada = true;
+        }
+
+        public void CompartirResultados()
+        {
+            if(!EstaCerrada) throw new InvalidOperationException("No puedes publicar resultados de una votación que está abierta");
+            ResultadosPublicados = true;
+        }
     }
 }
