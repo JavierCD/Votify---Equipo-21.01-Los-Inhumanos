@@ -71,6 +71,7 @@ builder.Services.AddScoped<IGenericRepository<Miembro>, GenericRepository<Miembr
 
 // 3. Registramos el servicio de Participantes 
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
+builder.Services.AddScoped<IParticipanteRepository, ParticipanteRepository>();
 
 
 var app = builder.Build();

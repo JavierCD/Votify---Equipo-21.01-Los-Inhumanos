@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
@@ -10,9 +8,9 @@ namespace Votify.Services.Implementations
 {
     public class ParticipanteService : IParticipanteService
     {
-        private readonly IGenericRepository<Participante> _repository;
+        private readonly IParticipanteRepository _repository;
 
-        public ParticipanteService(IGenericRepository<Participante> repository)
+        public ParticipanteService(IParticipanteRepository repository)
         {
             _repository = repository;
         }
@@ -37,40 +35,23 @@ namespace Votify.Services.Implementations
                 throw new KeyNotFoundException($"No se encontró el participante con ID {participante.Id}");
             }
 
-            // Usamos el nuevo método de dominio en lugar de cambiar la propiedad a pelo
-            participanteExistente.ActualizarFicha(participante.Descripcion);
-            
+            // 1. Actualizamos datos básicos
             participanteExistente.Name = participante.Name;
-            
+            participanteExistente.ActualizarFicha(participante.Descripcion);
+
+            // 2. Actualizamos los nuevos campos del Perfil Público
+            participanteExistente.InstitucionEducativa = participante.InstitucionEducativa;
+            participanteExistente.Intereses = participante.Intereses;
+            participanteExistente.ColorFondo = participante.ColorFondo;
+            participanteExistente.UrlFoto = participante.UrlFoto;
+
             await _repository.UpdateAsync(participanteExistente);
         }
 
-        public async Task CambiarEstadoAsync(int id, string nuevoEstado)
+        public async Task<Participante?> ObtenerDashboardAsync(int id)
         {
-            var participante = await _repository.GetByIdAsync(id);
-            if (participante == null)
-            {
-                throw new KeyNotFoundException($"No se encontró el participante con ID {id}");
-            }
-
-            // La entidad Participante se encarga de validar si el estado es correcto
-            participante.EvaluarEstado(nuevoEstado);
-
-            await _repository.UpdateAsync(participante);
-        }
-
-        public async Task CambiarVisibilidadAsync(int id, bool visible)
-        {
-            var participante = await _repository.GetByIdAsync(id);
-            if (participante == null)
-            {
-                throw new KeyNotFoundException($"No se encontró el participante con ID {id}");
-            }
-
-            // Delegamos la acción a la entidad
-            participante.CambiarVisibilidad(visible);
-
-            await _repository.UpdateAsync(participante);
+            // Usamos la Mega-Consulta que preparamos en el repositorio específico
+            return await _repository.ObtenerConDetallesDashboardAsync(id);
         }
     }
 }

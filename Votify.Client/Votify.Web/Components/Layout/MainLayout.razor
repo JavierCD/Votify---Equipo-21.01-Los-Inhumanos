@@ -18,12 +18,22 @@
                     <img src="images/monigotevotify.png" style="width:40px; height:40px;" @onclick="ToggleMenu" />
 
                     @if (mostrarMenu)
-                    {
-                        <div class="dropdown">
-                            <p>@Session.Usuario.Email</p>
-                            <button @onclick="Logout">Cerrar sesión</button>
-                        </div>
-                    }
+{
+    <div class="dropdown-menu show position-absolute shadow-sm p-3" style="right: 0; top: 50px; min-width: 200px; z-index: 1000;">
+        <p class="text-muted small mb-2 text-center">@Session.Usuario.Email</p>
+        
+        @if (Session.Usuario is Votify.Core.Models.Participante p)
+        {
+            <a class="btn btn-outline-primary btn-sm w-100 mb-2" href="/ficha-participante/@p.Id">
+                <RadzenIcon Icon="manage_accounts" class="me-1" Style="font-size: 16px;"/> Mi Perfil
+            </a>
+        }
+        
+        <button class="btn btn-danger btn-sm w-100" @onclick="Logout">
+            <RadzenIcon Icon="logout" class="me-1" Style="font-size: 16px;"/> Cerrar sesión
+        </button>
+    </div>
+}
                 </div>
             }
             else

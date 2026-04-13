@@ -13,7 +13,7 @@
 {
     <div class="container rz-mt-4 rz-text-align-center">
         <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mt-4">Cargando tu panel de control...</RadzenText>
+        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mt-4">Cargando tus participaciones...</RadzenText>
     </div>
 }
 else if (participante == null)
@@ -26,89 +26,102 @@ else if (participante == null)
 }
 else
 {
-    <div class="container rz-mt-4">
-        <RadzenText TextStyle="TextStyle.H3" class="rz-mb-4">Hola, @participante.Name 👋</RadzenText>
+    <div class="container rz-mt-4 rz-mb-5">
 
-        @* CONTENEDOR PRINCIPAL TIPO GRID *@
-        <RadzenRow Gap="1.5rem">
-            
-            @* COLUMNA IZQUIERDA (Ocupa 8 de 12 espacios en pantallas grandes) *@
-            <RadzenColumn Size="12" SizeMD="8">
-                
-                @* TARJETA 1: ESTADO DEL PARTICIPANTE *@
-                <RadzenCard class="rz-shadow-3 rz-mb-4" Style="border-top: 4px solid var(--rz-primary);">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                            <RadzenIcon Icon="assignment_ind" Style="font-size: 3rem; color: var(--rz-primary);" />
-                            <RadzenStack Gap="0">
-                                <RadzenText TextStyle="TextStyle.H6" class="rz-mb-0">Estado de tu cuenta</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" class="rz-color-primary-light">@participante.Email</RadzenText>
+        @* --- CABECERA SUPERIOR LIMPIA --- *@
+        <RadzenCard class="rz-mb-4 rz-shadow-2" Style="border-left: 4px solid var(--rz-primary);">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <div>
+                    <RadzenText TextStyle="TextStyle.H4" class="rz-m-0 fw-bold">Hola, @participante.Name 👋</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" class="text-muted rz-m-0">@participante.Email</RadzenText>
+                </div>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                    <RadzenButton Icon="refresh" Text="Actualizar" ButtonStyle="ButtonStyle.Light" Click="CargarDatos" />
+                    @* Aquí tienes tu acceso directo al perfil que pedías *@
+                    <RadzenButton Icon="manage_accounts" Text="Mi Perfil" ButtonStyle="ButtonStyle.Primary" Click="@(() => NavManager.NavigateTo($"/ficha-participante/{participante.Id}"))" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <RadzenText TextStyle="TextStyle.H5" class="rz-mb-4 fw-bold text-secondary">Tus Participaciones Activas</RadzenText>
+
+        @if (participante.Proyectos == null || !participante.Proyectos.Any())
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" class="rz-mt-4">
+                Aún no tienes proyectos registrados en ningún evento. ¡Anímate a participar!
+            </RadzenAlert>
+        }
+        else
+        {
+            @* --- BUCLE: CREAMOS UN ESPACIO GIGANTE POR CADA PROYECTO/EVENTO --- *@
+            @foreach (var proyecto in participante.Proyectos)
+            {
+                <RadzenCard class="rz-mb-5 rz-shadow-3 p-4" Style="border-top: 4px solid var(--rz-info);">
+
+                    @* Título del Proyecto *@
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="border-bottom pb-3 rz-mb-3">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.H5" class="rz-m-0 fw-bold">@proyecto.Name</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" class="text-muted">
+                                <RadzenIcon Icon="event" Style="font-size: 14px; vertical-align: text-bottom;" /> Inscrito el @proyecto.FechaRegistro.ToString("dd/MM/yyyy")
+                            </RadzenText>
+                        </div>
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Votación Abierta" IsPill="true" class="px-3 py-2" />
+                    </RadzenStack>
+
+                    <RadzenRow Gap="2rem">
+                        @* COLUMNA IZQUIERDA: ACCIONES Y MÉTRICAS *@
+                        <RadzenColumn Size="12" SizeLG="4">
+
+                            <div class="bg-light p-3 rounded rz-mb-3 text-center border">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mb-1">Total Puntos / Votos</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H2" class="fw-bold rz-color-info rz-m-0">
+                                    @(proyecto.Votos?.Sum(v => v.PuntuacionBase) ?? 0)
+                                </RadzenText>
+                            </div>
+
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                <RadzenButton Text="Editar Participación" Icon="edit_note" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" class="w-100" />
+                                <RadzenButton Text="Ver Comentarios" Icon="forum" ButtonStyle="ButtonStyle.Warning" class="w-100" />
                             </RadzenStack>
-                        </RadzenStack>
-                        
-                        <RadzenBadge BadgeStyle="ObtenerColorEstado(participante.Estado)" Text="@participante.Estado" IsPill="true" class="rz-p-2 rz-text-h6" />
-                    </RadzenStack>
-                    
-                    <RadzenText TextStyle="TextStyle.Body1" class="rz-mt-3">
-                        @(participante.Estado == "Pendiente" 
-                            ? "Tu perfil está siendo revisado por los organizadores. Pronto recibirás una actualización." 
-                            : "Tu perfil está activo y listo para participar en los eventos.")
-                    </RadzenText>
-                </RadzenCard>
 
-                @* TARJETA 2: MIS PROYECTOS (Actualizado a 1:N) *@
-                <RadzenCard class="rz-shadow-3">
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" class="rz-mb-3">
-                        <RadzenText TextStyle="TextStyle.H6" class="rz-m-0"><RadzenIcon Icon="rocket_launch" class="rz-mr-1" /> Mis Proyectos</RadzenText>
-                        <RadzenButton Icon="edit" Text="Gestionar Proyectos" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" />
-                    </RadzenStack>
+                        </RadzenColumn>
 
-                    @* Comprobamos si la colección está vacía *@
-                    @if (participante.Proyectos == null || !participante.Proyectos.Any())
-                    {
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" class="rz-m-0">
-                            Aún no has registrado ningún proyecto. ¡Anímate y presenta tu idea!
-                        </RadzenAlert>
-                    }
-                    else
-                    {
-                        @* Si tiene proyectos, los mostramos en una pequeña lista *@
-                        <RadzenStack Gap="1rem">
-                            @foreach (var proyecto in participante.Proyectos)
+                        @* COLUMNA DERECHA: SU PROPIA GRÁFICA EXCLUSIVA *@
+                        <RadzenColumn Size="12" SizeLG="8">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mb-2">Evolución de Votos</RadzenText>
+
+                            @if (proyecto.Votos != null && proyecto.Votos.Any())
                             {
-                                <div class="rz-p-2" style="border-left: 3px solid var(--rz-secondary); background-color: var(--rz-secondary-lighter);">
-                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0"><b>@proyecto.Name</b></RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-m-0 text-muted">Registrado el: @proyecto.FechaRegistro.ToString("dd/MM/yyyy")</RadzenText>
+                                @* Generamos los datos reales del gráfico sobre la marcha para este proyecto específico *@
+                                var datosGraficoProyecto = proyecto.Votos
+                                .GroupBy(v => v.Fecha.ToString("dd MMM"))
+                                .Select(g => new { Fecha = g.Key, Puntos = g.Sum(v => v.PuntuacionBase) })
+                                .ToList();
+
+                                <RadzenChart>
+                                    <RadzenColumnSeries Data="@datosGraficoProyecto" CategoryProperty="Fecha" Title="Votos/Puntos recibidos" ValueProperty="Puntos">
+                                        <RadzenSeriesDataLabels Visible="true" />
+                                    </RadzenColumnSeries>
+                                    <RadzenColumnOptions Radius="4" />
+                                    <RadzenLegend Visible="false" />
+                                    <RadzenValueAxis>
+                                        <RadzenGridLines Visible="true" />
+                                    </RadzenValueAxis>
+                                </RadzenChart>
+                            }
+                            else
+                            {
+                                <div class="d-flex flex-column align-items-center justify-content-center bg-light rounded border border-dashed" style="height: 200px;">
+                                    <RadzenIcon Icon="show_chart" Style="font-size: 2.5rem; opacity: 0.3;" />
+                                    <span class="text-muted mt-2">Aún no hay votos para analizar</span>
                                 </div>
                             }
-                        </RadzenStack>
-                    }
+                        </RadzenColumn>
+                    </RadzenRow>
                 </RadzenCard>
-
-            </RadzenColumn>
-
-            @* COLUMNA DERECHA (Ocupa 4 de 12 espacios en pantallas grandes) *@
-            <RadzenColumn Size="12" SizeMD="4">
-                
-                @* TARJETA 3: RESUMEN DE EVENTOS *@
-                <RadzenCard class="rz-shadow-3 rz-h-100" Style="background-color: var(--rz-secondary-lighter);">
-                    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-3"><RadzenIcon Icon="event" class="rz-mr-1" /> Mis Eventos</RadzenText>
-                    
-                    <RadzenStack AlignItems="AlignItems.Center" class="rz-py-4">
-                        @* Actualizamos el número para que cuente los proyectos reales si existen *@
-                        <RadzenText TextStyle="TextStyle.H1" class="rz-color-secondary rz-m-0" Style="font-size: 4rem;">
-                            @(participante.Proyectos?.Count ?? 0)
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-color-secondary-dark">Proyectos inscritos</RadzenText>
-                    </RadzenStack>
-
-                    <RadzenDivider class="rz-my-3" />
-                    <RadzenButton Text="Explorar Eventos" ButtonStyle="ButtonStyle.Secondary" class="w-100" />
-                </RadzenCard>
-
-            </RadzenColumn>
-
-        </RadzenRow>
+            }
+        }
     </div>
 }
 
@@ -121,17 +134,16 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        participante = await ParticipanteService.ObtenerPorIdAsync(Id);
-        cargando = false;
+        await CargarDatos();
     }
 
-    private BadgeStyle ObtenerColorEstado(string estado)
+    private async Task CargarDatos()
     {
-        return estado switch
-        {
-            "Aprobado" => BadgeStyle.Success,
-            "Rechazado" => BadgeStyle.Danger,
-            _ => BadgeStyle.Warning
-        };
+        cargando = true;
+
+        // El repositorio de Entity Framework traerá al participante, sus proyectos y los votos de cada proyecto
+        participante = await ParticipanteService.ObtenerDashboardAsync(Id);
+
+        cargando = false;
     }
 }
