@@ -94,7 +94,8 @@
                             <div class="card-body row">
 
                                 <div class="col-md-5 border-end">
-                                    <h6>Votación Activa</h6>
+                                    <h6>Estado de la Votación</h6>
+
                                     @if (categoria.Votacion == null)
                                     {
                                         <p class="text-muted small">Aún no hay votación configurada.</p>
@@ -103,9 +104,67 @@
                                             Configurar Votación
                                         </button>
                                     }
+                                    else if (!categoria.Votacion.EstaCerrada)
+                                    {
+                                        <div class="alert alert-success p-2 small d-flex justify-content-between align-items-center">
+                                            <span><RadzenIcon Icon="how_to_vote" class="me-1" /> En curso</span>
+                                            <span class="badge bg-success">@categoria.Votacion.Votos.Count votos</span>
+                                        </div>
+
+                                        <button class="btn btn-sm btn-warning w-100 fw-bold shadow-sm" @onclick="() => CerrarVotacionCategoria(categoria)">
+                                            <RadzenIcon Icon="lock" class="me-1" /> Cerrar Votación
+                                        </button>
+                                    }
                                     else
                                     {
-                                        <div class="alert alert-success p-2 small">Votación en curso</div>
+                                        <div class="alert alert-secondary p-2 small mb-2">
+                                            <RadzenIcon Icon="lock" class="me-1" /> Votación Cerrada
+                                        </div>
+
+                                        <div class="bg-white border rounded p-2 mb-3">
+                                            <strong class="small d-block mb-2 border-bottom pb-1">Clasificación Actual:</strong>
+
+                                            @{
+                                                // Lógica LINQ para agrupar los votos por proyecto y ordenarlos de mayor a menor
+                                                var ranking = categoria.Votacion.Votos
+                                                .GroupBy(v => v.Proyecto)
+                                                .Select(g => new { Proyecto = g.Key, Votos = g.Count() }) // O g.Sum(v => v.Puntuacion) si es multicriterio
+                                                .OrderByDescending(x => x.Votos)
+                                                .ToList();
+                                            }
+
+                                            @if (!ranking.Any())
+                                            {
+                                                <span class="text-muted small">Nadie votó en esta categoría.</span>
+                                            }
+                                            else
+                                            {
+                                                <ul class="list-unstyled mb-0 small">
+                                                    @for (int i = 0; i < Math.Min(3, ranking.Count); i++) // Mostramos el Top 3
+                                                    {
+                                                        var posicion = ranking[i];
+                                                        <li class="mb-1">
+                                                            <strong>@(i + 1)º</strong> @(posicion.Proyecto?.Name ?? "Proyecto Eliminado")
+                                                            <span class="badge bg-light text-dark float-end">@posicion.Votos pts</span>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                        </div>
+
+                                        <button class="btn btn-sm w-100 fw-bold shadow-sm @(categoria.Votacion.ResultadosPublicados ? "btn-success disabled" : "btn-primary")"
+                                                @onclick="() => CompartirClasificacion(categoria)">
+
+                                            <RadzenIcon Icon="@(categoria.Votacion.ResultadosPublicados ? "check_circle" : "send")" class="me-1" />
+                                            @(categoria.Votacion.ResultadosPublicados ? "Clasificación Compartida" : "Compartir Clasificación")
+                                        </button>
+
+                                        @if (categoria.Votacion.ResultadosPublicados)
+                                        {
+                                            <div class="text-center text-muted mt-1" style="font-size: 0.7rem;">
+                                                Notificados: Participantes, Jueces y Votantes.
+                                            </div>
+                                        }
                                     }
                                 </div>
 
@@ -327,5 +386,44 @@
 
         // 3. Guardamos los cambios en la base de datos
         await CategoriaService.UpdateAsync(categoria);
+    }
+
+    private async Task CerrarVotacionCategoria(Categoria categoria)
+    {
+        try
+        {
+            categoria.Votacion.CerrarVotacion();
+
+            await CategoriaService.UpdateAsync(categoria);
+
+            mensajeExito = $"La votación para '{categoria.Name}' se ha cerrado. Ya puedes ver el ranking.";
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cerrar: {ex.Message}";
+        }
+    }
+
+    private async Task CompartirClasificacion(Categoria categoria)
+    {
+        try
+        {
+            categoria.Votacion.CompartirResultados();
+
+            await CategoriaService.UpdateAsync(categoria);
+            
+            Console.WriteLine("-------------------------------------------------");
+            Console.WriteLine($"[SISTEMA] Compartiendo resultados de: {categoria.Name}");
+            Console.WriteLine($"- Enviando emails a {categoria.Proyectos.Count} participantes...");
+            Console.WriteLine($"- Enviando emails a los jueces vinculados...");
+            Console.WriteLine($"- Enviando emails a {categoria.Votacion.Votos.Select(v => v.VotanteId).Distinct().Count()} votantes públicos...");
+            Console.WriteLine("-------------------------------------------------");
+
+            mensajeExito = "¡La clasificación y los certificados han sido compartidos con éxito!";
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al compartir: {ex.Message}";
+        }
     }
 }
