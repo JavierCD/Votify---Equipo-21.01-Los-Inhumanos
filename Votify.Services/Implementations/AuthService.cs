@@ -31,5 +31,36 @@ namespace Votify.Services.Implementations
             }
             return miembro;
         }
+        public async Task<Miembro> Register(string name, string email, string password, string role)
+        {
+            var miembros = await _miembroRepository.GetAllAsync();
+
+            if (miembros.Any(m => m.Email == email))
+                throw new Exception("El usuario ya existe");
+
+            Miembro nuevoUsuario;
+
+            switch (role)
+            {
+                case "Participante":
+                    nuevoUsuario = new Participante(name, email, password);
+                    break;
+
+                case "Juez":
+                    nuevoUsuario = new Juez(name, email, password);
+                    break;
+
+                case "Admin":
+                    nuevoUsuario = new Organizador(name, email, password);
+                    break;
+
+                default:
+                    throw new Exception("Rol inválido");
+            }
+
+            await _miembroRepository.AddAsync(nuevoUsuario);
+
+            return nuevoUsuario;
+        }
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Radzen;
 using Votify.Core.Interfaces;
+using Votify.Core.Models;
 using Votify.Persistence.Context;
 using Votify.Persistence.Repositories;
 using Votify.Services.Implementations;
@@ -64,6 +65,7 @@ builder.Services.AddScoped<IVotoPuntuacionRepository, VotoPuntuacionRepository>(
 builder.Services.AddScoped<IEventoRepository, EventoRepository>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+builder.Services.AddScoped<IGenericRepository<Miembro>, GenericRepository<Miembro>>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 
 

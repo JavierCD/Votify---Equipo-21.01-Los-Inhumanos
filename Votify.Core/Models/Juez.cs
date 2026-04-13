@@ -8,5 +8,10 @@ namespace Votify.Core.Models
 {
     public class Juez : Miembro
     {
+        public Juez() : base() { }
+        public Juez(string name, string email, string password) : base(name, email, password)
+        {
+
+        }
     }
 }
