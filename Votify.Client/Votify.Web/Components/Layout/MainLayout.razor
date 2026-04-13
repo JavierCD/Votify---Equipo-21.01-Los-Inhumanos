@@ -1,8 +1,16 @@
 ﻿@inherits LayoutComponentBase
-@inject Votify.Web.Services.UserSession Session
-@inject NavigationManager Navigation
+@using System.Timers
+@using Votify.Core.Models
+@implements IDisposable
 
-<RadzenComponents/>
+@inject Votify.Web.Services.UserSession Session
+@using Microsoft.Extensions.DependencyInjection
+@inject IServiceScopeFactory ScopeFactory
+@inject NavigationManager Navigation
+@inject NotificationService RadzenNotificationService
+
+<RadzenComponents />
+<RadzenNotification />
 
 <div class="page">
     <div class="sidebar">
@@ -14,26 +22,76 @@
 
             @if (Session.Usuario != null)
             {
-                <div class="user-menu">
-                    <img src="images/monigotevotify.png" style="width:40px; height:40px;" @onclick="ToggleMenu" />
+                @* --- INICIO DE LA CAMPANITA --- *@
+                <div class="d-flex align-items-center me-2" style="position: relative;">
+                    <div style="cursor: pointer;" @onclick="ToggleNotificaciones">
+                        <RadzenIcon Icon="notifications" Style="font-size: 1.6rem; color: #555;" />
+
+                        @if (notificacionesSinLeer > 0)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@notificacionesSinLeer.ToString()"
+                                         IsPill="true" Style="position: absolute; top: -5px; right: -10px; font-size: 0.7rem; padding: 0.2rem 0.4rem;" />
+                        }
+                    </div>
+
+                    @* EL PANEL DESPLEGABLE DE NOTIFICACIONES *@
+                    @if (mostrarNotificaciones)
+                    {
+                        <div class="dropdown-menu show position-absolute shadow p-0" style="right: 60px; top: 50px; width: 320px; z-index: 1000; overflow: hidden; border-radius: 8px;">
+                            <div class="bg-primary text-white p-2 text-center fw-bold">
+                                Notificaciones
+                            </div>
+
+                            <div style="max-height: 350px; overflow-y: auto;">
+                                @if (!misNotificaciones.Any())
+                                {
+                                    <div class="p-4 text-center text-muted small">
+                                        No tienes notificaciones nuevas.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="list-group list-group-flush">
+                                        @foreach (var n in misNotificaciones)
+                                        {
+                                            <button class="list-group-item list-group-item-action p-3 text-start border-bottom" @onclick="() => ClicarNotificacion(n)">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="fw-bold text-primary" style="font-size: 0.9rem;">@n.Titulo</span>
+                                                    <span class="text-muted" style="font-size: 0.7rem;">@n.FechaCreacion.ToLocalTime().ToString("HH:mm")</span>
+                                                </div>
+                                                <div class="text-muted" style="font-size: 0.85rem; line-height: 1.3;">
+                                                    @n.Mensaje
+                                                </div>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                @* --- FIN DE LA CAMPANITA --- *@
+
+                <div class="user-menu" style="position: relative;">
+                    <img src="images/monigotevotify.png" style="width:40px; height:40px; cursor:pointer;" @onclick="ToggleMenu" />
 
                     @if (mostrarMenu)
-{
-    <div class="dropdown-menu show position-absolute shadow-sm p-3" style="right: 0; top: 50px; min-width: 200px; z-index: 1000;">
-        <p class="text-muted small mb-2 text-center">@Session.Usuario.Email</p>
-        
-        @if (Session.Usuario is Votify.Core.Models.Participante p)
-        {
-            <a class="btn btn-outline-primary btn-sm w-100 mb-2" href="/ficha-participante/@p.Id">
-                <RadzenIcon Icon="manage_accounts" class="me-1" Style="font-size: 16px;"/> Mi Perfil
-            </a>
-        }
-        
-        <button class="btn btn-danger btn-sm w-100" @onclick="Logout">
-            <RadzenIcon Icon="logout" class="me-1" Style="font-size: 16px;"/> Cerrar sesión
-        </button>
-    </div>
-}
+                    {
+                        <div class="dropdown-menu show position-absolute shadow-sm p-3" style="right: 0; top: 50px; min-width: 200px; z-index: 1000;">
+                            <p class="text-muted small mb-2 text-center">@Session.Usuario.Email</p>
+
+                            @if (Session.Usuario is Participante p)
+                            {
+                                <a class="btn btn-outline-primary btn-sm w-100 mb-2" href="/ficha-participante/@p.Id">
+                                    <RadzenIcon Icon="manage_accounts" class="me-1" Style="font-size: 16px;" /> Mi Perfil
+                                </a>
+                            }
+
+                            <button class="btn btn-danger btn-sm w-100" @onclick="Logout">
+                                <RadzenIcon Icon="logout" class="me-1" Style="font-size: 16px;" /> Cerrar sesión
+                            </button>
+                        </div>
+                    }
                 </div>
             }
             else
@@ -41,9 +99,6 @@
                 <a class="btn btn-primary" href="/login">Iniciar sesión</a>
                 <a class="btn btn-outline-primary" href="/register">Crear cuenta</a>
             }
-
-            
-
         </div>
 
         <article class="content px-4">
@@ -60,15 +115,101 @@
 
 @code {
     private bool mostrarMenu = false;
+    private bool mostrarNotificaciones = false;
+
+    private int notificacionesSinLeer = 0;
+    private List<Notificacion> misNotificaciones = new();
+    private Timer? timerConsulta;
+
+    // CAMBIO 1: Usamos OnParametersSetAsync para que reaccione al hacer Login
+    protected override async Task OnParametersSetAsync()
+    {
+        // Si hay usuario y el reloj aún no está encendido, lo encendemos
+        if (Session.Usuario != null && timerConsulta == null)
+        {
+            await RevisarNotificacionesNuevas();
+
+            timerConsulta = new Timer(10000); // 10 segundos para pruebas (luego ponlo a 30000)
+            timerConsulta.Elapsed += async (s, e) => await InvokeAsync(RevisarNotificacionesNuevas);
+            timerConsulta.AutoReset = true;
+            timerConsulta.Enabled = true;
+        }
+        // Si el usuario cierra sesión, apagamos el reloj
+        else if (Session.Usuario == null && timerConsulta != null)
+        {
+            timerConsulta.Stop();
+            timerConsulta.Dispose();
+            timerConsulta = null;
+        }
+    }
+
+    private async Task RevisarNotificacionesNuevas()
+    {
+        if (Session.Usuario == null) return;
+
+        // Creamos un "espacio temporal" seguro y fresco para pedir cosas a la BD
+        using var scope = ScopeFactory.CreateScope();
+        var notificacionService = scope.ServiceProvider.GetRequiredService<Votify.Services.Interfaces.INotificacionService>();
+
+        var nuevas = await notificacionService.ObtenerNotificacionesUsuarioAsync(Session.Usuario.Id);
+
+        if (nuevas.Count > misNotificaciones.Count)
+        {
+            var ultima = nuevas.First();
+            LanzarPopupNotificacion(ultima);
+        }
+
+        misNotificaciones = nuevas;
+        notificacionesSinLeer = nuevas.Count;
+        StateHasChanged();
+    }
+
+    private void LanzarPopupNotificacion(Notificacion n)
+    {
+        RadzenNotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = n.Titulo,
+            Detail = n.Mensaje,
+            Duration = 8000,
+            Click = (msg) => { Navigation.NavigateTo(n.UrlAccion); }
+        });
+    }
+
+    // ... (El resto de tus métodos ToggleMenu, ToggleNotificaciones, ClicarNotificacion, Logout, Dispose igual que antes) ...
+    void ToggleNotificaciones()
+    {
+        mostrarNotificaciones = !mostrarNotificaciones;
+        mostrarMenu = false;
+    }
 
     void ToggleMenu()
     {
         mostrarMenu = !mostrarMenu;
+        mostrarNotificaciones = false;
+    }
+
+    private async Task ClicarNotificacion(Notificacion n)
+    {
+        // Abrimos otra conexión segura para actualizar el estado a "Leída"
+        using var scope = ScopeFactory.CreateScope();
+        var notificacionService = scope.ServiceProvider.GetRequiredService<Votify.Services.Interfaces.INotificacionService>();
+
+        await notificacionService.MarcarComoLeidaAsync(n.Id);
+
+        mostrarNotificaciones = false;
+        await RevisarNotificacionesNuevas();
+        Navigation.NavigateTo(n.UrlAccion);
     }
 
     void Logout()
     {
         Session.Usuario = null;
         Navigation.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        timerConsulta?.Dispose();
     }
 }

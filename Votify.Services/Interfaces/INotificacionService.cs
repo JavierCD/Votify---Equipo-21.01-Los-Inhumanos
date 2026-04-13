@@ -7,8 +7,9 @@ using Votify.Core.Models;
 
 namespace Votify.Services.Interfaces
 {
-    public interface INotificacionCronService
+    public interface INotificacionService
     {
-        Task ProcesarAperturasDeVotacionAsync();
+        Task<List<Notificacion>> ObtenerNotificacionesUsuarioAsync(int miembroId);
+        Task MarcarComoLeidaAsync(int notificacionId);
     }
 }
