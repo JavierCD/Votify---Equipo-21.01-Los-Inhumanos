@@ -1,0 +1,86 @@
+﻿@page "/register"
+@using Votify.Services.Interfaces
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+
+<div class="d-flex justify-content-center align-items-center" style="height: 80vh;">
+
+    <div class="card shadow p-4" style="width: 400px;">
+
+        <h3 class="text-center mb-4">Crear cuenta</h3>
+
+        <EditForm Model="registerModel" OnSubmit="HandleRegister">
+
+            <div class="mb-3">
+                <label>Nombre</label>
+                <InputText class="form-control" @bind-Value="registerModel.Name" />
+            </div>
+
+            <div class="mb-3">
+                <label>Email</label>
+                <InputText class="form-control" @bind-Value="registerModel.Email" />
+            </div>
+
+            <div class="mb-3">
+                <label>Contraseña</label>
+                <InputText type="password" class="form-control" @bind-Value="registerModel.Password" />
+            </div>
+
+            <div class="mb-3">
+                <label>Rol</label>
+                <InputSelect class="form-control" @bind-Value="registerModel.Role">
+                    <option value="Participante">Participante</option>
+                    <option value="Juez">Juez</option>
+                    <option value="Admin">Administrador</option>
+                </InputSelect>
+            </div>
+
+            @if (!string.IsNullOrEmpty(mensaje))
+            {
+                <div class="alert alert-danger">
+                    @mensaje
+                </div>
+            }
+
+            <button type="submit" class="btn btn-primary w-100">
+                Registrarse
+            </button>
+
+        </EditForm>
+
+    </div>
+
+</div>
+
+@code {
+    private string mensaje = "";
+
+    private RegisterDto registerModel = new();
+
+    private async Task HandleRegister()
+    {
+        try
+        {
+            await AuthService.Register(
+                registerModel.Name,
+                registerModel.Email,
+                registerModel.Password,
+                registerModel.Role
+            );
+
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            mensaje = ex.Message;
+        }
+    }
+
+    public class RegisterDto
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public string Role { get; set; }
+    }
+}
