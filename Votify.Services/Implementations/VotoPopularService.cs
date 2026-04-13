@@ -70,19 +70,7 @@ namespace Votify.Services.Implementations
             if (votacion == null)
                 throw new ArgumentException("La votación popular no existe.");
 
-            if (!request.Anonimo)
-            {
-                if (request.VotanteId <= 0)
-                    throw new ArgumentException("El votante no es válido.");
-
-                var votante = await _votoPopularRepository.ObtenerVotantePorIdAsync(request.VotanteId);
-
-                if (votante == null)
-                    throw new ArgumentException("El votante no existe.");
-
-                if (await _votoPopularRepository.YaVotoEnEstaVotacionAsync(request.VotanteId, request.VotacionId))
-                    throw new InvalidOperationException("Este votante ya ha emitido su voto en esta votación.");
-            }
+            
             if (request.ProyectosSeleccionadosIds == null || !request.ProyectosSeleccionadosIds.Any())
                 throw new ArgumentException("Debes seleccionar al menos un proyecto.");
 
@@ -121,8 +109,7 @@ namespace Votify.Services.Implementations
                     hash
                 );
 
-                if (!request.Anonimo)
-                    voto.AssignId(request.VotanteId);
+            
 
                 return voto;
             }).ToList();
