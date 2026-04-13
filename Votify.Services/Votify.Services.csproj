@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.24" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Votify.Core\Votify.Core.csproj" />
     <ProjectReference Include="..\Votify.Persistence\Votify.Persistence.csproj" />
   </ItemGroup>
