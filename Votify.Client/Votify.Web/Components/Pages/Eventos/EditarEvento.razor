@@ -1,12 +1,15 @@
 ﻿@page "/eventos/editar/{EventoId:int}"
 @rendermode InteractiveServer
+@using System.Text
 @using Votify.Core.Factories
 @using Votify.Web.ViewModels
 @using Votify.Core.Interfaces
 @using Votify.Core.Models
+@using Votify.Services.Interfaces
 @inject NavigationManager NavigationManager
 @inject IEventoService EventoService
 @inject ICategoriaService CategoriaService
+@inject IEmailService EmailService
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -408,18 +411,77 @@
     {
         try
         {
+            // 1. Cambiamos el estado a publicado y guardamos en BD
             categoria.Votacion.CompartirResultados();
-
             await CategoriaService.UpdateAsync(categoria);
-            
-            Console.WriteLine("-------------------------------------------------");
-            Console.WriteLine($"[SISTEMA] Compartiendo resultados de: {categoria.Name}");
-            Console.WriteLine($"- Enviando emails a {categoria.Proyectos.Count} participantes...");
-            Console.WriteLine($"- Enviando emails a los jueces vinculados...");
-            Console.WriteLine($"- Enviando emails a {categoria.Votacion.Votos.Select(v => v.VotanteId).Distinct().Count()} votantes públicos...");
-            Console.WriteLine("-------------------------------------------------");
 
-            mensajeExito = "¡La clasificación y los certificados han sido compartidos con éxito!";
+            // 2. Extraemos el Ranking y calculamos las posiciones
+            var ranking = categoria.Votacion.Votos
+                .GroupBy(v => v.Proyecto)
+                .Select(g => new { Proyecto = g.Key, Votos = g.Count() })
+                .OrderByDescending(x => x.Votos)
+                .ToList();
+
+            // 3. CONSTRUIMOS EL DISEÑO DE LA TABLA EN HTML (Inline CSS para emails)
+            var htmlBuilder = new StringBuilder();
+            htmlBuilder.Append($@"
+                <div style='font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;'>
+                    <h2 style='color: #2c3e50; text-align: center;'>Resultados Oficiales</h2>
+                    <p>Hola, aquí tienes la clasificación final de la categoría <strong>'{categoria.Name}'</strong> en la que participaste:</p>
+
+                    <table style='width: 100%; border-collapse: collapse; margin-top: 20px;'>
+                        <thead style='background-color: #0d6efd; color: white;'>
+                            <tr>
+                                <th style='padding: 12px; border: 1px solid #ddd;'>Posición</th>
+                                <th style='padding: 12px; border: 1px solid #ddd; text-align: left;'>Proyecto</th>
+                                <th style='padding: 12px; border: 1px solid #ddd;'>Votos</th>
+                            </tr>
+                        </thead>
+                        <tbody>");
+
+            // Rellenamos las filas de la tabla dinámicamente
+            for (int i = 0; i < ranking.Count; i++)
+            {
+                var pos = ranking[i];
+                string colorFila = i % 2 == 0 ? "#f8f9fa" : "#ffffff"; // Filas alternas
+                string medalla = i == 0 ? "🥇 " : i == 1 ? "🥈 " : i == 2 ? "🥉 " : ""; // Top 3 destacado
+
+                htmlBuilder.Append($@"
+                            <tr style='background-color: {colorFila}; text-align: center;'>
+                                <td style='padding: 10px; border: 1px solid #ddd; font-weight: bold;'>{i + 1}º</td>
+                                <td style='padding: 10px; border: 1px solid #ddd; text-align: left;'>{medalla}{pos.Proyecto?.Name}</td>
+                                <td style='padding: 10px; border: 1px solid #ddd;'>
+                                    <span style='background-color: #e9ecef; padding: 4px 8px; border-radius: 12px; font-size: 0.9em;'>{pos.Votos} pts</span>
+                                </td>
+                            </tr>");
+            }
+
+            htmlBuilder.Append(@"
+                        </tbody>
+                    </table>
+                    <p style='margin-top: 30px; font-size: 0.9em; color: #6c757d; text-align: center;'>
+                        Gracias por participar en el evento.<br>El Equipo de Votify.
+                    </p>
+                </div>");
+
+            string cuerpoCorreo = htmlBuilder.ToString();
+            string asuntoCorreo = $"🏆 Resultados Finales: {categoria.Name}";
+
+            // 4. RECOPILAMOS LOS CORREOS DE LOS VOTANTES (Sin duplicados)
+            // Extraemos los correos de la tabla de Votos usando la nueva UT que hiciste en VotoPopularUsuario
+            var correosVotantes = categoria.Votacion.Votos
+                .Where(v => v.Votante != null && !string.IsNullOrEmpty(v.Votante.Email))
+                .Select(v => v.Votante.Email)
+                .Distinct() // Evitamos enviar el correo dos veces a la misma persona
+                .ToList();
+
+            // 5. ENVIAMOS LOS CORREOS
+            foreach (var email in correosVotantes)
+            {
+                await EmailService.EnviarCorreoAsync(email, asuntoCorreo, cuerpoCorreo);
+            }
+
+            mensajeExito = $"¡La clasificación se ha enviado por correo a {correosVotantes.Count} votantes!";
         }
         catch (Exception ex)
         {

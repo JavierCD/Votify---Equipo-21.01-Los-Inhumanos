@@ -18,6 +18,7 @@ namespace Votify.Core.Models
 
         // La votación en la que se emite (Obligatorio)
         public int? VotanteId { get; set; }
+        public virtual Votante? Votante { get; set; }
         public int VotacionId { get; set; }
         public Votacion? Votacion { get; set; }
 
