@@ -51,13 +51,13 @@
                 <DataAnnotationsValidator />
                 <ValidationSummary class="text-danger small" />
                 <div class="row g-3 mb-3">
-                    <div class="col">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de apertura</label>
-                        <InputDate @bind-Value="request.FechaApertura" class="form-control" />
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha y hora de apertura</label>
+                        <RadzenDatePicker @bind-Value="request.FechaApertura" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
                     </div>
-                    <div class="col">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de cierre</label>
-                        <InputDate @bind-Value="request.FechaCierre" class="form-control" />
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha y hora de cierre</label>
+                        <RadzenDatePicker @bind-Value="request.FechaCierre" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
                     </div>
                 </div>
                 <div class="mb-3">
@@ -71,6 +71,13 @@
                 <div class="mb-4">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Máximo de selecciones</label>
                     <InputNumber @bind-Value="request.MaxSelection" class="form-control" placeholder="Ej: 3" />
+                </div>
+                <div class="d-flex align-items-center mb-4 p-3 bg-light rounded border">
+                    <RadzenSwitch @bind-Value="request.EnviarNotificacionApertura" />
+                    <div class="ms-3">
+                        <span class="d-block fw-bold" style="font-size: 0.9rem;">Notificar al Jurado</span>
+                        <span class="text-muted" style="font-size: 0.8rem;">Envía un aviso automático a los jueces cuando comience esta votación.</span>
+                    </div>
                 </div>
                 <hr class="my-3" />
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@isLoading">
@@ -102,13 +109,13 @@
                 <DataAnnotationsValidator />
                 <ValidationSummary class="text-danger small" />
                 <div class="row g-3 mb-3">
-                    <div class="col">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de apertura</label>
-                        <InputDate @bind-Value="requestPuntuacion.FechaApertura" class="form-control" />
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha y hora de apertura</label>
+                        <RadzenDatePicker @bind-Value="request.FechaApertura" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
                     </div>
-                    <div class="col">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha de cierre</label>
-                        <InputDate @bind-Value="requestPuntuacion.FechaCierre" class="form-control" />
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Fecha y hora de cierre</label>
+                        <RadzenDatePicker @bind-Value="request.FechaCierre" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
                     </div>
                 </div>
                 <div class="mb-3">
@@ -122,6 +129,13 @@
                 <div class="mb-4">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Valor máximo de puntuación</label>
                     <InputNumber @bind-Value="requestPuntuacion.ValorMax" class="form-control" placeholder="Ej: 10" />
+                </div>
+                <div class="d-flex align-items-center mb-4 p-3 bg-light rounded border">
+                    <RadzenSwitch @bind-Value="request.EnviarNotificacionApertura" />
+                    <div class="ms-3">
+                        <span class="d-block fw-bold" style="font-size: 0.9rem;">Notificar al Jurado</span>
+                        <span class="text-muted" style="font-size: 0.8rem;">Envía un aviso automático a los jueces cuando comience esta votación.</span>
+                    </div>
                 </div>
                 <hr class="my-3" />
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@isLoading">
@@ -171,6 +185,9 @@
 
         try
         {
+            requestPuntuacion.FechaApertura = requestPuntuacion.FechaApertura.ToUniversalTime();
+            requestPuntuacion.FechaCierre = requestPuntuacion.FechaCierre.ToUniversalTime();
+
             var response = await PopularService.CrearVotacionPopularAsync(request);
             successMessage = $"Votación popular creada correctamente con ID {response.Id}.";
             LimpiarFormulario();
@@ -223,6 +240,9 @@
 
         try
         {
+            requestPuntuacion.FechaApertura = requestPuntuacion.FechaApertura.ToUniversalTime();
+            requestPuntuacion.FechaCierre = requestPuntuacion.FechaCierre.ToUniversalTime();
+
             var response = await PuntuacionService.CrearVotacionPuntuacionAsync(requestPuntuacion);
             successMessage = $"Votación por puntuación creada correctamente con ID {response.Id}.";
             requestPuntuacion = new CrearVotacionPuntuacionRequest

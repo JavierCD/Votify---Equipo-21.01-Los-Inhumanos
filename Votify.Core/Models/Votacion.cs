@@ -34,5 +34,10 @@ namespace Votify.Core.Models
             if(!EstaCerrada) throw new InvalidOperationException("No puedes publicar resultados de una votación que está abierta");
             ResultadosPublicados = true;
         }
+
+        // El organizador puede decidir si esta votación en concreto hace "ruido" o no al abrirse
+        public bool EnviarNotificacionApertura { get; set; } = true;
+        // Bandera de control interno
+        public bool NotificacionAperturaEnviada { get; set; } = false;
     }
 }
