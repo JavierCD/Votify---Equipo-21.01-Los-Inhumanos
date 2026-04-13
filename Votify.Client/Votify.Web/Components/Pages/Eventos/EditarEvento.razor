@@ -111,7 +111,7 @@
                                     {
                                         <div class="alert alert-success p-2 small d-flex justify-content-between align-items-center">
                                             <span><RadzenIcon Icon="how_to_vote" class="me-1" /> En curso</span>
-                                            <span class="badge bg-success">@categoria.Votacion.Votos.Count votos</span>
+                                            <span class="badge bg-success">@(categoria.Votacion.Votos?.Count ?? 0) votos</span>
                                         </div>
 
                                         <button class="btn btn-sm btn-warning w-100 fw-bold shadow-sm" @onclick="() => CerrarVotacionCategoria(categoria)">
