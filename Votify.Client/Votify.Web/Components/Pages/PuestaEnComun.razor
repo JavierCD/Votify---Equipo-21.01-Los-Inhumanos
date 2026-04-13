@@ -1,0 +1,72 @@
+﻿@page "/juez/puesta-en-comun/{CategoriaId:int}"
+@rendermode InteractiveServer
+@using Votify.Core.Models
+@using Votify.Services.Interfaces
+@inject IVotoExpertoServices VotoExpertoService
+@inject NavigationManager Nav
+
+<h3>Puesta en Común — Comentarios del Jurado</h3>
+
+@if (cargando)
+{
+    <p>Cargando comentarios...</p>
+}
+else if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+else if (!comentariosPorProyecto.Any())
+{
+    <div class="alert alert-info">Aún no hay comentarios registrados para esta categoría.</div>
+}
+else
+{
+    @foreach (var grupo in comentariosPorProyecto)
+    {
+        <div class="card mb-4">
+            <div class="card-header fw-bold">
+                📁 @grupo.Key
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var voto in grupo.Value)
+                {
+                    <li class="list-group-item">
+                        <div class="text-muted small mb-1">
+                            @(voto.Anonimo ? "Juez anónimo" : $"Juez ID: {voto.votanteId}") — @voto.Fecha.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                        <p class="mb-0">@voto.Comentario</p>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+}
+
+<button class="btn btn-secondary mt-2" @onclick='() => Nav.NavigateTo("/")'>Volver</button>
+
+@code {
+    [Parameter] public int CategoriaId { get; set; }
+
+    private Dictionary<string, List<Voto>> comentariosPorProyecto = new();
+    private bool cargando = true;
+    private string error = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var votos = await VotoExpertoService.ObtenerComentariosPorCategoriaAsync(CategoriaId);
+            comentariosPorProyecto = votos
+                .GroupBy(v => v.Proyecto?.Name ?? "Proyecto desconocido")
+                .ToDictionary(g => g.Key, g => g.ToList());
+        }
+        catch (Exception ex)
+        {
+            error = $"Error al cargar comentarios: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+}

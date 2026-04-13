@@ -6,6 +6,7 @@
 @using Votify.Core.Interfaces
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
+@inject IVotoExpertoServices VotoExpertoService
 @inject NavigationManager NavigationManager
 @inject IEventoService EventoService
 @inject IProyectoService ProyectoService
@@ -89,7 +90,7 @@
             }
         </div>
     </div>
-
+            
     <div class="container d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
         <h2 class="mb-4">Accede como votante a una votación</h2>
         <div class="card shadow-sm p-4 text-center" style="max-width: 400px; width: 100%;">
@@ -147,31 +148,35 @@ else if (Session.Usuario is Organizador)
         </div>
     </div>
 }
-else if (Session.Usuario is Juez)
+else if (Session.Usuario is Juez juez)
 {
     <div class="container mt-4">
-        <h2 class="mb-4">Hola, Nombre de usuario</h2>
-
-        <h4 class="mb-3">Mis Eventos a evaluar</h4>
+        <h2 class="mb-4">Hola, @NombreUsuario</h2>
+        <h4 class="mb-3">Mis Eventos a evaluar (@eventosJuez.Count)</h4>
         <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <div class="d-flex mb-3">
-                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center rounded" style="width: 80px; height: 80px;">Img</div>
-                            <div class="ms-3">
-                                <h5>Nombre del evento</h5>
-                                <p class="text-muted mb-1 small">Fecha inicio - Fecha fin</p>
-                                <p class="text-muted small">Lugar del evento</p>
+            @foreach (var ev in eventosJuez)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex mb-3">
+                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center rounded" style="width: 80px; height: 80px;">Img</div>
+                                <div class="ms-3">
+                                    <h5>@ev.Name</h5>
+                                    <p class="text-muted mb-1 small">@ev.FechaInicio.ToLocalTime().ToString("dd MMM") - @ev.FechaFin.ToLocalTime().ToString("dd MMM yyyy")</p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-outline-secondary w-100">Ver Proyectos y Participantes</button>
-                            <button class="btn btn-primary w-100" disabled>Acceder a Votación (Cerrada)</button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary w-100"
+                                        @onclick='() => NavigationManager.NavigateTo($"/juez/evento/{ev.Id}")'>
+                                    Ver Proyectos y Participantes
+                                </button>
+                                <button class="btn btn-primary w-100" disabled>Acceder a Votación (Cerrada)</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            }
         </div>
     </div>
 }
@@ -240,6 +245,7 @@ else
 
     private string NombreUsuario = "Invitado";
     private IEnumerable<Evento> misEventos = new List<Evento>();
+    private List<Evento> eventosJuez = new();
 
     private string codigoBusqueda = "";
     private Evento? eventoEncontrado;
@@ -284,10 +290,10 @@ else
             misEventos = new List<Evento>(); // Falta método en el EventoService
             NombreUsuario = Session.Usuario.Name; 
         }
-        else if (Session.Usuario is Juez)
+        else if (Session.Usuario is Juez juez)
         {
-            misEventos = new List<Evento>();
             NombreUsuario = Session.Usuario.Name;
+            eventosJuez = (await EventoService.ObtenerEventosPorJuezAsync(juez.Id)).ToList();
         }
         else
         {
