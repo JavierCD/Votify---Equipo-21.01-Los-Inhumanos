@@ -28,5 +28,16 @@ namespace Votify.Persistence.Repositories
                         .ThenInclude(cat => cat.Evento)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
+
+        public async Task<Participante?> ObtenerPorIdAsync(int id)
+        {
+            return await _context.Set<Participante>()
+                .Include(p => p.Proyectos)
+                    .ThenInclude(proy => proy.Categorias) 
+                        .ThenInclude(c => c.Votacion)     
+                            .ThenInclude(v => v.Votos)    
+                                .ThenInclude(v => v.Proyecto) 
+                .FirstOrDefaultAsync(p => p.Id == id);
+        }
     }
 }
