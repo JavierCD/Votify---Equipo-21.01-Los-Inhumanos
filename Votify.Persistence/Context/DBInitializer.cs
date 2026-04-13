@@ -220,6 +220,12 @@ namespace Votify.Persistence.Context
 
             context.Votantes.AddRange(votante1, votante2, votante3, votante4, votante5, votante6);
             context.SaveChanges();
+
+            // 6. Asociar jueces al evento
+            eventoDemo.Jurado.Add(juez);
+            eventoDemo.Jurado.Add(juez2);
+            context.Eventos.Update(eventoDemo);
+            context.SaveChanges();
         }
     }
 }

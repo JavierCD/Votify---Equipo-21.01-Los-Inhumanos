@@ -1,0 +1,146 @@
+﻿@page "/juez/evento/{EventoId:int}"
+@rendermode InteractiveServer
+@using Votify.Core.Models
+@using Votify.Services.Interfaces
+@using Votify.Core.Interfaces
+@inject IEventoService EventoService
+@inject IVotoExpertoServices VotoExpertoService
+@inject NavigationManager Nav
+
+<h3>Proyectos y Participantes</h3>
+
+@if (cargando)
+{
+    <p>Cargando...</p>
+}
+else if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+else
+{
+    <h5 class="text-muted mb-4">@evento?.Name</h5>
+
+    @foreach (var categoria in categorias)
+    {
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center"
+                 style="cursor:pointer;"
+                 @onclick="() => ToggleCategoria(categoria.Id)">
+                <span class="fw-bold">📂 @categoria.Name</span>
+                <span>@(categoriasAbiertas.Contains(categoria.Id) ? "▲" : "▼")</span>
+            </div>
+
+            @if (categoriasAbiertas.Contains(categoria.Id))
+            {
+                <div class="card-body">
+                    @foreach (var proyecto in proyectosPorCategoria.GetValueOrDefault(categoria.Id, new()))
+                    {
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">@proyecto.Name</h6>
+                                <textarea class="form-control mb-2"
+                                          rows="3"
+                                          placeholder="Escribe tu valoración cualitativa..."
+                                          @bind="comentarios[proyecto.Id]"></textarea>
+                                @if (guardados.Contains(proyecto.Id))
+                                {
+                                    <span class="badge bg-success">Guardado ✓</span>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary btn-sm"
+                                            @onclick="() => GuardarComentario(proyecto.Id, categoria.Id)">
+                                        Guardar comentario
+                                    </button>
+                                }
+                                @if (erroresPorProyecto.ContainsKey(proyecto.Id))
+                                {
+                                    <div class="text-danger mt-1">@erroresPorProyecto[proyecto.Id]</div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <button class="btn btn-primary w-100 mt-2"
+                            @onclick='() => Nav.NavigateTo($"/juez/puesta-en-comun/{categoria.Id}")'>
+                        👥 Ver puesta en común de @categoria.Name
+                    </button>
+                </div>
+            }
+        </div>
+    }
+
+    <button class="btn btn-outline-secondary mt-3" @onclick='() => Nav.NavigateTo("/")'>← Volver</button>
+}
+
+@code {
+    [Parameter] public int EventoId { get; set; }
+
+   
+    private int JuezId = 2;
+
+    private Evento? evento;
+    private List<Categoria> categorias = new();
+    private Dictionary<int, List<Proyecto>> proyectosPorCategoria = new();
+    private Dictionary<int, string> comentarios = new();
+    private HashSet<int> guardados = new();
+    private HashSet<int> categoriasAbiertas = new();
+    private Dictionary<int, string> erroresPorProyecto = new();
+    private bool cargando = true;
+    private string error = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            evento = await EventoService.ObtenerEventoConDetallesAsync(EventoId);
+            if (evento == null)
+            {
+                error = "No se encontró el evento.";
+                return;
+            }
+
+            categorias = evento.CategoriasEvento.ToList();
+
+            foreach (var categoria in categorias)
+            {
+                var proyectos = (await VotoExpertoService.ObtenerProyectosPorCategoriaAsync(categoria.Id)).ToList();
+                proyectosPorCategoria[categoria.Id] = proyectos;
+                foreach (var p in proyectos)
+                    comentarios[p.Id] = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Error al cargar: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void ToggleCategoria(int categoriaId)
+    {
+        if (categoriasAbiertas.Contains(categoriaId))
+            categoriasAbiertas.Remove(categoriaId);
+        else
+            categoriasAbiertas.Add(categoriaId);
+    }
+
+    private async Task GuardarComentario(int proyectoId, int categoriaId)
+    {
+        erroresPorProyecto.Remove(proyectoId);
+        try
+        {
+            var votacionId = categorias.FirstOrDefault(c => c.Id == categoriaId)?.Votacion?.Id ?? 0;
+            await VotoExpertoService.GuardarComentarioAsync(JuezId, proyectoId, votacionId, comentarios[proyectoId]);
+            guardados.Add(proyectoId);
+        }
+        catch (Exception ex)
+        {
+            erroresPorProyecto[proyectoId] = "Error al guardar el comentario. Asegúrate de que existe una votación creada para esta categoría.";
+        }
+    }
+}

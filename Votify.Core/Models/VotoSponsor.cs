@@ -4,8 +4,8 @@
     {
         protected VotoSponsor() { }
 
-        public VotoSponsor(int votacionId, int proyectoId, double puntuacionBase, bool anonimo = false, string? hashAnonimo = null)
-            : base(votacionId, proyectoId, puntuacionBase, anonimo, hashAnonimo) { }
+        public VotoSponsor(int votacionId, int proyectoId, double puntuacionBase, bool anonimo = false, string? hashAnonimo = null,string?comentario=null)
+            : base(votacionId, proyectoId, puntuacionBase, anonimo, hashAnonimo,comentario) { }
 
         public override double CalcularPuntuacionNormalizada() => PuntuacionBase * 0.95; // Penalización del 5%
         public override string RolVotante() => "SPONSOR";

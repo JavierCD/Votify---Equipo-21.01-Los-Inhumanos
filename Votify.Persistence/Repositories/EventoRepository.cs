@@ -28,5 +28,14 @@ namespace Votify.Persistence.Repositories
                         .ThenInclude(p => p.Participante)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
+        public async Task<IEnumerable<Evento>> ObtenerEventosPorJuezAsync(int juezId)
+        {
+            return await _context.Eventos
+                .Include(e=>e.Jurado)
+                .Include(e => e.CategoriasEvento)
+                .ThenInclude(c => c.Proyectos)
+                .Where(e => e.Jurado.Any(j => j.Id == juezId))
+               .ToListAsync();
+        }
     }
 }
