@@ -54,9 +54,7 @@ namespace Votify.Persistence.Context
             // 2. CONFIGURACIÓN DE PARTICIPANTE
             modelBuilder.Entity<Participante>(entity =>
             {
-                entity.Property(p => p.Estado)
-                      .IsRequired()
-                      .HasDefaultValue("Pendiente");
+              
             });
 
             // 3. CONFIGURACIÓN DE EVENTO

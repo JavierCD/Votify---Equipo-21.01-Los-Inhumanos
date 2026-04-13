@@ -35,8 +35,17 @@
             var user = await AuthService.Login(email, password);
             Session.Usuario = user;
             //mensaje = "Login correcto";
-            Navigation.NavigateTo("/", false);
-            // siguiente paso → redirigir según rol
+
+            // Redirección según el tipo de miembro
+            if (user is Votify.Core.Models.Participante p)
+            {
+                Navigation.NavigateTo($"/dashboard-participante/{p.Id}", false);
+            }
+            else
+            {
+                // Si es Organizador o Administrador, va a la página principal
+                Navigation.NavigateTo("/", false);
+            }
         }
         catch (Exception ex)
         {

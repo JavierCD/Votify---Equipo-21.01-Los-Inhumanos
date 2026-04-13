@@ -15,11 +15,11 @@ namespace Votify.Persistence.Context
     {
         public static void Initialize(VotifyContext context)
         {
-            //context.Database.EnsureDeleted();
+            context.Database.EnsureDeleted();
             
             
             
-            context.Database.Migrate();
+            context.Database.EnsureCreated();
 
             if (context.Eventos.Any())
             {
