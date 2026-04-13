@@ -302,7 +302,8 @@
                 VotacionId = votacionSeleccionada.VotacionId,
                 VotanteId = 0,
                 Anonimo = true,
-                ProyectosSeleccionadosIds = proyectosSeleccionados.ToList()
+                ProyectosSeleccionadosIds = proyectosSeleccionados.ToList(),
+                Email = emailVotante
             };
 
             await VotoPopularService.EmitirVotoPopularAsync(request);

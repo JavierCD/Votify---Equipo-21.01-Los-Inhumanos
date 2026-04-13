@@ -15,10 +15,12 @@ namespace Votify.Services.Implementations
     public class VotoPopularService : IVotoPopularService
     {
         private readonly IVotoPopularRepository _votoPopularRepository;
+        private readonly IGenericRepository<Votante> _votanteRepository;
 
-        public VotoPopularService(IVotoPopularRepository votoPopularRepository)
+        public VotoPopularService(IVotoPopularRepository votoPopularRepository, IGenericRepository<Votante> votanteRepository)
         {
             _votoPopularRepository = votoPopularRepository;
+            _votanteRepository = votanteRepository;
         }
 
         public async Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesPopularesDisponiblesAsync()
@@ -83,12 +85,33 @@ namespace Votify.Services.Implementations
             if (request.ProyectosSeleccionadosIds.Any(id => !proyectosValidosIds.Contains(id)))
                 throw new ArgumentException("Uno o más proyectos no pertenecen a la categoría de la votación.");
 
+            int votanteIdFinal = request.VotanteId;
+
+            Votante votanteFinal = null;
+
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                var todosLosVotantes = await _votanteRepository.GetAllAsync();
+                votanteFinal = todosLosVotantes.FirstOrDefault(v => v.Email == request.Email);
+
+                if (votanteFinal == null)
+                {
+
+                    votanteFinal = new Votante
+                    {
+                        Email = request.Email,
+                    };
+
+
+                    await _votanteRepository.AddAsync(votanteFinal);
+                }
+            }
+
             var creadorVoto = new VotoPublicoCreator();
 
             // Suponiendo que tienes una puntuación base que el usuario acaba de emitir (ej. 10 puntos)
             double puntuacionBaseEmitida = 10.0; // ¡Cámbialo por la variable de puntuación real de tu request!
 
-            // 2. Ahora usamos la fábrica elegida para crear cada voto
             var votos = request.ProyectosSeleccionadosIds.Select(proyectoId =>
             {
                 string? hash = null;
@@ -109,7 +132,17 @@ namespace Votify.Services.Implementations
                     hash
                 );
 
-            
+                if (votanteFinal != null)
+                {
+                    voto.Votante = votanteFinal;
+                }
+                else
+                {
+                    // Por si acaso votan sin correo, dejamos el que venía por defecto
+                    voto.VotanteId = request.VotanteId;
+                }
+
+
 
                 return voto;
             }).ToList();
