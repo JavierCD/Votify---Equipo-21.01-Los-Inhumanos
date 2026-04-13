@@ -62,6 +62,8 @@ builder.Services.AddScoped<IPuntuacionService, PuntuacionService>();
 builder.Services.AddScoped<IPuntuacionRepository, PuntuacionRepository>();
 builder.Services.AddScoped<IVotoPuntuacionService, VotoPuntuacionService>();
 builder.Services.AddScoped<IVotoPuntuacionRepository, VotoPuntuacionRepository>();
+builder.Services.AddScoped<IVotoExpertoRepository, VotoExpertoRepository>();
+builder.Services.AddScoped<IVotoExpertoServices, VotoExpertoService>();
 builder.Services.AddScoped<IEventoRepository, EventoRepository>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();

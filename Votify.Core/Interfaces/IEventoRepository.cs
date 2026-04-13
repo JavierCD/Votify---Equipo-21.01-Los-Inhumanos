@@ -10,5 +10,6 @@ namespace Votify.Core.Interfaces
     public interface IEventoRepository : IGenericRepository<Evento>
     {
         Task<Evento?> ObtenerEventoConDetallesAsync(int id);
+        Task<IEnumerable<Evento>> ObtenerEventosPorJuezAsync(int juezId);
     }
 }

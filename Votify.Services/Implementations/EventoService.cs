@@ -107,5 +107,12 @@ namespace Votify.Services.Implementations
                 e => e.CategoriasEvento
             );
         }
+        public async Task<IEnumerable<Evento>> ObtenerEventosPorJuezAsync(int juezId)
+        {
+            if (juezId <= 0)
+                throw new ArgumentException("El ID del juez no es válido.");
+
+            return await _repository.ObtenerEventosPorJuezAsync(juezId);
+        }
     }
 }
