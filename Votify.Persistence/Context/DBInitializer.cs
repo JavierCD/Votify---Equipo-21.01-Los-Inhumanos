@@ -211,6 +211,7 @@ namespace Votify.Persistence.Context
             
 
             // 5. Votantes
+            /*
             var votante1 = new Votante { Email = "votante1@votify.com", Anonimo = false, Rol = "PUBLIC" };
             var votante2 = new Votante { Email = "votante2@votify.com", Anonimo = false, Rol = "PUBLIC" };
             var votante3 = new Votante { Email = "votante3@votify.com", Anonimo = false, Rol = "PUBLIC" };
@@ -219,7 +220,7 @@ namespace Votify.Persistence.Context
             var votante6 = new Votante { Email = "votante6@votify.com", Anonimo = false, Rol = "EXPERT" };
 
             context.Votantes.AddRange(votante1, votante2, votante3, votante4, votante5, votante6);
-            context.SaveChanges();
+            context.SaveChanges();*/
         }
     }
 }
