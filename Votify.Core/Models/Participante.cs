@@ -19,6 +19,7 @@ namespace Votify.Core.Models
 
         public Participante(string name, string email, string password) : base(name, email, password)
         {
+
         }
 
         public void ActualizarFicha(string? nuevaDescripcion)
