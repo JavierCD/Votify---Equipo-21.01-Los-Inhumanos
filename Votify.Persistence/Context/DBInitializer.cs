@@ -16,9 +16,9 @@ namespace Votify.Persistence.Context
         public static void Initialize(VotifyContext context)
         {
             context.Database.EnsureDeleted();
-            
-            
-            
+
+
+
             context.Database.EnsureCreated();
 
             if (context.Eventos.Any())
@@ -146,23 +146,23 @@ namespace Votify.Persistence.Context
             context.SaveChanges();
 
             // 4. Proyectos asociados a categorías
-            
+
             var proyecto1 = new SustainabilityProject("AgroTech Social", participante.Id)
             {
                 Visible = true,
-                
+
             };
 
             var proyecto2 = new SustainabilityProject("EduAccess", participante2.Id)
             {
                 Visible = true,
-                
+
             };
 
             var proyecto3 = new SustainabilityProject("GreenCity", participante3.Id)
             {
                 Visible = true,
-                
+
             };
 
             proyecto1.Categorias.Add(categoria1);
@@ -172,19 +172,19 @@ namespace Votify.Persistence.Context
             var proyecto4 = new AiProject("HealthBot AI", participante4.Id)
             {
                 Visible = true,
-                
+
             };
 
             var proyecto5 = new AiProject("SmartCity Assistant", participante5.Id)
             {
                 Visible = true,
-                
+
             };
 
             var proyecto6 = new AiProject("EduBot", participante6.Id)
             {
                 Visible = true,
-                
+
             };
 
             proyecto4.Categorias.Add(categoria2);
@@ -203,14 +203,15 @@ namespace Votify.Persistence.Context
 
             };
 
-            proyecto7.Categorias.Add(categoria3); 
+            proyecto7.Categorias.Add(categoria3);
             proyecto8.Categorias.Add(categoria3);
 
             context.Proyectos.AddRange(proyecto1, proyecto2, proyecto3, proyecto4, proyecto5, proyecto6, proyecto7, proyecto8);
             context.SaveChanges();
-            
+
 
             // 5. Votantes
+            /**
             var votante1 = new Votante { Email = "votante1@votify.com", Anonimo = false, Rol = "PUBLIC" };
             var votante2 = new Votante { Email = "votante2@votify.com", Anonimo = false, Rol = "PUBLIC" };
             var votante3 = new Votante { Email = "votante3@votify.com", Anonimo = false, Rol = "PUBLIC" };
@@ -219,13 +220,35 @@ namespace Votify.Persistence.Context
             var votante6 = new Votante { Email = "votante6@votify.com", Anonimo = false, Rol = "EXPERT" };
 
             context.Votantes.AddRange(votante1, votante2, votante3, votante4, votante5, votante6);
+            context.SaveChanges();*/
+
+
+            // 6. --- PREPARACIÓN PARA TEST DE NOTIFICACIONES ---
+
+            // A) Asignamos el Juez Armando al Evento (para que el sistema sepa a quién avisar)
+            // Aseguramos que la lista existe y añadimos al juez
+            if (eventoDemo.Jurado == null) eventoDemo.Jurado = new List<Juez>();
+            eventoDemo.Jurado.Add(juez);
             context.SaveChanges();
 
-            // 6. Asociar jueces al evento
-            eventoDemo.Jurado.Add(juez);
-            eventoDemo.Jurado.Add(juez2);
-            context.Eventos.Update(eventoDemo);
+            // B) Creamos una Votación para la categoría "Innovación en IA"
+            // Le ponemos que empiece en EXACTAMENTE 1 MINUTO desde que arranca la app
+            var votacionTest = new Popular
+            {
+                CategoriaId = categoria2.Id,
+                FechaApertura = DateTime.UtcNow.AddMinutes(1), // ¡El cron la detectará en breve!
+                FechaCierre = DateTime.UtcNow.AddDays(2),
+                Estado = "Pendiente", // Aún no ha empezado
+                MaxSelection = 3,
+
+                // Estos son los interruptores clave que creamos en la Fase 1
+                EnviarNotificacionApertura = true,
+                NotificacionAperturaEnviada = false
+            };
+
+            context.Votaciones.Add(votacionTest);
             context.SaveChanges();
+            
         }
     }
 }

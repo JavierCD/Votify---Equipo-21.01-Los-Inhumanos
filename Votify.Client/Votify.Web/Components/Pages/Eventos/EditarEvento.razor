@@ -1,12 +1,15 @@
 ﻿@page "/eventos/editar/{EventoId:int}"
 @rendermode InteractiveServer
+@using System.Text
 @using Votify.Core.Factories
 @using Votify.Web.ViewModels
 @using Votify.Core.Interfaces
 @using Votify.Core.Models
+@using Votify.Services.Interfaces
 @inject NavigationManager NavigationManager
 @inject IEventoService EventoService
 @inject ICategoriaService CategoriaService
+@inject IEmailService EmailService
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -94,7 +97,8 @@
                             <div class="card-body row">
 
                                 <div class="col-md-5 border-end">
-                                    <h6>Votación Activa</h6>
+                                    <h6>Estado de la Votación</h6>
+
                                     @if (categoria.Votacion == null)
                                     {
                                         <p class="text-muted small">Aún no hay votación configurada.</p>
@@ -103,9 +107,67 @@
                                             Configurar Votación
                                         </button>
                                     }
+                                    else if (!categoria.Votacion.EstaCerrada)
+                                    {
+                                        <div class="alert alert-success p-2 small d-flex justify-content-between align-items-center">
+                                            <span><RadzenIcon Icon="how_to_vote" class="me-1" /> En curso</span>
+                                            <span class="badge bg-success">@(categoria.Votacion.Votos?.Count ?? 0) votos</span>
+                                        </div>
+
+                                        <button class="btn btn-sm btn-warning w-100 fw-bold shadow-sm" @onclick="() => CerrarVotacionCategoria(categoria)">
+                                            <RadzenIcon Icon="lock" class="me-1" /> Cerrar Votación
+                                        </button>
+                                    }
                                     else
                                     {
-                                        <div class="alert alert-success p-2 small">Votación en curso</div>
+                                        <div class="alert alert-secondary p-2 small mb-2">
+                                            <RadzenIcon Icon="lock" class="me-1" /> Votación Cerrada
+                                        </div>
+
+                                        <div class="bg-white border rounded p-2 mb-3">
+                                            <strong class="small d-block mb-2 border-bottom pb-1">Clasificación Actual:</strong>
+
+                                            @{
+                                                // Lógica LINQ para agrupar los votos por proyecto y ordenarlos de mayor a menor
+                                                var ranking = categoria.Votacion.Votos
+                                                .GroupBy(v => v.Proyecto)
+                                                .Select(g => new { Proyecto = g.Key, Votos = g.Count() }) // O g.Sum(v => v.Puntuacion) si es multicriterio
+                                                .OrderByDescending(x => x.Votos)
+                                                .ToList();
+                                            }
+
+                                            @if (!ranking.Any())
+                                            {
+                                                <span class="text-muted small">Nadie votó en esta categoría.</span>
+                                            }
+                                            else
+                                            {
+                                                <ul class="list-unstyled mb-0 small">
+                                                    @for (int i = 0; i < Math.Min(3, ranking.Count); i++) // Mostramos el Top 3
+                                                    {
+                                                        var posicion = ranking[i];
+                                                        <li class="mb-1">
+                                                            <strong>@(i + 1)º</strong> @(posicion.Proyecto?.Name ?? "Proyecto Eliminado")
+                                                            <span class="badge bg-light text-dark float-end">@posicion.Votos pts</span>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                        </div>
+
+                                        <button class="btn btn-sm w-100 fw-bold shadow-sm @(categoria.Votacion.ResultadosPublicados ? "btn-success disabled" : "btn-primary")"
+                                                @onclick="() => CompartirClasificacion(categoria)">
+
+                                            <RadzenIcon Icon="@(categoria.Votacion.ResultadosPublicados ? "check_circle" : "send")" class="me-1" />
+                                            @(categoria.Votacion.ResultadosPublicados ? "Clasificación Compartida" : "Compartir Clasificación")
+                                        </button>
+
+                                        @if (categoria.Votacion.ResultadosPublicados)
+                                        {
+                                            <div class="text-center text-muted mt-1" style="font-size: 0.7rem;">
+                                                Notificados: Participantes, Jueces y Votantes.
+                                            </div>
+                                        }
                                     }
                                 </div>
 
@@ -327,5 +389,107 @@
 
         // 3. Guardamos los cambios en la base de datos
         await CategoriaService.UpdateAsync(categoria);
+    }
+
+    private async Task CerrarVotacionCategoria(Categoria categoria)
+    {
+        try
+        {
+            categoria.Votacion.CerrarVotacion();
+
+            await CategoriaService.UpdateAsync(categoria);
+
+            mensajeExito = $"La votación para '{categoria.Name}' se ha cerrado. Ya puedes ver el ranking.";
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cerrar: {ex.Message}";
+        }
+    }
+
+    private async Task CompartirClasificacion(Categoria categoria)
+    {
+        try
+        {
+            // 1. Cambiamos el estado a publicado y guardamos en BD
+            categoria.Votacion.CompartirResultados();
+            await CategoriaService.UpdateAsync(categoria);
+
+            // 2. Extraemos el Ranking y calculamos las posiciones
+            var ranking = categoria.Votacion.Votos
+                .GroupBy(v => v.Proyecto)
+                .Select(g => new { Proyecto = g.Key, Votos = g.Count() })
+                .OrderByDescending(x => x.Votos)
+                .ToList();
+
+            // 3. CONSTRUIMOS EL DISEÑO DE LA TABLA EN HTML (Inline CSS para emails)
+            var htmlBuilder = new StringBuilder();
+            htmlBuilder.Append($@"
+                <div style='font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;'>
+                    <h2 style='color: #2c3e50; text-align: center;'>Resultados Oficiales</h2>
+                    <p>Hola, aquí tienes la clasificación final de la categoría <strong>'{categoria.Name}'</strong> en la que participaste:</p>
+
+                    <table style='width: 100%; border-collapse: collapse; margin-top: 20px;'>
+                        <thead style='background-color: #0d6efd; color: white;'>
+                            <tr>
+                                <th style='padding: 12px; border: 1px solid #ddd;'>Posición</th>
+                                <th style='padding: 12px; border: 1px solid #ddd; text-align: left;'>Proyecto</th>
+                                <th style='padding: 12px; border: 1px solid #ddd;'>Votos</th>
+                            </tr>
+                        </thead>
+                        <tbody>");
+
+            // Rellenamos las filas de la tabla dinámicamente
+            for (int i = 0; i < ranking.Count; i++)
+            {
+                var pos = ranking[i];
+                string colorFila = i % 2 == 0 ? "#f8f9fa" : "#ffffff"; // Filas alternas
+                string medalla = i == 0 ? "🥇 " : i == 1 ? "🥈 " : i == 2 ? "🥉 " : ""; // Top 3 destacado
+
+                htmlBuilder.Append($@"
+                            <tr style='background-color: {colorFila}; text-align: center;'>
+                                <td style='padding: 10px; border: 1px solid #ddd; font-weight: bold;'>{i + 1}º</td>
+                                <td style='padding: 10px; border: 1px solid #ddd; text-align: left;'>{medalla}{pos.Proyecto?.Name}</td>
+                                <td style='padding: 10px; border: 1px solid #ddd;'>
+                                    <span style='background-color: #e9ecef; padding: 4px 8px; border-radius: 12px; font-size: 0.9em;'>{pos.Votos} pts</span>
+                                </td>
+                            </tr>");
+            }
+
+            htmlBuilder.Append(@"
+                        </tbody>
+                    </table>
+                    <p style='margin-top: 30px; font-size: 0.9em; color: #6c757d; text-align: center;'>
+                        Gracias por participar en el evento.<br>El Equipo de Votify.
+                    </p>
+                </div>");
+
+            string cuerpoCorreo = htmlBuilder.ToString();
+            string asuntoCorreo = $"🏆 Resultados Finales: {categoria.Name}";
+
+
+
+            // 4. RECOPILAMOS LOS CORREOS DE LOS VOTANTES (Sin duplicados)
+            // Extraemos los correos de la tabla de Votos usando la nueva UT que hiciste en VotoPopularUsuario
+            var correosVotantes = categoria.Votacion.Votos
+                .Where(v => v.Votante != null && !string.IsNullOrEmpty(v.Votante.Email))
+                .Select(v => v.Votante.Email)
+                .Distinct() // Evitamos enviar el correo dos veces a la misma persona
+                .ToList();
+
+            Console.WriteLine($"[DEBUG] Total de correos únicos listos para enviar: {correosVotantes.Count}");
+
+            // 5. ENVIAMOS LOS CORREOS
+            foreach (var email in correosVotantes)
+            {
+                await EmailService.EnviarCorreoAsync(email, asuntoCorreo, cuerpoCorreo);
+            }
+
+            mensajeExito = $"¡La clasificación se ha enviado por correo a {correosVotantes.Count} votantes!";
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al compartir: {ex.Message}";
+        }
     }
 }
