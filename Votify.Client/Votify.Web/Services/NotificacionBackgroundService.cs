@@ -26,6 +26,8 @@ namespace Votify.Web.Services
                     try
                     {
                         await cronService.ProcesarAperturasDeVotacionAsync();
+                        await cronService.ProcesarRecordatoriosCierreAsync();
+                        await cronService.ProcesarCierresDeVotacionAsync();
                     }
                     catch (Exception ex)
                     {
