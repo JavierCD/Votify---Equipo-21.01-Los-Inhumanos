@@ -21,7 +21,7 @@
     }
     else if (votacionSeleccionada is null)
     {
-        @* ── PASO 1: lista de votaciones ── *@
+        @* ── COMPAÑEROS: lista de votaciones ── *@
 
         @if (!string.IsNullOrWhiteSpace(errorMessage))
         {
@@ -56,7 +56,7 @@
     }
     else
     {
-        @* ── PASO 2: detalle con proyectos y formulario ── *@
+        @* ── COMPAÑEROS: detalle con proyectos y formulario ── *@
 
         <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
             <div class="d-flex justify-content-between align-items-center">
@@ -88,60 +88,93 @@
 
         @if (string.IsNullOrWhiteSpace(successMessage))
         {
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoAsync">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary class="text-danger small" />
+            @* ── NUEVA UT: PASO 1 - IDENTIFICACIÓN (Solo pedir correo) ── *@
+            @if (!identificado)
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <h5 class="fw-bold mb-3">Identificación</h5>
+                    <p class="text-muted small mb-4">
+                        Introduce tu email. Lo utilizaremos exclusivamente para enviarte los resultados finales y tu certificado de participación cuando el evento termine.
+                    </p>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Correo Electrónico</label>
+                        <input type="email" class="form-control form-control-lg" @bind="emailVotante" placeholder="ejemplo@correo.com" />
+                    </div>
+
+                    <button type="button" class="btn btn-primary w-100 py-2 fw-bold" @onclick="ContinuarAVotar" disabled="@string.IsNullOrWhiteSpace(emailVotante)">
+                        Continuar a la Votación
+                    </button>
+
+                    @if (!string.IsNullOrEmpty(errorEmail))
+                    {
+                        <div class="alert alert-danger mt-3 small py-2">@errorEmail</div>
+                    }
+                </div>
+            }
+            else
+            {
+                @* ── COMPAÑEROS: PASO 2 - EL FORMULARIO ORIGINAL INTACTO ── *@
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+
+                    <div class="alert alert-info py-2 small mb-4 d-flex justify-content-between align-items-center">
+                        <span>Votando para recibir resultados en: <strong>@emailVotante</strong></span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => identificado = false">Cambiar</button>
+                    </div>
+
+                    <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger small" />
 
 
                    
 
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">Selecciona los proyectos</label>
-                        @foreach (var proyecto in votacionSeleccionada.Proyectos)
-                        {
-                            var proyectoIdLocal = proyecto.Id;
-                            var proyectoNombre = proyecto.Name;
-                            var seleccionado = proyectosSeleccionados.Contains(proyectoIdLocal);
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small text-uppercase text-muted">Selecciona los proyectos</label>
+                            @foreach (var proyecto in votacionSeleccionada.Proyectos)
+                            {
+                                var proyectoIdLocal = proyecto.Id;
+                                var proyectoNombre = proyecto.Name;
+                                var seleccionado = proyectosSeleccionados.Contains(proyectoIdLocal);
 
-                            <div class="card mb-2 border rounded-3 p-3 @(seleccionado ? "border-primary bg-primary bg-opacity-10" : "bg-light")"
-                                 style="cursor:pointer"
-                                 @onclick="() => AlternarProyecto(proyectoIdLocal, !seleccionado)">
-                                <div class="d-flex align-items-center gap-3">
-                                    <input type="checkbox"
-                                           class="form-check-input mt-0"
-                                           id="proy-@proyectoIdLocal"
-                                           checked="@seleccionado"
-                                           @onchange="(e => AlternarProyecto(proyectoIdLocal, e.Value is bool m && m))"
-                                           @onclick:stopPropagation="true" />
-                                    <label class="form-check-label fw-semibold mb-0" for="proy-@proyectoIdLocal" style="cursor:pointer">
-                                        @proyectoNombre
-                                    </label>
-                                    @if (seleccionado)
-                                    {
-                                        <span class="badge bg-primary ms-auto">Seleccionado</span>
-                                    }
+                                <div class="card mb-2 border rounded-3 p-3 @(seleccionado ? "border-primary bg-primary bg-opacity-10" : "bg-light")"
+                                     style="cursor:pointer"
+                                     @onclick="() => AlternarProyecto(proyectoIdLocal, !seleccionado)">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <input type="checkbox"
+                                               class="form-check-input mt-0"
+                                               id="proy-@proyectoIdLocal"
+                                               checked="@seleccionado"
+                                               @onchange="(e => AlternarProyecto(proyectoIdLocal, e.Value is bool m && m))"
+                                               @onclick:stopPropagation="true" />
+                                        <label class="form-check-label fw-semibold mb-0" for="proy-@proyectoIdLocal" style="cursor:pointer">
+                                            @proyectoNombre
+                                        </label>
+                                        @if (seleccionado)
+                                        {
+                                            <span class="badge bg-primary ms-auto">Seleccionado</span>
+                                        }
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                    </div>
+                            }
+                        </div>
 
-                    <hr class="my-3" />
+                        <hr class="my-3" />
 
-
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@enviando">
-                        @if (enviando)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            <span>Enviando...</span>
-                        }
-                        else
-                        {
-                            <span>Enviar voto</span>
-                        }
-                    </button>
-                </EditForm>
-            </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@enviando">
+                            @if (enviando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Enviando...</span>
+                            }
+                            else
+                            {
+                                <span>Enviar voto</span>
+                            }
+                        </button>
+                    </EditForm>
+                </div>
+            }
         }
     }
 </div>
@@ -149,6 +182,13 @@
 @code {
     [Parameter]
     public int VotacionId { get; set; }
+
+    // --- VARIABLES DE LA NUEVA UT ---
+    private string emailVotante = "";
+    private bool identificado = false;
+    private string errorEmail = "";
+
+    // --- VARIABLES ORIGINALES DE TUS COMPAÑEROS ---
     private List<VotacionPopularDisponibleResponse> listaVotaciones = new();
     private VotacionPopularDisponibleResponse? votacionSeleccionada;
     private FormVotoPopularModel formModel = new();
@@ -176,6 +216,20 @@
         }
     }
 
+    // --- MÉTODO DE LA NUEVA UT ---
+    private void ContinuarAVotar()
+    {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(emailVotante, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            errorEmail = "Por favor, introduce un correo electrónico con formato válido.";
+            return;
+        }
+
+        identificado = true;
+        errorEmail = "";
+    }
+
+    // --- MÉTODOS ORIGINALES INTACTOS ---
     private async Task SeleccionarVotacion(int votacionId)
     {
         errorMessage = null;
@@ -186,6 +240,7 @@
             votacionSeleccionada = await VotoPopularService.ObtenerDetallePorIdAsync(votacionId);
             proyectosSeleccionados.Clear();
             formModel = new FormVotoPopularModel();
+            identificado = false; // Reseteamos la UT si cambian de votación
         }
         catch (Exception ex)
         {
@@ -201,6 +256,7 @@
         errorMessage = null;
         successMessage = null;
         formModel = new FormVotoPopularModel();
+        identificado = false;
     }
 
     private void AlternarProyecto(int proyectoId, bool seleccionado)
@@ -240,17 +296,19 @@
 
         try
         {
+
             var request = new EmitirVotoPopularRequest
             {
                 VotacionId = votacionSeleccionada.VotacionId,
                 VotanteId = 0,
                 Anonimo = true,
-                ProyectosSeleccionadosIds = proyectosSeleccionados.ToList()
+                ProyectosSeleccionadosIds = proyectosSeleccionados.ToList(),
+                Email = emailVotante
             };
 
             await VotoPopularService.EmitirVotoPopularAsync(request);
 
-            successMessage = "¡Voto emitido correctamente!";
+            successMessage = "¡Voto emitido correctamente! Pronto recibirás los resultados en tu correo.";
             proyectosSeleccionados.Clear();
             formModel = new FormVotoPopularModel();
         }

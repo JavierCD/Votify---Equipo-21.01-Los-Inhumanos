@@ -3,6 +3,7 @@
 
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
+@using Votify.Services.Interfaces
 
 @inject IParticipanteService ParticipanteService
 @inject NavigationManager NavManager
@@ -119,6 +120,93 @@ else
                             }
                         </RadzenColumn>
                     </RadzenRow>
+
+                    <RadzenText TextStyle="TextStyle.H4" class="rz-mt-5 rz-mb-4" Style="border-bottom: 2px solid var(--rz-primary); padding-bottom: 0.5rem;">
+                        <RadzenIcon Icon="emoji_events" class="rz-mr-2" Style="color: gold;" /> Resultados de mis Eventos
+                    </RadzenText>
+
+                    @if (participante.Proyectos != null && participante.Proyectos.Any())
+                    {
+                        bool hayResultadosPublicados = false;
+
+                        <RadzenRow Gap="1.5rem">
+                            @foreach (var proyecto in participante.Proyectos)
+                            {
+                                @if (proyecto.Categorias != null)
+                                {
+                                    @foreach (var categoria in proyecto.Categorias)
+                                    {
+                                        // Solo mostramos si el organizador cerró y publicó la votación
+                                        @if (categoria.Votacion != null && categoria.Votacion.ResultadosPublicados)
+                                        {
+                                            hayResultadosPublicados = true;
+
+                                            // Calculamos el ranking igual que hace el Organizador
+                                            var ranking = categoria.Votacion.Votos
+                                            .GroupBy(v => v.Proyecto)
+                                            .Select(g => new { Proyecto = g.Key, Votos = g.Count() })
+                                            .OrderByDescending(x => x.Votos)
+                                            .ToList();
+
+                                            // Buscamos en qué posición ha quedado ESTE participante
+                                            var miPosicion = ranking.FindIndex(r => r.Proyecto?.Id == proyecto.Id) + 1;
+
+                                            <RadzenColumn Size="12" SizeMD="6">
+                                                <RadzenCard class="rz-shadow-3" Style="border-top: 4px solid var(--rz-secondary);">
+                                                    <RadzenText TextStyle="TextStyle.H6" class="fw-bold">@categoria.Name</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-3 text-muted">Tu proyecto: @proyecto.Name</RadzenText>
+
+                                                    <div class="p-3 bg-light rounded border">
+                                                        <h6 class="fw-bold mb-3 text-center text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;">Top 3 Clasificación</h6>
+
+                                                        <ul class="list-group list-group-flush mb-3 shadow-sm rounded">
+                                                            @for (int i = 0; i < Math.Min(3, ranking.Count); i++)
+                                                            {
+                                                                var pos = ranking[i];
+                                                                bool esMio = pos.Proyecto?.Id == proyecto.Id;
+
+                                                                <li class="list-group-item d-flex justify-content-between align-items-center @(esMio ? "bg-warning bg-opacity-25 fw-bold" : "")">
+                                                                    <span>
+                                                                        <strong class="me-2">@(i + 1)º</strong> @(pos.Proyecto?.Name ?? "Eliminado")
+                                                                        @if (i == 0)
+                                                                        {
+                                                                            <RadzenIcon Icon="workspace_premium" Style="color: gold;" />
+                                                                        }
+                                                                        @if (i == 1)
+                                                                        {
+                                                                            <RadzenIcon Icon="workspace_premium" Style="color: silver;" />
+                                                                        }
+                                                                        @if (i == 2)
+                                                                        {
+                                                                            <RadzenIcon Icon="workspace_premium" Style="color: #cd7f32;" />
+                                                                        }
+                                                                    </span>
+                                                                    <span class="badge bg-primary rounded-pill">@pos.Votos pts</span>
+                                                                </li>
+                                                            }
+                                                        </ul>
+
+                                                        <div class="alert alert-info py-2 mb-0 d-flex justify-content-between align-items-center border-0 shadow-sm">
+                                                            <span>Tu posición final: <strong class="fs-5 ms-1">@(miPosicion > 0 ? miPosicion + "º" : "Sin votos")</strong></span>
+
+                                                            <RadzenButton Text="Descargar Certificado" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Icon="card_membership" />
+                                                        </div>
+                                                    </div>
+                                                </RadzenCard>
+                                            </RadzenColumn>
+                                        }
+                                    }
+                                }
+                            }
+                        </RadzenRow>
+
+                        @if (!hayResultadosPublicados)
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" class="rz-mt-3">
+                                <RadzenIcon Icon="schedule" class="rz-mr-1" /> Aún no se han publicado los resultados de ninguna de las categorías en las que compites. ¡Mucha suerte!
+                            </RadzenAlert>
+                        }
+                    }
                 </RadzenCard>
             }
         }

@@ -68,13 +68,20 @@ builder.Services.AddScoped<IEventoRepository, EventoRepository>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IGenericRepository<Miembro>, GenericRepository<Miembro>>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IGenericRepository<Votante>, GenericRepository<Votante>>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
-
 
 // 3. Registramos el servicio de Participantes 
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 builder.Services.AddScoped<IParticipanteRepository, ParticipanteRepository>();
+// 4. Registramos el servicio que contiene la lógica
+builder.Services.AddScoped<INotificacionCronService, NotificacionCronService>();
+// 5. Registramos el Vigilante para que .NET lo arranque en segundo plano
+builder.Services.AddHostedService<NoctificacionBackgroundService>();
+builder.Services.AddScoped<INotificacionService, NotificacionService>();
 
+builder.Services.AddScoped<NotificationService>();
 
 var app = builder.Build();
 

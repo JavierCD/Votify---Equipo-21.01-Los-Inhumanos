@@ -3,6 +3,7 @@
 
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
+@using Votify.Services.Interfaces
 
 @inject IParticipanteService ParticipanteService
 @inject NavigationManager NavManager
@@ -76,7 +77,6 @@ else
             @* COLUMNA DERECHA *@
             <RadzenColumn Size="12" SizeMD="8">
 
-                @* --- DOBLE COMPROBACIÓN AQUÍ --- *@
                 @if (modoEdicion && esMiPropioPerfil)
                 {
                     @* --- MODO EDICIÓN --- *@

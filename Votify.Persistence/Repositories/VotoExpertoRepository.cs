@@ -28,6 +28,7 @@ namespace Votify.Persistence.Repositories
 
         public async Task GuardarComentarioAsync(Voto voto)
         {
+            voto.VotanteId = null;
             _context.Votos.Add(voto);
             await _context.SaveChangesAsync();
         }
@@ -45,7 +46,7 @@ namespace Votify.Persistence.Repositories
         public async Task<bool> YaComentoPorProyectoAsync(int juezId, int proyectoId, int categoriaId)
         {
             return await _context.Votos
-                .AnyAsync(v => v.votanteId == juezId
+                .AnyAsync(v => v.VotanteId == juezId
                             && v.ProyectoId == proyectoId
                             && v.Votacion.CategoriaId == categoriaId
                             && EF.Property<string>(v, "TipoVoto") == "Experto");

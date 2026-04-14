@@ -17,15 +17,19 @@ namespace Votify.Persistence.Repositories
 
         public async Task<Evento?> ObtenerEventoConDetallesAsync(int id)
         {
-
             return await _context.Eventos
                 .Include(e => e.Participantes)
                 .Include(e => e.Organizador)
                 .Include(e => e.CategoriasEvento)
-                    .ThenInclude(c => c.Premios)    
+                    .ThenInclude(c => c.Premios)
+                .Include(e => e.CategoriasEvento)
+                    .ThenInclude(c => c.Votacion)
+                        .ThenInclude(v => v.Votos)
+                            .ThenInclude(v => v.Votante)
                 .Include(e => e.CategoriasEvento)
                     .ThenInclude(c => c.Proyectos)
                         .ThenInclude(p => p.Participante)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
         public async Task<IEnumerable<Evento>> ObtenerEventosPorJuezAsync(int juezId)

@@ -18,7 +18,8 @@ namespace Votify.Core.Models
         public double PuntuacionBase { get; set; }
 
         // La votación en la que se emite (Obligatorio)
-        public int? votanteId { get; set; }
+        public int? VotanteId { get; set; }
+        public virtual Votante? Votante { get; set; }
         public int VotacionId { get; set; }
         public Votacion? Votacion { get; set; }
 
@@ -41,7 +42,7 @@ namespace Votify.Core.Models
 
         public void AssignId(int id)
         {
-            votanteId = id;
+            VotanteId = id;
         }
 
         public abstract double CalcularPuntuacionNormalizada(); 
