@@ -40,6 +40,7 @@ namespace Votify.Services.Implementations
 
             Miembro nuevoUsuario;
 
+            
             switch (role)
             {
                 case "Participante":
