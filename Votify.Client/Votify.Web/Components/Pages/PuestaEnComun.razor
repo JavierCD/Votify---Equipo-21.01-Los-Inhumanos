@@ -32,7 +32,7 @@ else
                 {
                     <li class="list-group-item">
                         <div class="text-muted small mb-1">
-                            @(voto.Anonimo ? "Juez anónimo" : $"Juez ID: {voto.votanteId}") — @voto.Fecha.ToString("dd/MM/yyyy HH:mm")
+                            @(voto.Anonimo ? "Juez anónimo" : $"Juez ID: {voto.VotanteId}") — @voto.Fecha.ToString("dd/MM/yyyy HH:mm")
                         </div>
                         <p class="mb-0">@voto.Comentario</p>
                     </li>

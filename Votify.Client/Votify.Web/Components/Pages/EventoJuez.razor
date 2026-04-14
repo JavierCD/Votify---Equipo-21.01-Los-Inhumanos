@@ -62,7 +62,7 @@ else
                         </div>
                     }
 
-                    <button class="btn btn-primary w-100 mt-2"
+                    <button class="btn btn-primary btn-sm"
                             @onclick='() => Nav.NavigateTo($"/juez/puesta-en-comun/{categoria.Id}")'>
                         👥 Ver puesta en común de @categoria.Name
                     </button>
@@ -78,8 +78,8 @@ else
     [Parameter] public int EventoId { get; set; }
 
    
-    private int JuezId = 2;
-
+    @inject Votify.Web.Services.UserSession Session
+    private int JuezId => Session.Usuario?.Id ?? 0;
     private Evento? evento;
     private List<Categoria> categorias = new();
     private Dictionary<int, List<Proyecto>> proyectosPorCategoria = new();
@@ -135,12 +135,14 @@ else
         try
         {
             var votacionId = categorias.FirstOrDefault(c => c.Id == categoriaId)?.Votacion?.Id ?? 0;
+            Console.WriteLine($"DEBUG - categoriaId: {categoriaId}, votacionId: {votacionId}");
             await VotoExpertoService.GuardarComentarioAsync(JuezId, proyectoId, votacionId, comentarios[proyectoId]);
             guardados.Add(proyectoId);
         }
         catch (Exception ex)
         {
             erroresPorProyecto[proyectoId] = "Error al guardar el comentario. Asegúrate de que existe una votación creada para esta categoría.";
+            Console.WriteLine($"DEBUG ERROR: {ex.Message} - Inner: {ex.InnerException?.Message}");
         }
     }
 }
