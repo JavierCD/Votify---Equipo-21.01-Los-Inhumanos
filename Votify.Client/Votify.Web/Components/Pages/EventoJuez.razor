@@ -38,8 +38,9 @@ else
                     {
                         <div class="card mb-3">
                             <div class="card-body">
-                                <h6 class="card-title">@proyecto.Name</h6>
-                                <textarea class="form-control mb-2"
+                                <h6 class="card-title fw-bold">📁 @proyecto.Name</h6>
+                                <p class="text-muted small mb-2">👤 Participante: @proyecto.Participante?.Name</p>
+                       <textarea class="form-control mb-2"
                                           rows="3"
                                           placeholder="Escribe tu valoración cualitativa..."
                                           @bind="comentarios[proyecto.Id]"></textarea>
