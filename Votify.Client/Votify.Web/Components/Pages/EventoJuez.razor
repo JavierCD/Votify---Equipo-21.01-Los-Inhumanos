@@ -36,14 +36,28 @@ else
                 <div class="card-body">
                     @foreach (var proyecto in proyectosPorCategoria.GetValueOrDefault(categoria.Id, new()))
                     {
-                        <div class="card mb-3">
+                        <div class="card mb-3 shadow-sm">
                             <div class="card-body">
                                 <h6 class="card-title fw-bold">📁 @proyecto.Name</h6>
-                                <p class="text-muted small mb-2">👤 Participante: @proyecto.Participante?.Name</p>
-                       <textarea class="form-control mb-2"
+
+                                @* --- MODIFICACIÓN: BOTÓN PARA VER FICHA --- *@
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <p class="text-muted small mb-0">👤 Participante: @proyecto.Participante?.Name</p>
+                                    @if (proyecto.Participante != null)
+                                    {
+                                        <button class="btn btn-outline-info btn-sm"
+                                                @onclick='() => Nav.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
+                                            <RadzenIcon Icon="account_circle" Style="font-size: 16px; vertical-align: middle;" /> Ver Ficha
+                                        </button>
+                                    }
+                                </div>
+                                @* ------------------------------------------ *@
+
+                                <textarea class="form-control mb-2"
                                           rows="3"
                                           placeholder="Escribe tu valoración cualitativa..."
                                           @bind="comentarios[proyecto.Id]"></textarea>
+
                                 @if (guardados.Contains(proyecto.Id))
                                 {
                                     <span class="badge bg-success">Guardado ✓</span>
@@ -74,6 +88,7 @@ else
 
     <button class="btn btn-outline-secondary mt-3" @onclick='() => Nav.NavigateTo("/")'>← Volver</button>
 }
+
 
 @code {
     [Parameter] public int EventoId { get; set; }
