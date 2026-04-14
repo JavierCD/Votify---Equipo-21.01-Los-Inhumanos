@@ -22,7 +22,7 @@ namespace Votify.Persistence.Repositories
         {
             return await _context.Set<Participante>()
                 .Include(p => p.Proyectos)
-                    .ThenInclude(proy => proy.Votos)
+                   .ThenInclude(proy => proy.Votos.Where(v => v.Comentario != null && EF.Property<string>(v, "TipoVoto") == "Experto"))
                 .Include(p => p.Proyectos)
                     .ThenInclude(proy => proy.Categorias)
                         .ThenInclude(cat => cat.Evento)
@@ -39,5 +39,6 @@ namespace Votify.Persistence.Repositories
                                 .ThenInclude(v => v.Proyecto) 
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
+
     }
 }
