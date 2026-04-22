@@ -207,7 +207,8 @@
     void Logout()
     {
         Session.Usuario = null;
-        Navigation.NavigateTo("/");
+        Navigation.NavigateTo("/", forceLoad: true);
+
     }
 
     public void Dispose()
