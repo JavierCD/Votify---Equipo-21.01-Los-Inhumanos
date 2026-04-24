@@ -1,9 +1,13 @@
 ﻿@page "/voto-popular-usuario/{VotacionId:int}"
 @rendermode InteractiveServer
+@using Votify.Core.Models                        
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
-@inject IVotoPopularService VotoPopularService
+@using Votify.Web.Services                      
+@inject IPopularService PopularService          
+@inject UserSession Session                      
 @inject ILogger<VotoPopularUsuario> Logger
+@inject IVotoPopularService VotoPopularService
 
 <div class="container py-4" style="max-width:680px">
 
@@ -71,6 +75,14 @@
                 </div>
             </div>
         </div>
+
+        @* ← NUEVO: aviso informativo cuando la restricción de autovoto está activa y el usuario es Participante *@
+        @if (!votacionSeleccionada.PermiteAutoVoto && Session.Usuario is Participante)
+        {
+            <div class="alert alert-info rounded-3 small">
+                En esta votación no puedes votar tus propios proyectos.
+            </div>
+        }
 
         @if (!string.IsNullOrWhiteSpace(errorMessage))
         {
@@ -198,12 +210,26 @@
     private bool enviando = false;
     private string? errorMessage;
     private string? successMessage;
+    private VotacionPopularDisponibleResponse? votacion;
 
     protected override async Task OnInitializedAsync()
     {
+        // ← CAMBIO: sesión inyectada correctamente (antes: SessionExtensions.Usuario, que no existe)
+        int votanteId = Session.Usuario is Participante p ? p.Id : 0;
+
         try
         {
-            votacionSeleccionada = await VotoPopularService.ObtenerDetallePorIdAsync(VotacionId);
+            listaVotaciones = await VotoPopularService.ObtenerVotacionesDisponiblesAsync(votanteId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogError(ex, "Error cargando votaciones populares.");
+        }
+        try
+        {
+            // ← CAMBIO: llamamos al método de la UT 3271 que filtra los proyectos del propio participante
+            votacionSeleccionada = await PopularService.ObtenerProyectosParaVotarAsync(VotacionId, votanteId);
         }
         catch (Exception ex)
         {
@@ -237,7 +263,10 @@
 
         try
         {
-            votacionSeleccionada = await VotoPopularService.ObtenerDetallePorIdAsync(votacionId);
+            // ← CAMBIO: al seleccionar de la lista, también filtramos por autovoto
+            int votanteId = Session.Usuario is Participante p ? p.Id : 0;
+            votacionSeleccionada = await PopularService.ObtenerProyectosParaVotarAsync(votacionId, votanteId);
+
             proyectosSeleccionados.Clear();
             formModel = new FormVotoPopularModel();
             identificado = false; // Reseteamos la UT si cambian de votación

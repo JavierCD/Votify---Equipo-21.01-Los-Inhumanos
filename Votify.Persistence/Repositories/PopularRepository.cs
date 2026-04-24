@@ -22,19 +22,10 @@ namespace Votify.Persistence.Repositories
 
         public async Task<Popular> CrearAsync(Popular popular)
         {
-            var entity = new Popular
-            {
-                CategoriaId = popular.CategoriaId,
-                FechaApertura = popular.FechaApertura,
-                FechaCierre = popular.FechaCierre,
-                Estado = popular.Estado,
-                MaxSelection = popular.MaxSelection
-            };
-
-            _context.Votaciones.Add(entity);
+            _context.Votaciones.Add(popular);
             await _context.SaveChangesAsync();
 
-            return entity;
+            return popular;
         }
         public async Task<bool> YaExisteVotacionParaCategoriaAsync(int categoriaId)
         {
@@ -47,6 +38,7 @@ namespace Votify.Persistence.Repositories
             return await _context.Votaciones
                 .OfType<Popular>()
                 .Include(v => v.Categoria)
+                  .ThenInclude(c=> c.Proyectos)
                 .FirstOrDefaultAsync(v => v.Id == id);
         }
     }

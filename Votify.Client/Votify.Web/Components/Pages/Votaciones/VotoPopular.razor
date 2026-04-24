@@ -80,6 +80,21 @@
                         <span class="text-muted" style="font-size: 0.8rem;">Envía un aviso automático a los jueces cuando comience esta votación.</span>
                     </div>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>¿Se puede votar uno mismo?</strong></label>
+                    <div>
+                        <button type="button"
+                                class="btn @(PermiteAutoVoto ? "btn-primary" : "btn-outline-primary") me-2"
+                                @onclick="() => PermiteAutoVoto = true">
+                            Sí
+                        </button>
+                        <button type="button"
+                                class="btn @(!PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
+                                @onclick="() => PermiteAutoVoto = false">
+                            No
+                        </button>
+                    </div>
+                </div>
                 <hr class="my-3" />
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@isLoading">
                     @if (isLoading)
@@ -169,6 +184,7 @@
 
 @code {
     private string tipoVotacion = "Popular";
+    private bool PermiteAutoVoto = false;
     [Parameter]
     public int CategoriaId { get; set; }
 
@@ -252,7 +268,8 @@
                 FechaApertura = DateTime.Today,
                 FechaCierre = DateTime.Today.AddDays(1),
                 Estado = "Abierta",
-                ValorMax = 10
+                ValorMax = 10,
+                PermiteAutoVoto=false
             };
         }
         catch (ArgumentException ex) { errorMessage = ex.Message; }
@@ -269,7 +286,8 @@
             FechaApertura = DateTime.Today,
             FechaCierre = DateTime.Today.AddDays(1),
             Estado = "Abierta",
-            MaxSelection = 1
+            MaxSelection = 1,
+            PermiteAutoVoto=false
         };
     }
 }
