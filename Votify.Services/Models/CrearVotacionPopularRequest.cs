@@ -14,5 +14,6 @@ namespace Votify.Services.Models
         public string Estado { get; set; } = string.Empty;
         public int MaxSelection { get; set; }
         public bool EnviarNotificacionApertura { get; set; } = true;
+        public bool PermiteAutoVoto { get; set; } = false;
     }
 }
