@@ -49,14 +49,17 @@ namespace Votify.Core.Models
             Votacion = votacion ?? throw new ArgumentNullException(nameof(votacion));
         }
 
-        public void AsignarPremio(Premio premio)
+        public void AsignarPremio(string nombre, string descripcion, int puesto)
         {
-            if(premio == null) throw new ArgumentNullException(nameof(premio));
+            if (puesto <= 0)
+                throw new ArgumentException("El puesto debe ser mayor a cero.");
 
-            if (!Premios.Contains(premio))
-            {
-                Premios.Add(premio);
-            }
+            if (Premios.Any(p => p.Posicion == puesto))
+                throw new InvalidOperationException($"Ya existe un premio para el puesto {puesto}.");
+
+            var nuevoPremio = new Premio(nombre, descripcion, puesto);
+
+            Premios.Add(nuevoPremio);
         }
 
         public void EliminarPremio(Premio premio)

@@ -1,4 +1,5 @@
 ﻿using Votify.Core.Models;
+using Votify.Services.Models;
 
 namespace Votify.Core.Interfaces
 {
@@ -8,6 +9,8 @@ namespace Votify.Core.Interfaces
         Task CrearAsync(Categoria categoria);
         Task UpdateAsync(Categoria categoria);
         Task DeleteAsync(int id);
+
+        Task AgregarPremioAsync(AgregarPremioRequest agregarPremioRequest);
 
     }
 }
