@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
+using Votify.Services.Models;
 
 namespace Votify.Services.Implementations
 {
@@ -35,6 +36,19 @@ namespace Votify.Services.Implementations
             {
                 await _categoriaRepository.DeleteAsync(categoria.Id);
             }
+        }
+
+        public async Task AgregarPremioAsync(AgregarPremioRequest agregarPremioRequest)
+        {
+            var categoria = await _categoriaRepository.GetByIdAsync(agregarPremioRequest.categoriaID);
+            if(categoria != null)
+            {
+                
+                categoria.AsignarPremio(agregarPremioRequest.nombrePremio, agregarPremioRequest.premioDesc, agregarPremioRequest.puesto);
+                await _categoriaRepository.UpdateAsync(categoria);
+            }
+
+            
         }
     }
 }

@@ -309,13 +309,14 @@
     private string? mensajeError;
 
     private EditarEventoRequest requestModel = new EditarEventoRequest();
+    private AgregarPremioRequest requestPremio = new AgregarPremioRequest();
 
     protected override async Task OnInitializedAsync()
     {
         // 1. Aquí debes cargar el evento con TODAS sus relaciones usando tu servicio
         evento = await EventoService.ObtenerEventoConDetallesAsync(EventoId);
 
-        
+
 
         if (evento != null)
         {
@@ -344,9 +345,15 @@
         // Buscamos la categoría en la lista cargada
         var categoria = evento!.CategoriasEvento.First(c => c.Id == categoriaId);
 
-        // Creamos el premio con el nuevo constructor
-        var premio = new Premio(nuevoPremioNombre, nuevoPremioDesc, nuevoPremioPuesto);
-        categoria.AsignarPremio(premio);
+        if (categoria != null)
+        {
+            requestPremio.categoriaID = categoria.Id;
+            requestPremio.nombrePremio = nuevoPremioNombre;
+            requestPremio.premioDesc = nuevoPremioDesc;
+            requestPremio.puesto = nuevoPremioPuesto;
+        }
+
+        //categoria.AsignarPremio(premio);
 
         // AQUÍ GUARDARÍAS EN BASE DE DATOS:
         await CategoriaService.UpdateAsync(categoria);
