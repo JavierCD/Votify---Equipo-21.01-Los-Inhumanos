@@ -7,6 +7,7 @@ using Votify.Core;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Core.Enums;
+using Votify.Services.Models;
 
 namespace Votify.Services.Implementations
 {
@@ -19,24 +20,19 @@ namespace Votify.Services.Implementations
             _repository = repository;
         }
 
-        public async Task ActualizarAsync(Evento evento)
+        public async Task ActualizarAsync(EditarEventoRequest eventoMod)
         {
-            var eventoExistente = await _repository.GetByIdAsync(evento.Id);
+            var eventoExistente = await _repository.GetByIdAsync(eventoMod.Id);
             if (eventoExistente == null) 
             {
-                throw new KeyNotFoundException($"No se encontró el evento con ID {evento.Id}");
+                throw new KeyNotFoundException($"No se encontró el evento con ID {eventoMod.Id}");
             }
             
-            eventoExistente.Id = evento.Id;
-            eventoExistente.Description = evento.Description;
-
-            if (evento.FechaFin <= evento.FechaInicio)
-            {
-                throw new ArgumentException("La fecha de fin debe ser posterior a la fecha de inicio");
-            }
-            
-            eventoExistente.FechaFin = evento.FechaFin;
-            eventoExistente.FechaInicio = evento.FechaInicio;
+            eventoExistente.ActualizarDatosGenerales(
+                eventoMod.Name, 
+                eventoMod.FechaInicio, 
+                eventoMod.FechaFin, 
+                eventoMod.Description);
 
             await _repository.UpdateAsync(eventoExistente);
 
