@@ -62,12 +62,15 @@ namespace Votify.Core.Models
             Premios.Add(nuevoPremio);
         }
 
-        public void EliminarPremio(Premio premio)
+        public void EliminarPremio(int premioID)
         {
-            if(premio!=null && Premios.Contains(premio))
-            {
-                Premios.Remove(premio);
-            }
+            var premioEliminar = Premios.FirstOrDefault(p => p.Id == premioID);
+
+            if (premioEliminar == null)
+                throw new InvalidOperationException($"El premio con ID {premioID} no existe");
+
+            Premios.Remove(premioEliminar);
+
         }
     }
 }
