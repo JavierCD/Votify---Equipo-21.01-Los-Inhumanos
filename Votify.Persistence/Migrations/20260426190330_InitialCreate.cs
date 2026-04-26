@@ -22,10 +22,13 @@ namespace Votify.Persistence.Migrations
                     Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     Password = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     FechaRegistro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    QuiereRecibirNotificaciones = table.Column<bool>(type: "boolean", nullable: false),
                     TipoDeMiembro = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
                     Descripcion = table.Column<string>(type: "text", nullable: true),
-                    Visible = table.Column<bool>(type: "boolean", nullable: true),
-                    Estado = table.Column<string>(type: "text", nullable: true, defaultValue: "Pendiente")
+                    InstitucionEducativa = table.Column<string>(type: "text", nullable: true),
+                    Intereses = table.Column<string>(type: "text", nullable: true),
+                    ColorFondo = table.Column<string>(type: "text", nullable: true),
+                    UrlFoto = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -39,8 +42,7 @@ namespace Votify.Persistence.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    Anonimo = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    Rol = table.Column<string>(type: "text", nullable: false)
+                    Anonimo = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -71,6 +73,30 @@ namespace Votify.Persistence.Migrations
                         principalTable: "Miembros",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Notificacion",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    MiembroId = table.Column<int>(type: "integer", nullable: false),
+                    Titulo = table.Column<string>(type: "text", nullable: false),
+                    Mensaje = table.Column<string>(type: "text", nullable: false),
+                    UrlAccion = table.Column<string>(type: "text", nullable: false),
+                    Leida = table.Column<bool>(type: "boolean", nullable: false),
+                    FechaCreacion = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notificacion", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notificacion_Miembros_MiembroId",
+                        column: x => x.MiembroId,
+                        principalTable: "Miembros",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -249,9 +275,14 @@ namespace Votify.Persistence.Migrations
                     FechaCierre = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Estado = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "Cerrada"),
                     CategoriaId = table.Column<int>(type: "integer", nullable: false),
+                    EstaCerrada = table.Column<bool>(type: "boolean", nullable: false),
+                    ResultadosPublicados = table.Column<bool>(type: "boolean", nullable: false),
+                    EnviarNotificacionApertura = table.Column<bool>(type: "boolean", nullable: false),
+                    NotificacionAperturaEnviada = table.Column<bool>(type: "boolean", nullable: false),
                     TipoVotacion = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
-                    UsaPesos = table.Column<bool>(type: "boolean", nullable: true, defaultValue: false),
+                    UsaPesos = table.Column<bool>(type: "boolean", nullable: true, defaultValue: true),
                     MaxSelection = table.Column<int>(type: "integer", nullable: true),
+                    PermiteAutoVoto = table.Column<bool>(type: "boolean", nullable: true),
                     ValorMax = table.Column<int>(type: "integer", nullable: true, defaultValue: 5)
                 },
                 constraints: table =>
@@ -274,7 +305,8 @@ namespace Votify.Persistence.Migrations
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Descripcion = table.Column<string>(type: "text", nullable: true),
                     Peso = table.Column<float>(type: "real", nullable: false),
-                    MulticriterioId = table.Column<int>(type: "integer", nullable: false)
+                    MulticriterioId = table.Column<int>(type: "integer", nullable: false),
+                    VotacionId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -296,8 +328,9 @@ namespace Votify.Persistence.Migrations
                     Fecha = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Anonimo = table.Column<bool>(type: "boolean", nullable: false),
                     HashAnonimo = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    Comentario = table.Column<string>(type: "text", nullable: true),
                     PuntuacionBase = table.Column<double>(type: "double precision", nullable: false),
-                    votanteId = table.Column<int>(type: "integer", nullable: true),
+                    VotanteId = table.Column<int>(type: "integer", nullable: true),
                     VotacionId = table.Column<int>(type: "integer", nullable: false),
                     ProyectoId = table.Column<int>(type: "integer", nullable: false),
                     TipoVoto = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false)
@@ -318,8 +351,8 @@ namespace Votify.Persistence.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Votos_Votantes_votanteId",
-                        column: x => x.votanteId,
+                        name: "FK_Votos_Votantes_VotanteId",
+                        column: x => x.VotanteId,
                         principalTable: "Votantes",
                         principalColumn: "Id");
                 });
@@ -355,6 +388,11 @@ namespace Votify.Persistence.Migrations
                 column: "VotantesId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Notificacion_MiembroId",
+                table: "Notificacion",
+                column: "MiembroId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Premios_CategoriaId",
                 table: "Premios",
                 column: "CategoriaId");
@@ -386,9 +424,9 @@ namespace Votify.Persistence.Migrations
                 column: "VotacionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Votos_votanteId",
+                name: "IX_Votos_VotanteId",
                 table: "Votos",
-                column: "votanteId");
+                column: "VotanteId");
         }
 
         /// <inheritdoc />
@@ -405,6 +443,9 @@ namespace Votify.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "EventosVotantes");
+
+            migrationBuilder.DropTable(
+                name: "Notificacion");
 
             migrationBuilder.DropTable(
                 name: "Premios");

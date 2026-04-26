@@ -130,6 +130,9 @@ namespace Votify.Persistence.Migrations
                     b.Property<float>("Peso")
                         .HasColumnType("real");
 
+                    b.Property<int?>("VotacionId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("MulticriterioId");
@@ -561,7 +564,7 @@ namespace Votify.Persistence.Migrations
                     b.Property<bool>("UsaPesos")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(true);
 
                     b.HasDiscriminator().HasValue("Multicriterio");
                 });
