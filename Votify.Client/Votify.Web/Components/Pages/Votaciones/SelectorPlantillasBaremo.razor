@@ -1,0 +1,68 @@
+﻿@* Votify.Web/Components/Pages/Votaciones/SelectorPlantillasBaremo.razor *@
+@using Votify.Services.Models
+@using Votify.Services.Interfaces
+@using Votify.Services.Models.DTOs
+@inject IPlantillaBaremoService PlantillaService
+
+<div class="row g-3">
+    @if (plantillas != null)
+    {
+        @foreach (var plantilla in plantillas)
+        {
+            <div class="col-md-6">
+                <RadzenCard class="h-100 d-flex flex-column shadow-sm border-0" style="background-color: #fcfcfc;">
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-1 fw-bold">@plantilla.Titulo</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-3 text-muted">@plantilla.Descripcion</RadzenText>
+
+                    <div class="flex-grow-1 mb-3">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="fw-semibold text-uppercase text-muted mb-2">Criterios y Pesos</RadzenText>
+                        <ul class="list-unstyled mb-0 small">
+                            @foreach (var criterio in plantilla.Criterios)
+                            {
+                                <li class="d-flex justify-content-between align-items-center border-bottom py-1">
+                                    <span>@criterio.Nombre</span>
+                                    <span class="badge bg-secondary">@criterio.Peso pts</span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-outline-primary w-100 mt-auto" @onclick="@(() => OnPlantillaSeleccionada.InvokeAsync(plantilla.Criterios))">
+                        Elegir plantilla
+                    </button>
+                </RadzenCard>
+            </div>
+        }
+
+        <div class="col-md-6">
+            <RadzenCard class="h-100 d-flex flex-column align-items-center justify-content-center shadow-sm" style="border: 2px dashed #dee2e6; background-color: #ffffff; cursor:pointer;" @onclick="@(() => OnPlantillaSeleccionada.InvokeAsync(new List<CriterioDto>()))">
+                <div class="text-center">
+                    <span style="font-size: 2rem;">📝</span>
+                    <h6 class="fw-bold mt-2">Crear desde cero</h6>
+                    <p class="text-muted small mb-0 px-3">Comienza con una tabla vacía y añade tus propios criterios manualmente.</p>
+                </div>
+            </RadzenCard>
+        </div>
+    }
+    else
+    {
+        <div class="col-12 text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando plantillas...</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<List<CriterioDto>> OnPlantillaSeleccionada { get; set; }
+
+    private IEnumerable<PlantillaBaremoDto>? plantillas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Obtenemos los datos del servicio de forma asíncrona
+        plantillas = await PlantillaService.ObtenerPlantillasPredefinidasAsync();
+    }
+}

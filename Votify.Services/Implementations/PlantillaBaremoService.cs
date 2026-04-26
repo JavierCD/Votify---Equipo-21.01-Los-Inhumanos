@@ -14,30 +14,31 @@ namespace Votify.Services.Implementations
         {
             var plantillas = new List<PlantillaBaremoDto>
         {
-            new PlantillaBaremoDto(
-                "hackathon-gen",
-                "Hackathon General",
-                "Ideal para competiciones de desarrollo de software con un enfoque equilibrado.",
-                new List<CriterioPlantillaDto>
+           new PlantillaBaremoDto
+            {
+                Id = "hackathon-gen",
+                Titulo = "Hackathon General",
+                Descripcion = "Criterios balanceados para competiciones de desarrollo de software.",
+                Criterios = new List<CriterioDto>
                 {
-                    new("Innovación y Originalidad", 30),
-                    new("Viabilidad Técnica", 25),
-                    new("Diseño y UX/UI", 20),
-                    new("Presentación / Pitch", 25)
-                }),
-
-            new PlantillaBaremoDto(
-                "pitch-eval",
-                "Evaluación de Pitch",
-                "Enfocado en startups y presentaciones de negocio.",
-                new List<CriterioPlantillaDto>
+                    new() { Nombre = "Innovación y Originalidad", Peso = 30 },
+                    new() { Nombre = "Viabilidad Técnica", Peso = 30 },
+                    new() { Nombre = "Diseño / UX", Peso = 20 },
+                    new() { Nombre = "Presentación / Pitch", Peso = 20 }
+                }
+            },
+            new PlantillaBaremoDto
+            {
+                Id = "pitch-eval",
+                Titulo = "Evaluación de Pitch",
+                Descripcion = "Enfocado en startups y rondas de inversión.",
+                Criterios = new List<CriterioDto>
                 {
-                    new("Problema y Solución", 25),
-                    new("Modelo de Negocio", 25),
-                    new("Tamaño de Mercado", 20),
-                    new("Tracción y Roadmap", 15),
-                    new("Equipo", 15)
-                })
+                    new() { Nombre = "Modelo de Negocio", Peso = 40 },
+                    new() { Nombre = "Problema y Solución", Peso = 30 },
+                    new() { Nombre = "Equipo", Peso = 30 }
+                }
+            }
 
             // Añadir más plantillas según sea necesario...
         };

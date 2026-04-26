@@ -6,12 +6,16 @@ using System.Threading.Tasks;
 
 namespace Votify.Services.Models.DTOs
 {
-    public record CriterioPlantillaDto(string Nombre, int Peso);
+    public record CriterioDto {
+        public string Nombre { get; set; }
+        public int Peso { get; set; }
+    }
 
-    public record PlantillaBaremoDto(
-    string Id,
-    string Titulo,
-    string Descripcion,
-    List<CriterioPlantillaDto> Criterios
-    );
+    public class PlantillaBaremoDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Titulo { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+        public List<CriterioDto> Criterios { get; set; } = new();
+    }
 }

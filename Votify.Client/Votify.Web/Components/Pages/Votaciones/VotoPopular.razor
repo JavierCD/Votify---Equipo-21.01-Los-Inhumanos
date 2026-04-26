@@ -2,47 +2,42 @@
 @rendermode InteractiveServer
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
-@using Votify.Services.Interfaces
+@using Votify.Services.Models.DTOs
 
 @inject IPuntuacionService PuntuacionService
-@inject NavigationManager NavigationManager
 @inject IPopularService PopularService
+@inject NavigationManager NavigationManager
 @inject ILogger<VotoPopular> Logger
 
 <div class="container py-4" style="max-width:620px">
 
     <div class="mb-4">
         <h2 class="fw-bold mb-1">
-            Nueva votación popular
-            <div class="mb-4">
-                <label class="form-label fw-semibold small text-uppercase text-muted">Tipo de votación</label>
-                <div class="d-flex gap-2">
-                    <button type="button"
-                            class="btn flex-fill @(tipoVotacion == "Popular" ? "btn-primary" : "btn-outline-primary")"
-                            @onclick='() => tipoVotacion = "Popular"'>
-                        🗳️ Popular
-                    </button>
-                    <button type="button"
-                            class="btn flex-fill @(tipoVotacion == "Multicriterio" ? "btn-primary" : "btn-outline-primary")"
-                            @onclick='() => tipoVotacion = "Multicriterio"'>
-                        ⚖️ Multicriterio
-                    </button>
-                    <button type="button"
-                            class="btn flex-fill @(tipoVotacion == "Puntuacion" ? "btn-primary" : "btn-outline-primary")"
-                            @onclick='() => tipoVotacion = "Puntuacion"'>
-                        🏅 Puntuación
-                    </button>
-                </div>
-            </div>
-
-            @if (tipoVotacion == "Multicriterio")
-            {
-                <div class="alert alert-info">La votación multicriterio estará disponible próximamente.</div>
-            }
-
-    <span class="badge bg-primary ms-2" style="font-size:0.7rem;vertical-align:middle">Admin</span>
+            Nueva votación
+            <span class="badge bg-primary ms-2" style="font-size:0.7rem;vertical-align:middle">Admin</span>
         </h2>
         <p class="text-muted small mb-0">Configura los parámetros de la votación pública para una categoría.</p>
+
+        <div class="mt-4">
+            <label class="form-label fw-semibold small text-uppercase text-muted">Tipo de votación</label>
+            <div class="d-flex gap-2">
+                <button type="button"
+                        class="btn flex-fill @(tipoVotacion == "Popular" ? "btn-primary" : "btn-outline-primary")"
+                        @onclick='() => CambiarTipoVotacion("Popular")'>
+                    🗳️ Popular
+                </button>
+                <button type="button"
+                        class="btn flex-fill @(tipoVotacion == "Multicriterio" ? "btn-primary" : "btn-outline-primary")"
+                        @onclick='() => CambiarTipoVotacion("Multicriterio")'>
+                    ⚖️ Multicriterio
+                </button>
+                <button type="button"
+                        class="btn flex-fill @(tipoVotacion == "Puntuacion" ? "btn-primary" : "btn-outline-primary")"
+                        @onclick='() => CambiarTipoVotacion("Puntuacion")'>
+                    🏅 Puntuación
+                </button>
+            </div>
+        </div>
     </div>
 
     @if (tipoVotacion == "Popular")
@@ -51,6 +46,7 @@
             <EditForm Model="@request" OnValidSubmit="CrearVotacionPopularAsync" FormName="crearVotacionPopularForm">
                 <DataAnnotationsValidator />
                 <ValidationSummary class="text-danger small" />
+
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small text-uppercase text-muted">Fecha y hora de apertura</label>
@@ -61,6 +57,7 @@
                         <RadzenDatePicker @bind-Value="request.FechaCierre" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
                     </div>
                 </div>
+
                 <div class="mb-3">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Estado</label>
                     <div class="d-flex gap-2">
@@ -69,10 +66,12 @@
                         <button type="button" class="btn flex-fill @(request.Estado == "Pausada" ? "btn-warning" : "btn-outline-warning")" @onclick='() => request.Estado = "Pausada"'>● Pausada</button>
                     </div>
                 </div>
+
                 <div class="mb-4">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Máximo de selecciones</label>
                     <InputNumber @bind-Value="request.MaxSelection" class="form-control" placeholder="Ej: 3" />
                 </div>
+
                 <div class="d-flex align-items-center mb-4 p-3 bg-light rounded border">
                     <RadzenSwitch @bind-Value="request.EnviarNotificacionApertura" />
                     <div class="ms-3">
@@ -80,60 +79,43 @@
                         <span class="text-muted" style="font-size: 0.8rem;">Envía un aviso automático a los jueces cuando comience esta votación.</span>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label"><strong>¿Se puede votar uno mismo?</strong></label>
-                    <div>
-                        <button type="button"
-                                class="btn @(PermiteAutoVoto ? "btn-primary" : "btn-outline-primary") me-2"
-                                @onclick="() => PermiteAutoVoto = true">
-                            Sí
-                        </button>
-                        <button type="button"
-                                class="btn @(!PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
-                                @onclick="() => PermiteAutoVoto = false">
-                            No
-                        </button>
-                    </div>
-                </div>
+
                 <hr class="my-3" />
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@isLoading">
                     @if (isLoading)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
+                
                         <span>Guardando...</span>
-     }
+                    }
                     else
                     {
-                        <span>Crear votación</span>
+                        <span>Crear votación popular</span>
                     }
                 </button>
             </EditForm>
-            @if (!string.IsNullOrWhiteSpace(successMessage))
-            {
-                <div class="alert alert-success d-flex align-items-center gap-2 mt-3 rounded-3"><span>✓</span><span>@successMessage</span></div>
-            }
-            @if (!string.IsNullOrWhiteSpace(errorMessage))
-            {
-                <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 rounded-3"><span>✕</span><span>@errorMessage</span></div>
-            }
+            @RenderMensajes()
         </div>
     }
+
     else if (tipoVotacion == "Puntuacion")
     {
         <div class="card shadow-sm border-0 rounded-4 p-4">
             <EditForm Model="@requestPuntuacion" OnValidSubmit="CrearVotacionPuntuacionAsync" FormName="crearVotacionPuntuacionForm">
                 <DataAnnotationsValidator />
                 <ValidationSummary class="text-danger small" />
+
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small text-uppercase text-muted">Fecha y hora de apertura</label>
-                        <RadzenDatePicker @bind-Value="request.FechaApertura" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
+                        <RadzenDatePicker @bind-Value="requestPuntuacion.FechaApertura" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small text-uppercase text-muted">Fecha y hora de cierre</label>
-                        <RadzenDatePicker @bind-Value="request.FechaCierre" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
+                        <RadzenDatePicker @bind-Value="requestPuntuacion.FechaCierre" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
                     </div>
                 </div>
+
                 <div class="mb-3">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Estado</label>
                     <div class="d-flex gap-2">
@@ -142,58 +124,202 @@
                         <button type="button" class="btn flex-fill @(requestPuntuacion.Estado == "Pausada" ? "btn-warning" : "btn-outline-warning")" @onclick='() => requestPuntuacion.Estado = "Pausada"'>● Pausada</button>
                     </div>
                 </div>
+
                 <div class="mb-4">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Valor máximo de puntuación</label>
                     <InputNumber @bind-Value="requestPuntuacion.ValorMax" class="form-control" placeholder="Ej: 10" />
                 </div>
+
                 <div class="d-flex align-items-center mb-4 p-3 bg-light rounded border">
-                    <RadzenSwitch @bind-Value="request.EnviarNotificacionApertura" />
+                    <RadzenSwitch @bind-Value="requestPuntuacion.EnviarNotificacionApertura" />
                     <div class="ms-3">
                         <span class="d-block fw-bold" style="font-size: 0.9rem;">Notificar al Jurado</span>
                         <span class="text-muted" style="font-size: 0.8rem;">Envía un aviso automático a los jueces cuando comience esta votación.</span>
                     </div>
                 </div>
+
                 <hr class="my-3" />
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@isLoading">
                     @if (isLoading)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
+                
                         <span>Guardando...</span>
-     }
+                    }
                     else
                     {
-                        <span>Crear votación</span>
+                        <span>Crear votación por puntuación</span>
                     }
                 </button>
             </EditForm>
-            @if (!string.IsNullOrWhiteSpace(successMessage))
-            {
-                <div class="alert alert-success d-flex align-items-center gap-2 mt-3 rounded-3"><span>✓</span><span>@successMessage</span></div>
-            }
-            @if (!string.IsNullOrWhiteSpace(errorMessage))
-            {
-                <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 rounded-3"><span>✕</span><span>@errorMessage</span></div>
-            }
+            @RenderMensajes()
         </div>
     }
+
     else if (tipoVotacion == "Multicriterio")
     {
-        <div class="alert alert-info">La votación multicriterio estará disponible próximamente.</div>
+        <div class="card shadow-sm border-0 rounded-4 p-4">
+            @if (!mostrandoConfiguracionMulticriterio)
+            {
+                <h5 class="fw-bold mb-3">1. Selecciona una base para tu baremo</h5>
+                <SelectorPlantillasBaremo OnPlantillaSeleccionada="AplicarPlantillaMulticriterio" />
+            }
+            else
+            {
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0">2. Configurar Votación Multicriterio</h5>
+                    <button class="btn btn-sm btn-link text-decoration-none" @onclick="() => mostrandoConfiguracionMulticriterio = false">
+                        <i class="bi bi-arrow-left"></i> Cambiar plantilla
+                    </button>
+                </div>
+
+                <EditForm Model="@requestMulticriterio" OnValidSubmit="CrearVotacionMulticriterioAsync" FormName="crearVotacionMulticriterioForm">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger small" />
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small text-uppercase text-muted">Fecha y hora de apertura</label>
+                            <RadzenDatePicker @bind-Value="requestMulticriterio.FechaApertura" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small text-uppercase text-muted">Fecha y hora de cierre</label>
+                            <RadzenDatePicker @bind-Value="requestMulticriterio.FechaCierre" ShowTime="true" ShowSeconds="false" HoursStep="1" MinutesStep="5" DateFormat="dd/MM/yyyy HH:mm" class="w-100" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Estado</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn flex-fill @(requestMulticriterio.Estado == "Abierta" ? "btn-success" : "btn-outline-success")" @onclick='() => requestMulticriterio.Estado = "Abierta"'>● Abierta</button>
+                            <button type="button" class="btn flex-fill @(requestMulticriterio.Estado == "Cerrada" ? "btn-danger" : "btn-outline-danger")" @onclick='() => requestMulticriterio.Estado = "Cerrada"'>● Cerrada</button>
+                            <button type="button" class="btn flex-fill @(requestMulticriterio.Estado == "Pausada" ? "btn-warning" : "btn-outline-warning")" @onclick='() => requestMulticriterio.Estado = "Pausada"'>● Pausada</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-semibold small text-uppercase text-muted mb-0">Criterios de Evaluación</label>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="AñadirFilaCriterio">
+                                + Añadir Criterio
+                            </button>
+                        </div>
+
+                        <RadzenDataGrid @ref="gridCriterios" Data="@requestMulticriterio.Criterios" TItem="CriterioDto" EditMode="DataGridEditMode.Single" EmptyText="No hay criterios configurados.">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="CriterioDto" Property="Nombre" Title="Nombre">
+                                    <EditTemplate Context="criterio">
+                                        <RadzenTextBox @bind-Value="criterio.Nombre" Style="width:100%" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="CriterioDto" Property="Peso" Title="Peso" Width="100px">
+                                    <EditTemplate Context="criterio">
+                                        <RadzenNumeric @bind-Value="criterio.Peso" Style="width:100%" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="CriterioDto" Context="criterio" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
+                                    <Template Context="criterio">
+                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                                      Click="@(args => gridCriterios.EditRow(criterio))" @onclick:stopPropagation="true" />
+
+                                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" Class="ms-1"
+                                                      Click="@(args => { requestMulticriterio.Criterios.Remove(criterio); })" @onclick:stopPropagation="true" />
+                                    </Template>
+                                    <EditTemplate Context="criterio">
+                                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.ExtraSmall"
+                                                      Click="@(args => gridCriterios.UpdateRow(criterio))" />
+
+                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall" Class="ms-1"
+                                                      Click="@(args => gridCriterios.CancelEditRow(criterio))" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+
+                        <div class="text-end mt-1">
+                            <small class="@(requestMulticriterio.Criterios.Sum(c => c.Peso) == 100 ? "text-success fw-bold" : "text-danger fw-bold")">
+                                Total pesos: @requestMulticriterio.Criterios.Sum(c => c.Peso) / 100
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-4 p-3 bg-light rounded border">
+                        <RadzenSwitch @bind-Value="requestMulticriterio.EnviarNotificacionApertura" />
+                        <div class="ms-3">
+                            <span class="d-block fw-bold" style="font-size: 0.9rem;">Notificar al Jurado</span>
+                            <span class="text-muted" style="font-size: 0.8rem;">Envía un aviso automático a los jueces cuando comience esta votación.</span>
+                        </div>
+                    </div>
+
+                    <hr class="my-3" />
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                
+                            <span>Guardando...</span>
+                        }
+                        else
+                        {
+                            <span>Crear Votación Multicriterio</span>
+                        }
+                    </button>
+                </EditForm>
+            }
+            @RenderMensajes()
+        </div>
     }
 </div>
 
 @code {
-    private string tipoVotacion = "Popular";
-    private bool PermiteAutoVoto = false;
     [Parameter]
     public int CategoriaId { get; set; }
 
-    private CrearVotacionPopularRequest request = new();
- 
+    private string tipoVotacion = "Popular";
     private bool isLoading = false;
     private string? successMessage;
     private string? errorMessage;
 
+    // --- REQUESTS ---
+    private CrearVotacionPopularRequest request = new();
+    private CrearVotacionPuntuacionRequest requestPuntuacion = new();
+    private CrearVotacionMulticriterioRequest requestMulticriterio = new(); // Asegúrate de crear este DTO
+
+    // --- MULTICRITERIO STATE ---
+    private bool mostrandoConfiguracionMulticriterio = false;
+    private RadzenDataGrid<CriterioDto> gridCriterios;
+
+    protected override void OnInitialized()
+    {
+        // Inicializar Popular
+        request.CategoriaId = CategoriaId;
+        request.FechaApertura = DateTime.Today;
+        request.FechaCierre = DateTime.Today.AddDays(1);
+        request.Estado = "Abierta";
+        request.MaxSelection = 1;
+
+        // Inicializar Puntuacion
+        requestPuntuacion.CategoriaId = CategoriaId;
+        requestPuntuacion.FechaApertura = DateTime.Today;
+        requestPuntuacion.FechaCierre = DateTime.Today.AddDays(1);
+        requestPuntuacion.Estado = "Abierta";
+        requestPuntuacion.ValorMax = 10;
+
+        // Inicializar Multicriterio
+        requestMulticriterio.CategoriaId = CategoriaId;
+        requestMulticriterio.FechaApertura = DateTime.Today;
+        requestMulticriterio.FechaCierre = DateTime.Today.AddDays(1);
+        requestMulticriterio.Estado = "Abierta";
+    }
+
+    private void CambiarTipoVotacion(string tipo)
+    {
+        tipoVotacion = tipo;
+        successMessage = null;
+        errorMessage = null;
+    }
+
+    // --- MÉTODOS POPULAR ---
     private async Task CrearVotacionPopularAsync()
     {
         isLoading = true;
@@ -202,12 +328,13 @@
 
         try
         {
-            requestPuntuacion.FechaApertura = requestPuntuacion.FechaApertura.ToUniversalTime();
-            requestPuntuacion.FechaCierre = requestPuntuacion.FechaCierre.ToUniversalTime();
+            // Corrección de bug: Usar request en lugar de requestPuntuacion
+            request.FechaApertura = request.FechaApertura.ToUniversalTime();
+            request.FechaCierre = request.FechaCierre.ToUniversalTime();
 
             var response = await PopularService.CrearVotacionPopularAsync(request);
             successMessage = $"Votación popular creada correctamente con ID {response.Id}.";
-            LimpiarFormulario();
+            LimpiarFormularioPopular();
         }
         catch (ArgumentException ex)
         {
@@ -231,24 +358,20 @@
             isLoading = false;
         }
     }
-   
 
-    private CrearVotacionPuntuacionRequest requestPuntuacion = new();
-
-    protected override async Task OnInitializedAsync()
+    private void LimpiarFormularioPopular()
     {
-        request.CategoriaId = CategoriaId;
-        request.FechaApertura = DateTime.Today;
-        request.FechaCierre = DateTime.Today.AddDays(1);
-        request.Estado = "Abierta";
-
-        requestPuntuacion.CategoriaId = CategoriaId;
-        requestPuntuacion.FechaApertura = DateTime.Today;
-        requestPuntuacion.FechaCierre = DateTime.Today.AddDays(1);
-        requestPuntuacion.Estado = "Abierta";
-        requestPuntuacion.ValorMax = 10;
+        request = new CrearVotacionPopularRequest
+        {
+            CategoriaId = CategoriaId,
+            FechaApertura = DateTime.Today,
+            FechaCierre = DateTime.Today.AddDays(1),
+            Estado = "Abierta",
+            MaxSelection = 1
+        };
     }
 
+    // --- MÉTODOS PUNTUACIÓN ---
     private async Task CrearVotacionPuntuacionAsync()
     {
         isLoading = true;
@@ -262,32 +385,100 @@
 
             var response = await PuntuacionService.CrearVotacionPuntuacionAsync(requestPuntuacion);
             successMessage = $"Votación por puntuación creada correctamente con ID {response.Id}.";
+
             requestPuntuacion = new CrearVotacionPuntuacionRequest
             {
                 CategoriaId = CategoriaId,
                 FechaApertura = DateTime.Today,
                 FechaCierre = DateTime.Today.AddDays(1),
                 Estado = "Abierta",
-                ValorMax = 10,
-                PermiteAutoVoto=false
+                ValorMax = 10
             };
         }
-        catch (ArgumentException ex) { errorMessage = ex.Message; }
-        catch (InvalidOperationException ex) { errorMessage = ex.Message; }
-        catch (Exception ex) { errorMessage = $"Error inesperado: {ex.Message}"; }
-        finally { isLoading = false; }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error inesperado: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
-    private void LimpiarFormulario()
+    // --- MÉTODOS MULTICRITERIO ---
+    private void AplicarPlantillaMulticriterio(List<CriterioDto> criteriosSeleccionados)
     {
-        request = new CrearVotacionPopularRequest
-        {
-            CategoriaId = CategoriaId,
-            FechaApertura = DateTime.Today,
-            FechaCierre = DateTime.Today.AddDays(1),
-            Estado = "Abierta",
-            MaxSelection = 1,
-            PermiteAutoVoto=false
-        };
+        // Clonamos la lista para evitar alterar el objeto en memoria del servicio
+        requestMulticriterio.Criterios = criteriosSeleccionados.Select(c => new CriterioDto { Nombre = c.Nombre, Peso = c.Peso }).ToList();
+        mostrandoConfiguracionMulticriterio = true;
+        successMessage = null;
+        errorMessage = null;
     }
+
+    private async Task AñadirFilaCriterio()
+    {
+        var nuevo = new CriterioDto{Nombre = "Nuevo Criterio", Peso = 10};
+        requestMulticriterio.Criterios.Add(nuevo);
+        await gridCriterios.Reload();
+        await gridCriterios.EditRow(nuevo);
+    }
+
+    private async Task CrearVotacionMulticriterioAsync()
+    {
+        if (requestMulticriterio.Criterios == null || !requestMulticriterio.Criterios.Any())
+        {
+            errorMessage = "Debes añadir al menos un criterio.";
+            return;
+        }
+
+        if (requestMulticriterio.Criterios.Sum(c => c.Peso) != 100)
+        {
+            errorMessage = "La suma de los pesos de los criterios debe ser exactamente 100.";
+            return;
+        }
+
+        isLoading = true;
+        successMessage = null;
+        errorMessage = null;
+
+        try
+        {
+            requestMulticriterio.FechaApertura = requestMulticriterio.FechaApertura.ToUniversalTime();
+            requestMulticriterio.FechaCierre = requestMulticriterio.FechaCierre.ToUniversalTime();
+
+            // Descomenta y utiliza tu servicio real cuando lo tengas implementado
+            // var response = await MulticriterioService.CrearVotacionAsync(requestMulticriterio);
+            await Task.Delay(500); // Simulación temporal
+
+            successMessage = $"Votación Multicriterio creada correctamente.";
+            mostrandoConfiguracionMulticriterio = false; // Volver al selector
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error inesperado: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // --- RENDER FRAGMENTS (Para evitar repetir código de alertas) ---
+    private RenderFragment RenderMensajes() => __builder =>
+    {
+        if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="alert alert-success d-flex align-items-center gap-2 mt-3 rounded-3">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>@successMessage</span>
+            </div>
+        }
+        if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 rounded-3">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>@errorMessage</span>
+            </div>
+        }
+    };
 }
