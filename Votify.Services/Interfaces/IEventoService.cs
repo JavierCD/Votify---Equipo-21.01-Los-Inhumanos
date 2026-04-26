@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Models;
+using Votify.Services.Models;
 
 namespace Votify.Core.Interfaces
 {
@@ -16,7 +17,7 @@ namespace Votify.Core.Interfaces
         Task<Evento?> ObtenerEventoPorCodigoAsync(string codigo);
         Task<IEnumerable<Evento>> ObtenerEventosPorJuezAsync(int juezId);
         Task<Evento> CrearAsync(Evento evento);
-        Task ActualizarAsync(Evento evento);
+        Task ActualizarAsync(EditarEventoRequest request);
         Task EliminarAsync(int id);
         
         // TODO: Borrar cuando Login terminado
