@@ -149,5 +149,23 @@ namespace Votify.Services.Implementations
 
             await _votoPopularRepository.GuardarVotosAsync(votos);
         }
+        public async Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesDisponiblesAsync(int votanteId)
+        {
+            
+            var votaciones = await _votoPopularRepository.ObtenerVotacionesPopularesDisponiblesAsync();
+           
+
+           
+            return votaciones.Select(v => new VotacionPopularDisponibleResponse
+            {
+                VotacionId = v.Id,
+                CategoriaId = v.CategoriaId,
+                CategoriaNombre = v.Categoria?.Name ?? string.Empty,
+                Estado = v.Estado,
+                MaxSelection = v.MaxSelection,
+                PermiteAutoVoto = v.PermiteAutoVoto,
+                Proyectos = new List<ProyectoVotacionPopularResponse>() 
+            }).ToList();
+        }
     }
 }

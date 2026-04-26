@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
+using Votify.Services.Models;
 
 namespace Votify.Services.Implementations
 {
@@ -36,5 +37,36 @@ namespace Votify.Services.Implementations
                 await _categoriaRepository.DeleteAsync(categoria.Id);
             }
         }
+
+        public async Task AgregarPremioAsync(AgregarPremioRequest agregarPremioRequest)
+        {
+            var categoria = await _categoriaRepository.GetByIdAsync(agregarPremioRequest.categoriaID);
+            if(categoria != null)
+            {
+                
+                categoria.AsignarPremio(agregarPremioRequest.nombrePremio, agregarPremioRequest.premioDesc, agregarPremioRequest.puesto);
+                await _categoriaRepository.UpdateAsync(categoria);
+            }
+
+            
+        }
+
+        public async Task EliminarPremioAsync(int categoriaId, int premioId)
+        {
+            // 1. Recuperamos el Aggregate Root
+            var categoria = await _categoriaRepository.GetByIdAsync(categoriaId);
+
+            if (categoria == null)
+            {
+                throw new KeyNotFoundException($"No se encontró la categoría {categoriaId}");
+            }
+
+            // 2. Delegamos la lógica al Dominio
+            categoria.EliminarPremio(premioId);
+
+            // 3. Persistimos los cambios
+            await _categoriaRepository.UpdateAsync(categoria);
+        }
+
     }
 }

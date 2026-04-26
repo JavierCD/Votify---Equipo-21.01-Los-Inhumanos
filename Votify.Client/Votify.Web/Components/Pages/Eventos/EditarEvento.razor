@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @using System.Text
 @using Votify.Core.Factories
+@using Votify.Services.Models
 @using Votify.Web.ViewModels
 @using Votify.Core.Interfaces
 @using Votify.Core.Models
@@ -186,7 +187,8 @@
                                                         <div class="text-muted small mt-1">@premio.Descripcion</div>
                                                     }
                                                 </div>
-                                                <button class="btn btn-sm text-danger border-0" @onclick="() => EliminarPremioConcreto(categoria.Id, premio)">
+                                                <button class="btn btn-sm text-danger border-0"
+                                                        @onclick="() => EliminarPremioConcreto(categoria.Id, premio.Id)">
                                                     <RadzenIcon Icon="delete" />
                                                 </button>
                                             </li>
@@ -307,15 +309,26 @@
     private string? mensajeExito;
     private string? mensajeError;
 
+    private EditarEventoRequest requestModel = new EditarEventoRequest();
+    private AgregarPremioRequest requestPremio = new AgregarPremioRequest();
+
     protected override async Task OnInitializedAsync()
     {
         // 1. Aquí debes cargar el evento con TODAS sus relaciones usando tu servicio
         evento = await EventoService.ObtenerEventoConDetallesAsync(EventoId);
 
+
+
         if (evento != null)
         {
             fechaInicioTemp = evento.FechaInicio;
             fechaFinTemp = evento.FechaFin;
+
+            requestModel.Id = evento.Id;
+            requestModel.Name = evento.Name;
+            requestModel.FechaInicio = evento.FechaInicio;
+            requestModel.FechaFin = evento.FechaFin;
+            requestModel.Description = evento.Description;
         }
     }
 
@@ -333,12 +346,16 @@
         // Buscamos la categoría en la lista cargada
         var categoria = evento!.CategoriasEvento.First(c => c.Id == categoriaId);
 
-        // Creamos el premio con el nuevo constructor
-        var premio = new Premio(nuevoPremioNombre, nuevoPremioDesc, nuevoPremioPuesto);
-        categoria.AsignarPremio(premio);
+        if (categoria != null)
+        {
+            requestPremio.categoriaID = categoria.Id;
+            requestPremio.nombrePremio = nuevoPremioNombre;
+            requestPremio.premioDesc = nuevoPremioDesc;
+            requestPremio.puesto = nuevoPremioPuesto;
+        }
 
         // AQUÍ GUARDARÍAS EN BASE DE DATOS:
-        await CategoriaService.UpdateAsync(categoria);
+        await CategoriaService.AgregarPremioAsync(requestPremio);
 
         // Limpiar el formulario
         nuevoPremioNombre = "";
@@ -355,15 +372,7 @@
         {
             if (evento == null) return;
 
-            evento.ActualizarDatosGenerales(
-                evento.Name,
-                fechaInicioTemp,
-                fechaFinTemp,
-                evento.Description
-            );
-
-
-            await EventoService.ActualizarAsync(evento);
+            await EventoService.ActualizarAsync(requestModel);
 
             mensajeExito = "Los datos generales del evento se han actualizado correctamente.";
         }
@@ -379,16 +388,24 @@
         }
     }
 
-    private async Task EliminarPremioConcreto(int categoriaId, Premio premio)
+    private async Task EliminarPremioConcreto(int categoriaId, int premioId)
     {
-        // 1. Buscamos la categoría en la lista que tenemos cargada en memoria
-        var categoria = evento!.CategoriasEvento.First(c => c.Id == categoriaId);
+        try
+        {
+            // 1. Delegamos toda la responsabilidad al Servicio
+            await CategoriaService.EliminarPremioAsync(categoriaId, premioId);
 
-        // 2. Usamos el método de dominio que acabamos de crear
-        categoria.EliminarPremio(premio);
+            // 2. Actualizamos la UI para reflejar el cambio sin recargar la página entera
+            // Esto es puramente visual: quitamos el premio de la lista local en memoria.
+            var categoriaLocal = evento!.CategoriasEvento.First(c => c.Id == categoriaId);
+            var premioLocal = categoriaLocal.Premios.First(p => p.Id == premioId);
+            categoriaLocal.Premios.Remove(premioLocal);
 
-        // 3. Guardamos los cambios en la base de datos
-        await CategoriaService.UpdateAsync(categoria);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error inesperado al guardar: {ex.Message}";
+        }
     }
 
     private async Task CerrarVotacionCategoria(Categoria categoria)

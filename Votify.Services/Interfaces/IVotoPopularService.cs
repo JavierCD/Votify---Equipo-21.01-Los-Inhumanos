@@ -14,5 +14,6 @@ namespace Votify.Services.Interfaces
         Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesPopularesDisponiblesAsync();
         Task<VotacionPopularDisponibleResponse> ObtenerDetallePorIdAsync(int votacionId);
         Task EmitirVotoPopularAsync(EmitirVotoPopularRequest request);
+        Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesDisponiblesAsync(int votanteId);
     }
 }
