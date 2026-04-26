@@ -8,6 +8,7 @@
 @inject IPopularService PopularService
 @inject NavigationManager NavigationManager
 @inject ILogger<VotoPopular> Logger
+@inject IMulticriterioService MulticriterioService
 
 <div class="container py-4" style="max-width:620px">
 
@@ -433,7 +434,7 @@
 
         if (requestMulticriterio.Criterios.Sum(c => c.Peso) != 100)
         {
-            errorMessage = "La suma de los pesos de los criterios debe ser exactamente 100.";
+            errorMessage = "La suma de los pesos debe ser exactamente 100.";
             return;
         }
 
@@ -446,16 +447,22 @@
             requestMulticriterio.FechaApertura = requestMulticriterio.FechaApertura.ToUniversalTime();
             requestMulticriterio.FechaCierre = requestMulticriterio.FechaCierre.ToUniversalTime();
 
-            // Descomenta y utiliza tu servicio real cuando lo tengas implementado
-            // var response = await MulticriterioService.CrearVotacionAsync(requestMulticriterio);
-            await Task.Delay(500); // Simulación temporal
+            // Capturamos el ID devuelto por el servicio
+            int votacionId = await MulticriterioService.CrearVotacionAsync(requestMulticriterio);
 
-            successMessage = $"Votación Multicriterio creada correctamente.";
-            mostrandoConfiguracionMulticriterio = false; // Volver al selector
+            if (votacionId > 0)
+            {
+                // Incluimos el ID en el mensaje
+                successMessage = $"Votación Multicriterio creada correctamente con ID: {votacionId}";
+
+                // Opcional: Esperar un segundo para que el usuario lea el ID antes de redirigir
+                await Task.Delay(1500);
+                NavigationManager.NavigateTo($"/eventos/editar/{CategoriaId}");
+            }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error inesperado: {ex.Message}";
+            errorMessage = $"Error al guardar: {ex.Message}";
         }
         finally
         {

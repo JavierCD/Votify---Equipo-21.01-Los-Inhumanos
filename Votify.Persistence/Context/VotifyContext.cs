@@ -122,7 +122,13 @@ namespace Votify.Persistence.Context
             modelBuilder.Entity<Multicriterio>(entity =>
             {
                 // No hace falta poner ToTable porque hereda de Votacion
-                entity.Property(m => m.UsaPesos).HasDefaultValue(false);
+                entity.Property(m => m.UsaPesos).HasDefaultValue(true);
+
+                // CONFIGURACIÓN DE LA RELACIÓN CON CRITERIOS
+                entity.HasMany(m => m.Criterios)
+                      .WithOne() // Relación unidireccional o con propiedad de navegación si existe
+                      .HasForeignKey("VotacionId") // EF creará esta columna en la tabla Criterios
+                      .OnDelete(DeleteBehavior.Cascade); // Si borras la votación, se borran sus criterios
             });
 
             // 4.2. Propiedades específicas de Puntuacion

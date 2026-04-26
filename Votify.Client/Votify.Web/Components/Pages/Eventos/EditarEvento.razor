@@ -115,6 +115,11 @@
                                             <span class="badge bg-success">@(categoria.Votacion.Votos?.Count ?? 0) votos</span>
                                         </div>
 
+                                        <div class="alert alert-success p-2 small d-flex justify-content-between align-items-center">
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                                         Text="@($"ID Votación: {categoria.Votacion.Id}")" />
+                                        </div>
+
                                         <button class="btn btn-sm btn-warning w-100 fw-bold shadow-sm" @onclick="() => CerrarVotacionCategoria(categoria)">
                                             <RadzenIcon Icon="lock" class="me-1" /> Cerrar Votación
                                         </button>
