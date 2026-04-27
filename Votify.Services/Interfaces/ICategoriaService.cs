@@ -12,6 +12,7 @@ namespace Votify.Core.Interfaces
 
         Task AgregarPremioAsync(AgregarPremioRequest agregarPremioRequest);
         Task EliminarPremioAsync(int categoriaId, int premioId);
+        Task CerrarVotacionAsync(int categoriaId);
 
     }
 }

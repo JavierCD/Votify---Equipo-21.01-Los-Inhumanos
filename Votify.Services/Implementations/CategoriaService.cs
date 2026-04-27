@@ -68,5 +68,32 @@ namespace Votify.Services.Implementations
             await _categoriaRepository.UpdateAsync(categoria);
         }
 
+        public async Task CerrarVotacionAsync(int categoriaId)
+        {
+            // 1. Orquestación: Obtener el Aggregate Root (incluyendo la entidad Votacion)
+            // Es vital usar Includes porque EF Core necesita la Votacion cargada en memoria para mutarla.
+            var categoria = await _categoriaRepository.GetWithIncludesAsync(
+                c => c.Id == categoriaId,
+                c => c.Votacion
+            );
+
+            if (categoria == null)
+            {
+                throw new KeyNotFoundException($"No se encontró la categoría con ID {categoriaId}");
+            }
+
+            if (categoria.Votacion == null)
+            {
+                throw new InvalidOperationException($"La categoría '{categoria.Name}' no tiene una votación configurada.");
+            }
+
+            // 2. Ejecución: Delegar el comportamiento al Dominio Puro
+            // La entidad Votacion se encarga de cambiar su propio estado (EstaCerrada = true, etc.)
+            categoria.Votacion.CerrarVotacion();
+
+            // 3. Orquestación: Persistir los cambios en Infraestructura
+            await _categoriaRepository.UpdateAsync(categoria);
+        }
+
     }
 }

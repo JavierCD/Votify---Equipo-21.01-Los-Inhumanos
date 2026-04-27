@@ -120,7 +120,8 @@
                                                          Text="@($"ID Votación: {categoria.Votacion.Id}")" />
                                         </div>
 
-                                        <button class="btn btn-sm btn-warning w-100 fw-bold shadow-sm" @onclick="() => CerrarVotacionCategoria(categoria)">
+                                        <button class="btn btn-sm btn-warning w-100 fw-bold shadow-sm"
+                                                @onclick="() => CerrarVotacionCategoria(categoria.Id)">
                                             <RadzenIcon Icon="lock" class="me-1" /> Cerrar Votación
                                         </button>
                                     }
@@ -413,19 +414,29 @@
         }
     }
 
-    private async Task CerrarVotacionCategoria(Categoria categoria)
+    private async Task CerrarVotacionCategoria(int categoriaId)
     {
         try
         {
-            categoria.Votacion.CerrarVotacion();
+            // 1. Llamada al Caso de Uso en la capa de Aplicación
+            await CategoriaService.CerrarVotacionAsync(categoriaId);
 
-            await CategoriaService.UpdateAsync(categoria);
+            // 2. Actualizar el modelo local de la vista para que Blazor re-renderice
+            // Buscamos la categoría en la lista local de memoria y forzamos el cierre visual
+            var categoriaLocal = evento!.CategoriasEvento.First(c => c.Id == categoriaId);
+            categoriaLocal.Votacion.CerrarVotacion();
 
-            mensajeExito = $"La votación para '{categoria.Name}' se ha cerrado. Ya puedes ver el ranking.";
+            mensajeExito = $"La votación para '{categoriaLocal.Name}' se ha cerrado. Ya puedes ver el ranking.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Capturamos reglas de negocio del dominio
+            mensajeError = $"Operación no válida: {ex.Message}";
         }
         catch (Exception ex)
         {
-            mensajeError = $"Error al cerrar: {ex.Message}";
+            // Capturamos errores de base de datos u otros
+            mensajeError = $"Error al cerrar la votación: {ex.Message}";
         }
     }
 
