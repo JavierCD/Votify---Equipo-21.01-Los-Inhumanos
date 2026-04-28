@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Votify.Core.Enums;
 using Votify.Core.Factories;
 using Votify.Core.Models;
@@ -16,9 +14,6 @@ namespace Votify.Persistence.Context
         public static void Initialize(VotifyContext context)
         {
             context.Database.EnsureDeleted();
-
-
-
             context.Database.EnsureCreated();
 
             if (context.Eventos.Any())
@@ -26,229 +21,137 @@ namespace Votify.Persistence.Context
                 return;
             }
 
-            // 1. Miembros
-            var organizadorMock = new Organizador
-            {
-                Name = "Alan Brito (Organizador Demo)",
-                Email = "alan.brito@votify.com",
-                Password = "HashFalsoTemporal123"
-            };
+            // ==========================================
+            // 1. MIEMBROS (Organizadores, Jueces, Participantes)
+            // ==========================================
 
-            var juez = new Juez
-            {
-                Name = "Armando Bronca (Juez)",
-                Email = "juez@votify.com",
-                Password = "HashTemporal123"
-            };
+            // 1.1 Organizadores (Mínimo 2)
+            var org1 = new Organizador { Name = "Alan Brito (Org 1)", Email = "alan.brito@votify.com", Password = "HashFalsoTemporal123" };
+            var org2 = new Organizador { Name = "Laura Campos (Org 2)", Email = "laura.campos@votify.com", Password = "HashFalsoTemporal123" };
 
-            var juez2 = new Juez
-            {
-                Name = "Elena Fuerte (Juez)",
-                Email = "elena.fuerte@votify.com",
-                Password = "HashTemporal123"
-            };
+            // 1.2 Jueces
+            var juez1 = new Juez { Name = "Armando Bronca", Email = "juez1@votify.com", Password = "HashTemporal123" };
+            var juez2 = new Juez { Name = "Elena Fuerte", Email = "juez2@votify.com", Password = "HashTemporal123" };
 
-            var participante = new Participante
+            // 1.3 Participantes (Creamos 15 participantes para repartirlos en los proyectos)
+            var participantes = new List<Participante>();
+            for (int i = 1; i <= 15; i++)
             {
-                Name = "Paco Merte (Participante)",
-                Email = "participante@votify.com",
-                Password = "HashTemporal123"
-            };
+                participantes.Add(new Participante
+                {
+                    Name = $"Equipo {i}",
+                    Email = $"equipo{i}@votify.com",
+                    Password = "HashTemporal123"
+                });
+            }
 
-            var participante2 = new Participante
-            {
-                Name = "Equipo Alpha",
-                Email = "alpha@votify.com",
-                Password = "HashTemporal123"
-            };
-
-            var participante3 = new Participante
-            {
-                Name = "Equipo Beta",
-                Email = "beta@votify.com",
-                Password = "HashTemporal123"
-            };
-
-            var participante4 = new Participante
-            {
-                Name = "Equipo Gamma",
-                Email = "gamma@votify.com",
-                Password = "HashTemporal123"
-            };
-
-            var participante5 = new Participante
-            {
-                Name = "Equipo Delta",
-                Email = "delta@votify.com",
-                Password = "HashTemporal123"
-            };
-
-            var participante6 = new Participante
-            {
-                Name = "Equipo Omega",
-                Email = "omega@votify.com",
-                Password = "HashTemporal123"
-            };
-
-            var participante7 = new Participante
-            {
-                Name = "Equipo Sigma",
-                Email = "sigma@votify.com",
-                Password = "HashTemporal123"
-            };
-
-            var participante8 = new Participante
-            {
-                Name = "Equipo Zeta",
-                Email = "zeta@votify.com",
-                Password = "HashTemporal123"
-            };
-
-            context.Miembros.AddRange(organizadorMock, juez, juez2, participante, participante2, participante3, participante4, participante5, participante6, participante7, participante8);
+            context.Miembros.AddRange(org1, org2, juez1, juez2);
+            context.Miembros.AddRange(participantes);
             context.SaveChanges();
 
-            // 2. Eventos 
+            // ==========================================
+            // 2. EVENTOS (2 por organizador = 4 eventos en total)
+            // ==========================================
             EventoCreator creadorHackathon = new HackathonEventCreator();
-            Evento eventoDemo = creadorHackathon.CrearEvento(
-                "Hackathon de Innovación 2026",
-                DateTime.UtcNow.AddDays(5),
-                DateTime.UtcNow.AddDays(7),
-                organizadorMock.Id,
-                "Evento principal de prueba."
-            );
+            // Asumiendo que usas las fábricas, reutilizaremos HackathonEventCreator o instancias directas según tu arquitectura
 
-            context.Eventos.Add(eventoDemo);
+            var evento1 = creadorHackathon.CrearEvento("Hackathon de Innovación 2026", DateTime.UtcNow.AddDays(5), DateTime.UtcNow.AddDays(7), org1.Id, "Evento principal de prueba Org 1.");
+            var evento2 = creadorHackathon.CrearEvento("Feria de Startups Tecnológicas", DateTime.UtcNow.AddDays(10), DateTime.UtcNow.AddDays(12), org1.Id, "Segundo evento de Org 1.");
+            var evento3 = creadorHackathon.CrearEvento("Torneo eSports & Dev", DateTime.UtcNow.AddDays(15), DateTime.UtcNow.AddDays(18), org2.Id, "Primer evento de Org 2.");
+            var evento4 = creadorHackathon.CrearEvento("Congreso de Ciberseguridad", DateTime.UtcNow.AddDays(20), DateTime.UtcNow.AddDays(22), org2.Id, "Segundo evento de Org 2.");
+
+            // Asignamos el juez 1 al evento 1 para tus tests de notificaciones
+            evento1.Jurado = new List<Juez> { juez1 };
+
+            context.Eventos.AddRange(evento1, evento2, evento3, evento4);
             context.SaveChanges();
 
-            // 3. Categorías del evento 1
-            var categoria1 = new Categoria("Proyectos Sociales", "Soluciones tecnológicas con impacto social")
+            // ==========================================
+            // 3. CATEGORÍAS (Mínimo 2 por evento = 8 categorías)
+            // ==========================================
+            var categorias = new List<Categoria>
             {
-                Name = "Proyectos Sociales",
-                Descripcion = "Soluciones tecnológicas con impacto social.",
-                EventoId = eventoDemo.Id
+                // Evento 1
+                new Categoria { Name = "Impacto Social", Descripcion = "Soluciones para la sociedad.", EventoId = evento1.Id },
+                new Categoria { Name = "Innovación en IA", Descripcion = "Uso de Inteligencia Artificial.", EventoId = evento1.Id },
+                // Evento 2
+                new Categoria { Name = "FinTech", Descripcion = "Tecnología financiera.", EventoId = evento2.Id },
+                new Categoria { Name = "GreenTech", Descripcion = "Sostenibilidad y medio ambiente.", EventoId = evento2.Id },
+                // Evento 3
+                new Categoria { Name = "Desarrollo de Videojuegos", Descripcion = "Creación de entretenimiento.", EventoId = evento3.Id },
+                new Categoria { Name = "Herramientas eSports", Descripcion = "Software para competición.", EventoId = evento3.Id },
+                // Evento 4
+                new Categoria { Name = "Seguridad Ofensiva", Descripcion = "Red Team y Pentesting.", EventoId = evento4.Id },
+                new Categoria { Name = "Seguridad Defensiva", Descripcion = "Blue Team y Protección.", EventoId = evento4.Id }
             };
 
-            var categoria2 = new Categoria
-            {
-                Name = "Innovación en IA",
-                Descripcion = "Mejor uso de modelos de Inteligencia Artificial.",
-                EventoId = eventoDemo.Id
-            };
-
-            var categoria3 = new Categoria
-            {
-                Name = "Ciberseguridad",
-                Descripcion = "Proyectos enfocados en seguridad digital.",
-                EventoId = eventoDemo.Id
-            };
-
-            context.Categorias.AddRange(categoria1, categoria2, categoria3);
+            context.Categorias.AddRange(categorias);
             context.SaveChanges();
 
-            // 4. Proyectos asociados a categorías
+            // ==========================================
+            // 4. PROYECTOS (Mínimo 5 por categoría = 40 proyectos)
+            // ==========================================
+            var proyectos = new List<Proyecto>();
+            int participanteIndex = 0;
 
-            var proyecto1 = new SustainabilityProject("AgroTech Social", participante.Id)
+            // Función local rápida para rotar a través de los 15 participantes disponibles
+            Participante GetNextParticipante()
             {
-                Visible = true,
+                var p = participantes[participanteIndex];
+                participanteIndex = (participanteIndex + 1) % participantes.Count;
+                return p;
+            }
 
-            };
-
-            var proyecto2 = new SustainabilityProject("EduAccess", participante2.Id)
+            // Generar 5 proyectos para cada una de las 8 categorías
+            for (int i = 0; i < categorias.Count; i++)
             {
-                Visible = true,
+                var categoriaActual = categorias[i];
 
-            };
+                for (int j = 1; j <= 5; j++)
+                {
+                    Proyecto nuevoProyecto;
+                    var participante = GetNextParticipante();
 
-            var proyecto3 = new SustainabilityProject("GreenCity", participante3.Id)
-            {
-                Visible = true,
+                    // Alternamos el tipo de proyecto instanciado basándonos en tu modelo
+                    if (i % 3 == 0)
+                    {
+                        nuevoProyecto = new SustainabilityProject($"Sustain Proy {j} - Cat {i + 1}", participante.Id) { Visible = true };
+                    }
+                    else if (i % 3 == 1)
+                    {
+                        nuevoProyecto = new AiProject($"AI Proy {j} - Cat {i + 1}", participante.Id) { Visible = true };
+                    }
+                    else
+                    {
+                        nuevoProyecto = new CybersecurityProject($"Cyber Proy {j} - Cat {i + 1}", participante.Id) { Visible = true };
+                    }
 
-            };
+                    nuevoProyecto.Categorias.Add(categoriaActual);
+                    proyectos.Add(nuevoProyecto);
+                }
+            }
 
-            proyecto1.Categorias.Add(categoria1);
-            proyecto2.Categorias.Add(categoria1);
-            proyecto3.Categorias.Add(categoria1);
-
-            var proyecto4 = new AiProject("HealthBot AI", participante4.Id)
-            {
-                Visible = true,
-
-            };
-
-            var proyecto5 = new AiProject("SmartCity Assistant", participante5.Id)
-            {
-                Visible = true,
-
-            };
-
-            var proyecto6 = new AiProject("EduBot", participante6.Id)
-            {
-                Visible = true,
-
-            };
-
-            proyecto4.Categorias.Add(categoria2);
-            proyecto5.Categorias.Add(categoria2);
-            proyecto6.Categorias.Add(categoria2);
-
-            var proyecto7 = new CybersecurityProject("SecureVote", participante7.Id)
-            {
-                Visible = true,
-
-            };
-
-            var proyecto8 = new CybersecurityProject("CryptoShield", participante8.Id)
-            {
-                Visible = true,
-
-            };
-
-            proyecto7.Categorias.Add(categoria3);
-            proyecto8.Categorias.Add(categoria3);
-
-            context.Proyectos.AddRange(proyecto1, proyecto2, proyecto3, proyecto4, proyecto5, proyecto6, proyecto7, proyecto8);
+            context.Proyectos.AddRange(proyectos);
             context.SaveChanges();
 
+            // ==========================================
+            // 5. PREPARACIÓN PARA TEST DE NOTIFICACIONES (Mantenido de tu código original)
+            // ==========================================
 
-            // 5. Votantes
-            /**
-            var votante1 = new Votante { Email = "votante1@votify.com", Anonimo = false, Rol = "PUBLIC" };
-            var votante2 = new Votante { Email = "votante2@votify.com", Anonimo = false, Rol = "PUBLIC" };
-            var votante3 = new Votante { Email = "votante3@votify.com", Anonimo = false, Rol = "PUBLIC" };
-            var votante4 = new Votante { Email = "votante4@votify.com", Anonimo = false, Rol = "SPONSOR" };
-            var votante5 = new Votante { Email = "votante5@votify.com", Anonimo = true, Rol = "PUBLIC" };
-            var votante6 = new Votante { Email = "votante6@votify.com", Anonimo = false, Rol = "EXPERT" };
-
-            context.Votantes.AddRange(votante1, votante2, votante3, votante4, votante5, votante6);
-            context.SaveChanges();*/
-
-
-            // 6. --- PREPARACIÓN PARA TEST DE NOTIFICACIONES ---
-
-            // A) Asignamos el Juez Armando al Evento (para que el sistema sepa a quién avisar)
-            // Aseguramos que la lista existe y añadimos al juez
-            if (eventoDemo.Jurado == null) eventoDemo.Jurado = new List<Juez>();
-            eventoDemo.Jurado.Add(juez);
-            context.SaveChanges();
-
-            // B) Creamos una Votación para la categoría "Innovación en IA"
-            // Le ponemos que empiece en EXACTAMENTE 1 MINUTO desde que arranca la app
+            // Usamos la categoría "Innovación en IA" (que es la categorias[1] de nuestra lista)
             var votacionTest = new Popular
             {
-                CategoriaId = categoria2.Id,
+                CategoriaId = categorias[1].Id,
                 FechaApertura = DateTime.UtcNow.AddMinutes(1), // ¡El cron la detectará en breve!
                 FechaCierre = DateTime.UtcNow.AddDays(2),
                 Estado = "Pendiente", // Aún no ha empezado
                 MaxSelection = 3,
-
-                // Estos son los interruptores clave que creamos en la Fase 1
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = false
             };
 
             context.Votaciones.Add(votacionTest);
             context.SaveChanges();
-            
         }
     }
 }
