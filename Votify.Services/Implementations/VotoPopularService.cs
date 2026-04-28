@@ -85,6 +85,13 @@ namespace Votify.Services.Implementations
             if (request.ProyectosSeleccionadosIds.Any(id => !proyectosValidosIds.Contains(id)))
                 throw new ArgumentException("Uno o más proyectos no pertenecen a la categoría de la votación.");
 
+           if(!string.IsNullOrWhiteSpace(request.Email))
+            {
+                bool yaVoto = await _votoPopularRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
+                if (yaVoto)
+                    throw new InvalidOperationException("Este correo electronico ya ha emitido su voto en esta votacion");
+            }
+            
             int votanteIdFinal = request.VotanteId;
 
             Votante votanteFinal = null;
@@ -148,6 +155,24 @@ namespace Votify.Services.Implementations
             }).ToList();
 
             await _votoPopularRepository.GuardarVotosAsync(votos);
+        }
+        public async Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesDisponiblesAsync(int votanteId)
+        {
+            
+            var votaciones = await _votoPopularRepository.ObtenerVotacionesPopularesDisponiblesAsync();
+           
+
+           
+            return votaciones.Select(v => new VotacionPopularDisponibleResponse
+            {
+                VotacionId = v.Id,
+                CategoriaId = v.CategoriaId,
+                CategoriaNombre = v.Categoria?.Name ?? string.Empty,
+                Estado = v.Estado,
+                MaxSelection = v.MaxSelection,
+                PermiteAutoVoto = v.PermiteAutoVoto,
+                Proyectos = new List<ProyectoVotacionPopularResponse>() 
+            }).ToList();
         }
     }
 }

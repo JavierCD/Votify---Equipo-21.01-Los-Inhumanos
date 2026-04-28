@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
+using Votify.Services.Models;
 
 namespace Votify.Services.Implementations
 {
@@ -36,5 +37,63 @@ namespace Votify.Services.Implementations
                 await _categoriaRepository.DeleteAsync(categoria.Id);
             }
         }
+
+        public async Task AgregarPremioAsync(AgregarPremioRequest agregarPremioRequest)
+        {
+            var categoria = await _categoriaRepository.GetByIdAsync(agregarPremioRequest.categoriaID);
+            if(categoria != null)
+            {
+                
+                categoria.AsignarPremio(agregarPremioRequest.nombrePremio, agregarPremioRequest.premioDesc, agregarPremioRequest.puesto);
+                await _categoriaRepository.UpdateAsync(categoria);
+            }
+
+            
+        }
+
+        public async Task EliminarPremioAsync(int categoriaId, int premioId)
+        {
+            // 1. Recuperamos el Aggregate Root
+            var categoria = await _categoriaRepository.GetByIdAsync(categoriaId);
+
+            if (categoria == null)
+            {
+                throw new KeyNotFoundException($"No se encontró la categoría {categoriaId}");
+            }
+
+            // 2. Delegamos la lógica al Dominio
+            categoria.EliminarPremio(premioId);
+
+            // 3. Persistimos los cambios
+            await _categoriaRepository.UpdateAsync(categoria);
+        }
+
+        public async Task CerrarVotacionAsync(int categoriaId)
+        {
+            // 1. Orquestación: Obtener el Aggregate Root (incluyendo la entidad Votacion)
+            // Es vital usar Includes porque EF Core necesita la Votacion cargada en memoria para mutarla.
+            var categoria = await _categoriaRepository.GetWithIncludesAsync(
+                c => c.Id == categoriaId,
+                c => c.Votacion
+            );
+
+            if (categoria == null)
+            {
+                throw new KeyNotFoundException($"No se encontró la categoría con ID {categoriaId}");
+            }
+
+            if (categoria.Votacion == null)
+            {
+                throw new InvalidOperationException($"La categoría '{categoria.Name}' no tiene una votación configurada.");
+            }
+
+            // 2. Ejecución: Delegar el comportamiento al Dominio Puro
+            // La entidad Votacion se encarga de cambiar su propio estado (EstaCerrada = true, etc.)
+            categoria.Votacion.CerrarVotacion();
+
+            // 3. Orquestación: Persistir los cambios en Infraestructura
+            await _categoriaRepository.UpdateAsync(categoria);
+        }
+
     }
 }

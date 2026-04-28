@@ -12,8 +12,6 @@ namespace Votify.Core.Models
 
         public string Name { get; set; }
 
-        // Lo dejamos nullable (?) como lo tenías en tu Entity original, 
-        // ya que las descripciones suelen ser opcionales
         public string? Descripcion { get; set; }
 
         public float Peso { get; set; }
