@@ -341,7 +341,7 @@ else
         {
             // 1. Mockeamos el ID del participante (suponiendo que en tu Seeder es el ID 3)
             // TODO: Cambiar esto cuando tu compañero acabe el Login (UT 3616) Si se quiere probar comentar la parte del DBInit que está relacionada con los proyectos
-            int participanteMockId = 7;
+            int participanteMockId = ((Participante)Session.Usuario).Id;
 
             // 2. Instanciamos tu Proyecto usando el constructor blindado
             ProyectoCreator creator;
