@@ -245,10 +245,26 @@
                     </div>
 
                     <div class="d-flex align-items-center mb-4 p-3 bg-light rounded border">
-                        <RadzenSwitch @bind-Value="requestMulticriterio.EnviarNotificacionApertura" />
+                        <RadzenSwitch @bind-Value="request.EnviarNotificacionApertura" />
                         <div class="ms-3">
                             <span class="d-block fw-bold" style="font-size: 0.9rem;">Notificar al Jurado</span>
                             <span class="text-muted" style="font-size: 0.8rem;">Envía un aviso automático a los jueces cuando comience esta votación.</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><strong>¿Se puede votar uno mismo?</strong></label>
+                        <div>
+                            <button type="button"
+                                    class="btn @(PermiteAutoVoto ? "btn-primary" : "btn-outline-primary") me-2"
+                                    @onclick="() => PermiteAutoVoto = true">
+                                Sí
+                            </button>
+                            <button type="button"
+                                    class="btn @(!PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
+                                    @onclick="() => PermiteAutoVoto = false">
+                                No
+                            </button>
                         </div>
                     </div>
 
@@ -280,6 +296,7 @@
     private bool isLoading = false;
     private string? successMessage;
     private string? errorMessage;
+    private bool PermiteAutoVoto = false;
 
     // --- REQUESTS ---
     private CrearVotacionPopularRequest request = new();
@@ -332,6 +349,7 @@
             // Corrección de bug: Usar request en lugar de requestPuntuacion
             request.FechaApertura = request.FechaApertura.ToUniversalTime();
             request.FechaCierre = request.FechaCierre.ToUniversalTime();
+            request.PermiteAutoVoto =PermiteAutoVoto;
 
             var response = await PopularService.CrearVotacionPopularAsync(request);
             successMessage = $"Votación popular creada correctamente con ID {response.Id}.";
@@ -362,6 +380,7 @@
 
     private void LimpiarFormularioPopular()
     {
+        PermiteAutoVoto = false;
         request = new CrearVotacionPopularRequest
         {
             CategoriaId = CategoriaId,
