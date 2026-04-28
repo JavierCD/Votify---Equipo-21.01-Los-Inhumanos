@@ -14,10 +14,12 @@ namespace Votify.Services.Implementations
     public class EventoService : IEventoService
     {
         private readonly IEventoRepository _repository;
+        private readonly IGenericRepository<Juez> _juezRepository;
 
-        public EventoService(IEventoRepository repository)
+        public EventoService(IEventoRepository repository, IGenericRepository<Juez> juezRepository)
         {
             _repository = repository;
+            _juezRepository = juezRepository;
         }
 
         public async Task ActualizarAsync(EditarEventoRequest eventoMod)
@@ -109,6 +111,47 @@ namespace Votify.Services.Implementations
                 throw new ArgumentException("El ID del juez no es válido.");
 
             return await _repository.ObtenerEventosPorJuezAsync(juezId);
+        }
+
+        public async Task AsignarJuezAEventoAsync(int juezId, int eventoId)
+        {
+            // 1. Usamos tu GenericRepository para traer el evento INCLUYENDO su jurado actual
+            var evento = await _repository.GetWithIncludesAsync(e => e.Id == eventoId, e => e.Jurado);
+            var juez = await _juezRepository.GetByIdAsync(juezId);
+
+            if (evento == null || juez == null)
+            {
+                throw new ArgumentException("Evento o Juez no encontrados.");
+            }
+
+            // 2. Evitamos duplicados en la tabla intermedia EventosJurado
+            if (evento.Jurado.Any(j => j.Id == juezId))
+            {
+                throw new InvalidOperationException("El juez ya está asignado a este evento.");
+            }
+
+            // 3. Lo añadimos a la lista y actualizamos
+            evento.Jurado.Add(juez);
+            await _repository.UpdateAsync(evento);
+        }
+
+        public async Task DesasignarJuezAEventoAsync(int juezId, int eventoId)
+        {
+            // Traemos el evento con su lista de jurado usando tu repositorio genérico
+            var evento = await _repository.GetWithIncludesAsync(e => e.Id == eventoId, e => e.Jurado);
+
+            if (evento == null)
+                throw new ArgumentException("Evento no encontrado.");
+
+            // Buscamos si el juez realmente está en la lista de este evento
+            var juezARemover = evento.Jurado.FirstOrDefault(j => j.Id == juezId);
+
+            if (juezARemover == null)
+                throw new InvalidOperationException("El juez no está asignado a este evento.");
+
+            // Lo quitamos de la lista y actualizamos
+            evento.Jurado.Remove(juezARemover);
+            await _repository.UpdateAsync(evento);
         }
     }
 }

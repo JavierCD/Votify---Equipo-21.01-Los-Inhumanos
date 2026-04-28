@@ -19,7 +19,9 @@ namespace Votify.Core.Interfaces
         Task<Evento> CrearAsync(Evento evento);
         Task ActualizarAsync(EditarEventoRequest request);
         Task EliminarAsync(int id);
-        
+        Task AsignarJuezAEventoAsync(int juezId, int eventoId);
+        Task DesasignarJuezAEventoAsync(int juezId, int eventoId);
+
         // TODO: Borrar cuando Login terminado
         Task<int> ObtenerOrganizadorMockIdAsync();
     }
