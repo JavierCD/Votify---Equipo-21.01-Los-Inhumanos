@@ -1,0 +1,263 @@
+﻿@page "/voto-multicriterio-usuario/{VotacionId:int}"
+@rendermode InteractiveServer
+@using Votify.Services.Interfaces
+@using Votify.Services.Models
+
+@inject IVotoMulticriterioService VotoMulticriterioService
+@inject ILogger<VotoMulticriterioUsuario> Logger
+
+<div class="container py-4" style="max-width:720px">
+
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Votación Multicriterio</h2>
+        <p class="text-muted small mb-0">Evalúa cada proyecto basándote en los criterios del baremo (0 a 10 puntos).</p>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="d-flex align-items-center gap-2 text-muted">
+            <span class="spinner-border spinner-border-sm"></span>
+            <span>Cargando baremo de evaluación...</span>
+        </div>
+    }
+    else if (votacion is null)
+    {
+        <div class="alert alert-danger rounded-3">@errorMessage</div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">@votacion.CategoriaNombre</h4>
+                <span class="badge bg-success-subtle text-success me-2">@votacion.Estado</span>
+                <span class="badge bg-primary-subtle text-primary">@votacion.Criterios.Count Criterios a evaluar</span>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert alert-danger rounded-3 d-flex align-items-center gap-2">
+                <span>✕</span><span>@errorMessage</span>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="alert alert-success rounded-3 d-flex align-items-center gap-2">
+                <span>✓</span><span>@successMessage</span>
+            </div>
+        }
+
+        @if (string.IsNullOrWhiteSpace(successMessage))
+        {
+            @* ── PASO 1: PANTALLA DE IDENTIFICACIÓN (Doble Bóveda) ── *@
+            @if (!identificado)
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <h5 class="fw-bold mb-3">Identificación</h5>
+                    <p class="text-muted small mb-4">
+                        Introduce tu email para verificar que no has votado antes. Mantendremos el anonimato separando tu correo de los votos emitidos.
+                    </p>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Correo Electrónico</label>
+                        <input type="email" class="form-control form-control-lg" @bind="emailVotante" placeholder="ejemplo@correo.com" />
+                    </div>
+
+                    <button type="button" class="btn btn-primary w-100 py-2 fw-bold" @onclick="ContinuarAVotar" disabled="@string.IsNullOrWhiteSpace(emailVotante)">
+                        Continuar a la Evaluación
+                    </button>
+
+                    @if (!string.IsNullOrEmpty(errorEmail))
+                    {
+                        <div class="alert alert-danger mt-3 small py-2">@errorEmail</div>
+                    }
+                </div>
+            }
+            else
+            {
+                @* ── PASO 2: FORMULARIO DE EVALUACIÓN MULTICRITERIO ── *@
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-light">
+
+                    <div class="alert alert-info py-2 small mb-4 d-flex justify-content-between align-items-center bg-white border-info">
+                        <span>Evaluando como: <strong>@emailVotante</strong></span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => identificado = false">Cambiar</button>
+                    </div>
+
+                    <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoAsync">
+                        <DataAnnotationsValidator />
+
+                        @foreach (var proyecto in votacion.Proyectos)
+                        {
+                            <div class="card mb-4 border-0 shadow-sm rounded-4">
+                                <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+                                    <h5 class="fw-bold mb-0 text-primary">@proyecto.Name</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        @foreach (var criterio in votacion.Criterios)
+                                        {
+                                            <div class="col-12 col-md-6">
+                                                <div class="p-2 rounded-3" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <span class="fw-semibold small" style="line-height: 1.2;">@criterio.Nombre</span>
+                                                        <input type="number"
+                                                               class="form-control form-control-sm fw-bold text-center"
+                                                               style="width: 70px;"
+                                                               min="0" max="10"
+                                                               value="@ObtenerPuntuacion(proyecto.Id, criterio.Id)"
+                                                               @onchange="e => ActualizarPuntuacion(proyecto.Id, criterio.Id, e.Value?.ToString())" />
+                                                    </div>
+                                                    <small class="text-muted d-block" style="font-size: 0.7rem;">Peso en el baremo: @criterio.Peso%</small>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <hr class="my-3" />
+
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3" disabled="@enviando">
+                            @if (enviando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Procesando evaluación...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-send-fill me-2"></i>
+                
+                                <span>Enviar Evaluación Completa</span>
+                            }
+                        </button>
+                    </EditForm>
+                </div>
+            }
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int VotacionId { get; set; }
+
+    // --- VARIABLES DE IDENTIFICACIÓN ---
+    private string emailVotante = "";
+    private bool identificado = false;
+    private string errorEmail = "";
+
+    // --- VARIABLES ORIGINALES ---
+    // NOTA: Asegúrate de tener este DTO con las listas de Proyectos y Criterios
+    private VotacionMulticriterioDetalleResponse? votacion;
+    private object formModel = new();
+
+    // Diccionario anidado: ProyectoId -> CriterioId -> Puntuacion
+    private Dictionary<int, Dictionary<int, int>> puntuaciones = new();
+
+    private bool cargando = true;
+    private bool enviando = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            votacion = await VotoMulticriterioService.ObtenerDetallePorIdAsync(VotacionId);
+
+            // Inicializamos la matriz de puntuaciones a 0
+            if (votacion != null && votacion.Proyectos != null && votacion.Criterios != null)
+            {
+                foreach (var p in votacion.Proyectos)
+                {
+                    puntuaciones[p.Id] = new Dictionary<int, int>();
+                    foreach (var c in votacion.Criterios)
+                    {
+                        puntuaciones[p.Id][c.Id] = 0;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogError(ex, "Error cargando baremo multicriterio.");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void ContinuarAVotar()
+    {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(emailVotante, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            errorEmail = "Por favor, introduce un correo electrónico válido.";
+            return;
+        }
+
+        identificado = true;
+        errorEmail = "";
+    }
+
+    private int ObtenerPuntuacion(int proyectoId, int criterioId)
+    {
+        if (puntuaciones.ContainsKey(proyectoId) && puntuaciones[proyectoId].ContainsKey(criterioId))
+        {
+            return puntuaciones[proyectoId][criterioId];
+        }
+        return 0;
+    }
+
+    private void ActualizarPuntuacion(int proyectoId, int criterioId, string? valor)
+    {
+        if (int.TryParse(valor, out var num))
+        {
+            // Restringimos la nota del 0 al 10 (Ajusta si tu negocio usa 0-100)
+            if (num > 10) num = 10;
+            if (num < 0) num = 0;
+
+            if (puntuaciones.ContainsKey(proyectoId))
+            {
+                puntuaciones[proyectoId][criterioId] = num;
+            }
+        }
+    }
+
+    private async Task EmitirVotoAsync()
+    {
+        errorMessage = null;
+        successMessage = null;
+        enviando = true;
+
+        try
+        {
+            var request = new EmitirVotoMulticriterioRequest
+            {
+                VotacionId = VotacionId,
+                Email = emailVotante,
+                Puntuaciones = puntuaciones
+            };
+
+            await VotoMulticriterioService.EmitirVotoAsync(request);
+
+            successMessage = "¡Evaluación multicriterio registrada correctamente!";
+
+            // Limpiamos en caso de querer votar por otra persona desde el mismo equipo físico
+            identificado = false;
+            emailVotante = "";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogError(ex, "Error emitiendo evaluación multicriterio.");
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+}
