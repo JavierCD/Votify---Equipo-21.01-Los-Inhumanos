@@ -27,6 +27,8 @@ namespace Votify.Core.Models
         public int ProyectoId { get; set; }
         public Proyecto? Proyecto { get; set; }
 
+        public List<DetalleVoto> Detalle { get; set; } = new();
+
         protected Voto() { }
 
         protected Voto(int votacionId, int proyectoId, double puntuacionBase, bool anonimo = false, string? hashAnonimo = null,string? comentario=null)
