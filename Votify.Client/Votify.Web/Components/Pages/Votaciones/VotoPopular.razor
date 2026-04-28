@@ -189,7 +189,7 @@
     public int CategoriaId { get; set; }
 
     private CrearVotacionPopularRequest request = new();
- 
+
     private bool isLoading = false;
     private string? successMessage;
     private string? errorMessage;
@@ -204,6 +204,7 @@
         {
             requestPuntuacion.FechaApertura = requestPuntuacion.FechaApertura.ToUniversalTime();
             requestPuntuacion.FechaCierre = requestPuntuacion.FechaCierre.ToUniversalTime();
+            request.PermiteAutoVoto = PermiteAutoVoto;
 
             var response = await PopularService.CrearVotacionPopularAsync(request);
             successMessage = $"Votación popular creada correctamente con ID {response.Id}.";
