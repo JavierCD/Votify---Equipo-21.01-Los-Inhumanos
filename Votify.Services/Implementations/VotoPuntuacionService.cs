@@ -11,6 +11,7 @@ namespace Votify.Services.Implementations
     public class VotoPuntuacionService : IVotoPuntuacionService
     {
         private readonly IVotoPuntuacionRepository _votoPuntuacionRepository;
+        private readonly IGenericRepository<Votante> _votanteRepository;
 
         public VotoPuntuacionService(IVotoPuntuacionRepository votoPuntuacionRepository)
         {
@@ -66,6 +67,28 @@ namespace Votify.Services.Implementations
 
             if (request.PuntuacionesPorProyecto.Keys.Any(id => !proyectosValidosIds.Contains(id)))
                 throw new ArgumentException("Uno o más proyectos no pertenecen a la categoría de la votación.");
+
+            int votanteIdFinal = request.VotanteId;
+
+            Votante votanteFinal = null;
+
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                var todosLosVotantes = await _votanteRepository.GetAllAsync();
+                votanteFinal = todosLosVotantes.FirstOrDefault(v => v.Email == request.Email);
+
+                if (votanteFinal == null)
+                {
+
+                    votanteFinal = new Votante
+                    {
+                        Email = request.Email,
+                    };
+
+
+                    await _votanteRepository.AddAsync(votanteFinal);
+                }
+            }
 
             var creadorVoto = new VotoPublicoCreator();
 
