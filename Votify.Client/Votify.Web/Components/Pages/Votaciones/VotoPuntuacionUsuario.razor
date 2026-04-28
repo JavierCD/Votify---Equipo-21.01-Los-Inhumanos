@@ -30,7 +30,7 @@
                 <div>
                     <h4 class="fw-bold mb-1">@votacion.CategoriaNombre</h4>
                     <span class="badge bg-success-subtle text-success me-2">@votacion.Estado</span>
-                    <span class="badge bg-primary-subtle text-primary">Máx. @votacion.ValorMax puntos</span>
+                    <span class="badge bg-primary-subtle text-primary">Máx. @votacion.ValorMax puntos por proyecto</span>
                 </div>
             </div>
         </div>
@@ -51,47 +51,79 @@
 
         @if (string.IsNullOrWhiteSpace(successMessage))
         {
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoAsync">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary class="text-danger small" />
-
-                   
+            @* ── PASO 1: PANTALLA DE IDENTIFICACIÓN ── *@
+            @if (!identificado)
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <h5 class="fw-bold mb-3">Identificación</h5>
+                    <p class="text-muted small mb-4">
+                        Introduce tu email. Lo utilizaremos exclusivamente para enviarte los resultados finales y tu certificado de participación cuando el evento termine.
+                    </p>
 
                     <div class="mb-4">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">Puntúa los proyectos</label>
-                        @foreach (var proyecto in votacion.Proyectos)
-                        {
-                            <div class="card mb-2 border rounded-3 p-3 bg-light">
-                                <div class="d-flex align-items-center justify-content-between gap-3">
-                                    <span class="fw-semibold">@proyecto.Name</span>
-                                    <input type="number"
-                                           class="form-control"
-                                           style="max-width: 100px;"
-                                           min="0"
-                                           max="@votacion.ValorMax"
-                                           value="@ObtenerPuntuacion(proyecto.Id)"
-                                           @onchange="e => ActualizarPuntuacion(proyecto.Id, e.Value?.ToString())" />
-                                </div>
-                            </div>
-                        }
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Correo Electrónico</label>
+                        <input type="email" class="form-control form-control-lg" @bind="emailVotante" placeholder="ejemplo@correo.com" />
                     </div>
 
-                    <hr class="my-3" />
-
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@enviando">
-                        @if (enviando)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            <span>Enviando...</span>
-                        }
-                        else
-                        {
-                            <span>Enviar voto</span>
-                        }
+                    <button type="button" class="btn btn-primary w-100 py-2 fw-bold" @onclick="ContinuarAVotar" disabled="@string.IsNullOrWhiteSpace(emailVotante)">
+                        Continuar a la Votación
                     </button>
-                </EditForm>
-            </div>
+
+                    @if (!string.IsNullOrEmpty(errorEmail))
+                    {
+                        <div class="alert alert-danger mt-3 small py-2">@errorEmail</div>
+                    }
+                </div>
+            }
+            else
+            {
+                @* ── PASO 2: FORMULARIO DE VOTACIÓN ── *@
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+
+                    <div class="alert alert-info py-2 small mb-4 d-flex justify-content-between align-items-center">
+                        <span>Votando para recibir resultados en: <strong>@emailVotante</strong></span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => identificado = false">Cambiar</button>
+                    </div>
+
+                    <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger small" />
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small text-uppercase text-muted">Puntúa los proyectos</label>
+                            @foreach (var proyecto in votacion.Proyectos)
+                            {
+                                <div class="card mb-2 border rounded-3 p-3 bg-light">
+                                    <div class="d-flex align-items-center justify-content-between gap-3">
+                                        <span class="fw-semibold">@proyecto.Name</span>
+                                        <input type="number"
+                                               class="form-control fw-bold text-center"
+                                               style="max-width: 100px;"
+                                               min="0"
+                                               max="@votacion.ValorMax"
+                                               value="@ObtenerPuntuacion(proyecto.Id)"
+                                               @onchange="e => ActualizarPuntuacion(proyecto.Id, e.Value?.ToString())" />
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <hr class="my-3" />
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@enviando">
+                            @if (enviando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Enviando...</span>
+                            }
+                            else
+                            {
+                                <span>Enviar voto</span>
+                            }
+                        </button>
+                    </EditForm>
+                </div>
+            }
         }
     }
 </div>
@@ -100,6 +132,12 @@
     [Parameter]
     public int VotacionId { get; set; }
 
+    // --- VARIABLES DE IDENTIFICACIÓN ---
+    private string emailVotante = "";
+    private bool identificado = false;
+    private string errorEmail = "";
+
+    // --- VARIABLES ORIGINALES ---
     private VotacionPuntuacionDetalleResponse? votacion;
     private FormVotoPuntuacionModel formModel = new();
     private Dictionary<int, int> puntuaciones = new();
@@ -128,6 +166,20 @@
         }
     }
 
+    // --- MÉTODO DE VALIDACIÓN DE CORREO ---
+    private void ContinuarAVotar()
+    {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(emailVotante, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            errorEmail = "Por favor, introduce un correo electrónico con formato válido.";
+            return;
+        }
+
+        identificado = true;
+        errorEmail = "";
+    }
+
+    // --- MÉTODOS ORIGINALES DE PUNTUACIÓN ---
     private int ObtenerPuntuacion(int proyectoId)
     {
         return puntuaciones.TryGetValue(proyectoId, out var val) ? val : 0;
@@ -136,7 +188,13 @@
     private void ActualizarPuntuacion(int proyectoId, string? valor)
     {
         if (int.TryParse(valor, out var num))
+        {
+            // Opcional: Validar que no exceda ValorMax en el frontend
+            if (votacion != null && num > votacion.ValorMax) num = votacion.ValorMax;
+            if (num < 0) num = 0;
+
             puntuaciones[proyectoId] = num;
+        }
     }
 
     private async Task EmitirVotoAsync()
@@ -152,13 +210,17 @@
                 VotacionId = VotacionId,
                 VotanteId = 0,
                 Anonimo = true,
-                PuntuacionesPorProyecto = puntuaciones
+                PuntuacionesPorProyecto = puntuaciones,
+                Email = emailVotante // <-- ¡Variable inyectada aquí!
             };
 
             await VotoPuntuacionService.EmitirVotoPuntuacionAsync(request);
-            successMessage = "¡Voto emitido correctamente!";
+
+            successMessage = "¡Voto emitido correctamente! Pronto recibirás los resultados en tu correo.";
+
             foreach (var key in puntuaciones.Keys.ToList())
                 puntuaciones[key] = 0;
+
             formModel = new FormVotoPuntuacionModel();
         }
         catch (Exception ex)
