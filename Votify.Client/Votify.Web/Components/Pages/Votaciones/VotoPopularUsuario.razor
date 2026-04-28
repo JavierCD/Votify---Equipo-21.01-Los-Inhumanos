@@ -228,7 +228,6 @@
         }
         try
         {
-            // ← CAMBIO: llamamos al método de la UT 3271 que filtra los proyectos del propio participante
             votacionSeleccionada = await PopularService.ObtenerProyectosParaVotarAsync(VotacionId, votanteId);
         }
         catch (Exception ex)
