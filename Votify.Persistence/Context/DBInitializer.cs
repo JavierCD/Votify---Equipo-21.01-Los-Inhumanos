@@ -152,6 +152,40 @@ namespace Votify.Persistence.Context
 
             context.Votaciones.Add(votacionTest);
             context.SaveChanges();
+
+
+            // ================================================
+            // 5. PREPARACIÓN PARA TEST DE NOTIFICACIÓN DE CIERRE
+            // ================================================
+
+            // Usamos la categoría "Innovación en IA"
+            var votacionCierreTest = new Popular
+            {
+                CategoriaId = categorias[1].Id,
+
+                // Ya está abierta desde antes
+                FechaApertura = DateTime.UtcNow.AddHours(-2),
+
+                // Se cerrará en breve (para que el cron la detecte)
+                FechaCierre = DateTime.UtcNow.AddSeconds(30),
+
+                Estado = "Abierta",
+
+                MaxSelection = 3,
+
+                // Activamos notificaciones de cierre
+                EnviarNotificacionCierre = true,
+                NotificacionRecordatorioEnviada = false,
+                NotificacionCierreEnviada = false,
+
+                // Importante: no está cerrada aún
+                EstaCerrada = false
+            };
+
+            context.Votaciones.Add(votacionCierreTest);
+            context.SaveChanges();
         }
+
+
     }
 }

@@ -39,6 +39,10 @@ namespace Votify.Core.Models
         public bool EnviarNotificacionApertura { get; set; } = true;
         // Bandera de control interno
         public bool NotificacionAperturaEnviada { get; set; } = false;
-       
+
+        public bool EnviarNotificacionCierre { get; set; } = true;
+        public bool NotificacionRecordatorioEnviada { get; set; } = false;
+        public bool NotificacionCierreEnviada { get; set; } = false;
+
     }
 }
