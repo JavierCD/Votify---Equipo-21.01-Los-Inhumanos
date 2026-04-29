@@ -15,6 +15,7 @@ namespace Votify.Core.Models
         public string Estado { get; set; }
         public List<Voto> Votos { get; set; }
         public Categoria Categoria { get; set; }
+        public virtual ICollection<Juez> JuecesAutorizados { get; set; } = new List<Juez>();
 
         // Relación 1 a 1 con Categoría (la clave foránea vive aquí)
         public int CategoriaId { get; set; }
@@ -27,6 +28,7 @@ namespace Votify.Core.Models
         {
             if (EstaCerrada) throw new InvalidOperationException("La votación ya está cerrada");
             EstaCerrada = true;
+            // hacer un enum para cambiar la variable estado de string a enum
         }
 
         public void CompartirResultados()
