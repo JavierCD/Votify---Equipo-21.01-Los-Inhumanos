@@ -28,6 +28,7 @@ namespace Votify.Core.Models
         {
             if (EstaCerrada) throw new InvalidOperationException("La votación ya está cerrada");
             EstaCerrada = true;
+            // hacer un enum para cambiar la variable estado de string a enum
         }
 
         public void CompartirResultados()
