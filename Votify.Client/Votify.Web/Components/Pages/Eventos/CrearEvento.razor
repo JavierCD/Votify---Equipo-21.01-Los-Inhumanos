@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 
 @using Votify.Core.Factories
-@using Votify.Web.ViewModels
+@using Votify.Services.Models
 @using Votify.Core.Interfaces
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
@@ -95,7 +95,7 @@
 </div>
 
 @code {
-    private CrearEventoViewModel modelo = new();
+    private CrearEventoRequest modelo = new();
     private string? mensajeError;
 
     private void AgregarCategoriaTemporal()
@@ -107,6 +107,7 @@
     {
         mensajeError = null;
 
+        // Validación puramente visual de la UI
         if (modelo.Categorias.Any(c => string.IsNullOrWhiteSpace(c.Nombre)))
         {
             mensajeError = "Las categorías añadidas deben tener al menos un nombre.";
@@ -115,60 +116,21 @@
 
         try
         {
-            int organizadorRealId = await EventoService.ObtenerOrganizadorMockIdAsync();
+            
+            // Pasamos el ViewModel y dejamos que el Servicio orqueste las Factories y el Dominio.
+            await EventoService.CrearEventoDesdeFormularioAsync(modelo);
 
-            // --- APLICACIÓN DEL FACTORY METHOD EN EL CLIENTE ---
-
-            EventoCreator creator;
-
-
-            if (modelo.TipoEvento == "Hackathon")
-            {
-                creator = new HackathonEventCreator();
-            }
-            else if (modelo.TipoEvento == "Feria de Innovación")
-            {
-                creator = new InnovationFairEventCreator();
-            }
-            else if (modelo.TipoEvento == "E-Sports")
-            {
-                creator = new ESportsEventCreator();
-            }
-            else
-            {
-                creator = new HackathonEventCreator(); // Fallback por seguridad
-            }
-
-
-
-
-            Evento nuevoEvento = creator.CrearEvento(
-                modelo.Nombre,
-                modelo.FechaInicio.ToUniversalTime(),
-                modelo.FechaFin.ToUniversalTime(),
-                organizadorRealId,
-                modelo.Descripcion
-            );
-
-            // 3. Añadimos las categorías a la entidad
-            foreach (var cat in modelo.Categorias)
-            {
-                nuevoEvento.AgregarCategoria(cat.Nombre, cat.Descripcion);
-            }
-
-            // 4. Guardamos en la base de datos
-            await EventoService.CrearAsync(nuevoEvento);
-
-            // 5. Volvemos al Dashboard
             NavigationManager.NavigateTo("/");
         }
         catch (ArgumentException ex)
         {
-            mensajeError = ex.Message; // Reglas de negocio (fechas mal, etc.)
+            // Atrapamos las reglas de negocio (fechas mal, etc.) que lance el dominio
+            mensajeError = ex.Message;
         }
         catch (Exception ex)
         {
-            mensajeError = $"Error interno: {ex.Message}";
+            // Atrapamos errores de BD o servidor
+            mensajeError = $"Error interno al crear el evento: {ex.Message}";
         }
     }
 }

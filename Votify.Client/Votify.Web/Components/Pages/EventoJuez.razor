@@ -151,14 +151,21 @@ else
         try
         {
             var votacionId = categorias.FirstOrDefault(c => c.Id == categoriaId)?.Votacion?.Id ?? 0;
-            Console.WriteLine($"DEBUG - categoriaId: {categoriaId}, votacionId: {votacionId}");
-            await VotoExpertoService.GuardarComentarioAsync(JuezId, proyectoId, votacionId, comentarios[proyectoId]);
+
+            // Llamada limpia y directa
+            await VotoExpertoService.GuardarComentarioAsync(
+                JuezId,
+                proyectoId,
+                votacionId,
+                categoriaId,
+                comentarios[proyectoId]
+            );
+
             guardados.Add(proyectoId);
         }
         catch (Exception ex)
         {
             erroresPorProyecto[proyectoId] = "Error al guardar el comentario. Asegúrate de que existe una votación creada para esta categoría.";
-            Console.WriteLine($"DEBUG ERROR: {ex.Message} - Inner: {ex.InnerException?.Message}");
         }
     }
 }
