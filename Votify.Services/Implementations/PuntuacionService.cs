@@ -45,7 +45,9 @@ namespace Votify.Services.Implementations
                 FechaApertura = request.FechaApertura,
                 FechaCierre = request.FechaCierre,
                 Estado = request.Estado,
-                ValorMax = request.ValorMax
+                ValorMax = request.ValorMax,
+                PermiteAutoVoto=request.PermiteAutoVoto,
+                RestriccionVotoUnico=request.RestriccionVotoUnico,
             };
 
             var resultado = await _puntuacionRepository.CrearAsync(puntuacion);
@@ -58,6 +60,38 @@ namespace Votify.Services.Implementations
                 FechaCierre = resultado.FechaCierre,
                 Estado = resultado.Estado,
                 ValorMax = resultado.ValorMax
+            };
+        }
+        public async Task<VotacionPuntuacionDetalleResponse> ObtenerProyectosParaVotarAsync(int votacionId, int votanteId)
+        {
+            var votacion = await _puntuacionRepository.ObtenerPorIdConCategoriaAsync(votacionId);
+            if (votacion == null)
+                throw new ArgumentException("La votacion no existe.");
+
+            if (votacion.Categoria == null)
+                throw new InvalidOperationException("La votacion no tiene una categortia asociada");
+
+            var proyectos = votacion.Categoria.Proyectos.ToList();
+            if(!votacion.PermiteAutoVoto)
+            {
+                proyectos = proyectos.Where(p => p.ParticipanteId != votanteId).ToList();
+
+            }
+            return new VotacionPuntuacionDetalleResponse
+            {
+                VotacionId = votacion.Id,
+                CategoriaId = votacion.CategoriaId,
+                CategoriaNombre = votacion.Categoria.Name,
+                Estado = votacion.Estado,
+                ValorMax = votacion.ValorMax,
+                PermiteAutoVoto = votacion.PermiteAutoVoto,
+                RestriccionVotoUnico = votacion.RestriccionVotoUnico,
+                Proyectos = proyectos.Select(p => new ProyectoVotacionPopularResponse
+                {
+                    Id = p.Id,
+                    Name = p.Name
+                }).ToList()
+
             };
         }
     }

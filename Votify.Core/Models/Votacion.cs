@@ -23,6 +23,8 @@ namespace Votify.Core.Models
 
         public bool EstaCerrada { get; set; } = false;
         public bool ResultadosPublicados { get; set; } = false;
+        public bool RestriccionVotoUnico { get; set; }
+        public bool PermiteAutoVoto { get; set; }
 
         public void CerrarVotacion()
         {

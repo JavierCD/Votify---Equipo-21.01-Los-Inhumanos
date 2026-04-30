@@ -41,7 +41,8 @@ namespace Votify.Services.Implementations
                 FechaCierre = request.FechaCierre,
                 Estado = request.Estado,
                 MaxSelection = request.MaxSelection,
-                PermiteAutoVoto = request.PermiteAutoVoto
+                PermiteAutoVoto = request.PermiteAutoVoto,
+                RestriccionVotoUnico = request.RestriccionVotoUnico
             };
 
             var creada = await _popularRepository.CrearAsync(popular);
@@ -54,7 +55,8 @@ namespace Votify.Services.Implementations
                 FechaCierre = popular.FechaCierre,
                 Estado = popular.Estado,
                 MaxSelection = popular.MaxSelection,
-                PermiteAutoVoto = popular.PermiteAutoVoto
+                PermiteAutoVoto = popular.PermiteAutoVoto,
+                RestriccionVotoUnico=popular.RestriccionVotoUnico
             };
         }
         public async Task<VotacionPopularDisponibleResponse> ObtenerProyectosParaVotarAsync(int votacionId, int votanteId)

@@ -15,5 +15,6 @@ namespace Votify.Services.Models
         public int ValorMax { get; set; }
         public bool EnviarNotificacionApertura { get; set; } = true;
         public bool PermiteAutoVoto { get; set; } = false;
+        public bool RestriccionVotoUnico { get; set; }
     }
 }

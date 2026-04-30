@@ -1,8 +1,12 @@
 ﻿@page "/voto-puntuacion-usuario/{VotacionId:int}"
 @rendermode InteractiveServer
+@using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
+@using Votify.Web.Services
 @inject IVotoPuntuacionService VotoPuntuacionService
+@inject IPuntuacionService PuntuacionService
+@inject UserSession Session
 @inject ILogger<VotoPuntuacionUsuario> Logger
 
 <div class="container py-4" style="max-width:680px">
@@ -34,6 +38,14 @@
                 </div>
             </div>
         </div>
+
+        @* ← UT 3271: aviso cuando la restricción de autovoto está activa y el usuario es Participante *@
+        @if (!votacion.PermiteAutoVoto && Session.Usuario is Participante)
+        {
+            <div class="alert alert-info rounded-3 small">
+                En esta votación no puedes votar tus propios proyectos.
+            </div>
+        }
 
         @if (!string.IsNullOrWhiteSpace(errorMessage))
         {
@@ -149,11 +161,20 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // ← UT 3271: calcular votanteId para filtrar proyectos propios
+        int votanteId = Session.Usuario is Participante p ? p.Id : 0;
+
         try
         {
-            votacion = await VotoPuntuacionService.ObtenerDetallePorIdAsync(VotacionId);
-            foreach (var p in votacion.Proyectos)
-                puntuaciones[p.Id] = 0;
+            // ← UT 3271: usar ObtenerProyectosParaVotarAsync en vez de ObtenerDetallePorIdAsync
+            // para que el filtro de autovoto aplique
+            votacion = await PuntuacionService.ObtenerProyectosParaVotarAsync(VotacionId, votanteId);
+
+            if (votacion != null)
+            {
+                foreach (var pr in votacion.Proyectos)
+                    puntuaciones[pr.Id] = 0;
+            }
         }
         catch (Exception ex)
         {
@@ -189,7 +210,6 @@
     {
         if (int.TryParse(valor, out var num))
         {
-            // Opcional: Validar que no exceda ValorMax en el frontend
             if (votacion != null && num > votacion.ValorMax) num = votacion.ValorMax;
             if (num < 0) num = 0;
 
@@ -211,7 +231,7 @@
                 VotanteId = 0,
                 Anonimo = true,
                 PuntuacionesPorProyecto = puntuaciones,
-                Email = emailVotante // <-- ¡Variable inyectada aquí!
+                Email = emailVotante
             };
 
             await VotoPuntuacionService.EmitirVotoPuntuacionAsync(request);

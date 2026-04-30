@@ -85,7 +85,7 @@ namespace Votify.Services.Implementations
             if (request.ProyectosSeleccionadosIds.Any(id => !proyectosValidosIds.Contains(id)))
                 throw new ArgumentException("Uno o más proyectos no pertenecen a la categoría de la votación.");
 
-           if(!string.IsNullOrWhiteSpace(request.Email))
+           if(!string.IsNullOrWhiteSpace(request.Email) && votacion.RestriccionVotoUnico)
             {
                 bool yaVoto = await _votoPopularRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
                 if (yaVoto)

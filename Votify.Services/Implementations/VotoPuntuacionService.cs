@@ -13,9 +13,10 @@ namespace Votify.Services.Implementations
         private readonly IVotoPuntuacionRepository _votoPuntuacionRepository;
         private readonly IGenericRepository<Votante> _votanteRepository;
 
-        public VotoPuntuacionService(IVotoPuntuacionRepository votoPuntuacionRepository)
+        public VotoPuntuacionService(IVotoPuntuacionRepository votoPuntuacionRepository,IGenericRepository<Votante>votanteRespository)
         {
             _votoPuntuacionRepository = votoPuntuacionRepository;
+            _votanteRepository = votanteRespository;
         }
 
         public async Task<VotacionPuntuacionDetalleResponse> ObtenerDetallePorIdAsync(int votacionId)
@@ -68,6 +69,12 @@ namespace Votify.Services.Implementations
             if (request.PuntuacionesPorProyecto.Keys.Any(id => !proyectosValidosIds.Contains(id)))
                 throw new ArgumentException("Uno o más proyectos no pertenecen a la categoría de la votación.");
 
+            if (!string.IsNullOrWhiteSpace(request.Email) && votacion.RestriccionVotoUnico)
+            {
+                bool yaVoto = await _votoPuntuacionRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
+                if (yaVoto)
+                    throw new InvalidOperationException("Este correo electrónico ya ha emitido su voto en esta votación.");
+            }
             int votanteIdFinal = request.VotanteId;
 
             Votante votanteFinal = null;

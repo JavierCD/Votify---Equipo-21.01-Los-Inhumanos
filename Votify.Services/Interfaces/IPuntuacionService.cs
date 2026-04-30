@@ -10,5 +10,7 @@ namespace Votify.Services.Interfaces
     public interface IPuntuacionService
     {
         Task<PuntuacionResponse> CrearVotacionPuntuacionAsync(CrearVotacionPuntuacionRequest request);
+        Task<VotacionPuntuacionDetalleResponse> ObtenerProyectosParaVotarAsync(int votacionId, int votanteId);
+      
     }
 }
