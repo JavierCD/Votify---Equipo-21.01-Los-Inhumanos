@@ -20,7 +20,7 @@ namespace Votify.Core.Models
         public int MulticriterioId { get; set; }
 
         // Propiedad de navegación pura
-        public Multicriterio? Votacion { get; set; }
+        public Multicriterio? Multicriterio { get; set; }
 
         public Criterio() { }
     }

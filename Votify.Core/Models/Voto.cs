@@ -27,7 +27,7 @@ namespace Votify.Core.Models
         public int ProyectoId { get; set; }
         public Proyecto? Proyecto { get; set; }
 
-        public List<DetalleVoto> Detalle { get; set; } = new();
+        public List<DetalleVoto> Detalles { get; set; } = new();
 
         protected Voto() { }
 

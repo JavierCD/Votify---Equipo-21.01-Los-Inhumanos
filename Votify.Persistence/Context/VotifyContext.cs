@@ -126,8 +126,8 @@ namespace Votify.Persistence.Context
 
                 // CONFIGURACIÓN DE LA RELACIÓN CON CRITERIOS
                 entity.HasMany(m => m.Criterios)
-                      .WithOne() // Relación unidireccional o con propiedad de navegación si existe
-                      .HasForeignKey("VotacionId") // EF creará esta columna en la tabla Criterios
+                      .WithOne(c => c.Multicriterio) // Usamos la propiedad de navegación explícita
+                      .HasForeignKey(c => c.MulticriterioId) // Clave foránea explícita
                       .OnDelete(DeleteBehavior.Cascade); // Si borras la votación, se borran sus criterios
             });
 
@@ -167,7 +167,7 @@ namespace Votify.Persistence.Context
                 entity.HasKey(c => c.Id);
                 entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
 
-                entity.HasOne(c => c.Votacion)
+                entity.HasOne(c => c.Multicriterio)
                       .WithMany(m => ((Multicriterio)m).Criterios) // Enganchamos con Multicriterio
                       .HasForeignKey(c => c.MulticriterioId)
                       .OnDelete(DeleteBehavior.Cascade);

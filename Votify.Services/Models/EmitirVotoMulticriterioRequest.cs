@@ -9,6 +9,8 @@ namespace Votify.Services.Models
     public class EmitirVotoMulticriterioRequest
     {
         public int VotacionId { get; set; }
+        public int VotanteId { get; set; }
+        public bool Anonimo { get; set; } = false;
         public string Email { get; set; } = string.Empty;
 
         // Diccionario anidado: ProyectoId -> (CriterioId -> Puntuacion)
