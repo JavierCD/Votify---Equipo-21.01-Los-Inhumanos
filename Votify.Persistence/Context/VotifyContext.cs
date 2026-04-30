@@ -175,11 +175,15 @@ namespace Votify.Persistence.Context
             });
 
             // 7. CONFIGURACIÓN DE PREMIO
+            // 7. CONFIGURACIÓN DE PREMIO
             modelBuilder.Entity<Premio>(entity =>
             {
                 entity.ToTable("Premios");
                 entity.HasKey(p => p.Id);
                 entity.Property(p => p.Name).IsRequired().HasMaxLength(100);
+
+                // ---> NUEVO: Configuración de la regla de empates <---
+                entity.Property(p => p.PermiteEmpate).HasDefaultValue(false);
 
                 entity.HasOne(p => p.Categoria)
                       .WithMany(c => c.Premios)

@@ -74,6 +74,8 @@ builder.Services.AddScoped<IPlantillaBaremoService, PlantillaBaremoService>();
 builder.Services.AddScoped<IMulticriterioService, MulticriterioService>();
 builder.Services.AddScoped<IVotoMulticriterioRepository, VotoMulticriterioRepository>();
 builder.Services.AddScoped<IVotoMulticriterioService, VotoMulticriterioService>();
+builder.Services.AddScoped<IResultadosService, ResultadosService>();
+builder.Services.AddScoped<IEmailTemplateBuilder, EmailTemplateBuilder>();
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 builder.Services.AddScoped<IGenericRepository<Juez>, GenericRepository<Juez>>();
 
