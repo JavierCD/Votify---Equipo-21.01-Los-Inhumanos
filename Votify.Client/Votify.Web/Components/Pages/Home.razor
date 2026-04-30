@@ -4,6 +4,7 @@
 @using Votify.Core.Factories
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
+
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
 @inject IVotoExpertoServices VotoExpertoService
@@ -13,6 +14,7 @@
 @inject Votify.Web.Services.UserSession Session
 @inject IVotoPopularService VotoPopularService
 @inject IVotoPuntuacionService VotoPuntuacionService
+@inject IVotoMulticriterioService VotoMulticriterioService
 
 
 <PageTitle>Inicio - Votify</PageTitle>
@@ -237,6 +239,14 @@ else
         {
             await VotoPuntuacionService.ObtenerDetallePorIdAsync(id);
             NavigationManager.NavigateTo($"/voto-puntuacion-usuario/{id}");
+            return;
+        }
+        catch { }
+
+        try
+        {
+            await VotoMulticriterioService.ObtenerDetallePorIdAsync(id);
+            NavigationManager.NavigateTo($"/voto-multicriterio-usuario/{id}");
             return;
         }
         catch { }

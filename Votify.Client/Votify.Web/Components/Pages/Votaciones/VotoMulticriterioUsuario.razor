@@ -3,7 +3,8 @@
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
 
-@inject IMulticriterioService MulticriterioService
+@* CAMBIO AQUÍ: Usamos IVotoMulticriterioService *@
+@inject IVotoMulticriterioService MulticriterioService
 @inject ILogger<VotoMulticriterioUsuario> Logger
 
 <div class="container py-4" style="max-width:720px">
@@ -237,7 +238,8 @@
                 Puntuaciones = puntuaciones
             };
 
-            await MulticriterioService.EmitirVotoAsync(request);
+            // CAMBIO AQUÍ: Llamamos al método con el nombre correcto
+            await MulticriterioService.EmitirVotoMulticriterioAsync(request);
 
             successMessage = "¡Evaluación multicriterio registrada correctamente! Gracias por participar.";
             identificado = false;
