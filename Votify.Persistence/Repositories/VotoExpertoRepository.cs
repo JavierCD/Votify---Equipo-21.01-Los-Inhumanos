@@ -28,28 +28,27 @@ namespace Votify.Persistence.Repositories
 
         public async Task GuardarComentarioAsync(Voto voto)
         {
-            voto.VotanteId = null;
+            //voto.VotanteId = null;
             _context.Votos.Add(voto);
             await _context.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<Voto>> ObtenerComentariosPorCategoriaAsync(int categoriaId)
         {
-            return await _context.Votos
+            // Magia: OfType<VotoExperto>() filtra automáticamente los expertos
+            return await _context.Votos.OfType<VotoExperto>()
                 .Include(v => v.Proyecto)
-                .Where(v => v.Votacion.CategoriaId == categoriaId
-                         && EF.Property<string>(v, "TipoVoto") == "Experto"
-                         && v.Comentario != null)
+                .Where(v => v.Votacion.CategoriaId == categoriaId && v.Comentario != null)
                 .ToListAsync();
         }
 
         public async Task<bool> YaComentoPorProyectoAsync(int juezId, int proyectoId, int categoriaId)
         {
-            return await _context.Votos
-                .AnyAsync(v => v.VotanteId == juezId
+            // Usamos OfType y buscamos directamente por JuezId
+            return await _context.Votos.OfType<VotoExperto>()
+                .AnyAsync(v => v.JuezId == juezId
                             && v.ProyectoId == proyectoId
-                            && v.Votacion.CategoriaId == categoriaId
-                            && EF.Property<string>(v, "TipoVoto") == "Experto");
+                            && v.Votacion.CategoriaId == categoriaId);
         }
     }
 }

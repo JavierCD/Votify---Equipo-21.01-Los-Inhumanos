@@ -83,8 +83,10 @@ builder.Services.AddScoped<INotificacionCronService, NotificacionCronService>();
 // 5. Registramos el Vigilante para que .NET lo arranque en segundo plano
 builder.Services.AddHostedService<NoctificacionBackgroundService>();
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
-
 builder.Services.AddScoped<NotificationService>();
+// 6.Trazabilidad de votos
+builder.Services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();
+builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
 
 var app = builder.Build();
 

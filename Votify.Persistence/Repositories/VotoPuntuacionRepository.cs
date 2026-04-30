@@ -48,7 +48,8 @@ namespace Votify.Persistence.Repositories
 
         public async Task<bool> YaVotoEnEstaVotacionAsync(int votanteId, int votacionId)
         {
-            return await _context.Votos
+            // Convertimos la consulta a VotoPublico
+            return await _context.Votos.OfType<VotoPublico>()
                 .AnyAsync(v => v.VotanteId == votanteId && v.VotacionId == votacionId);
         }
     }

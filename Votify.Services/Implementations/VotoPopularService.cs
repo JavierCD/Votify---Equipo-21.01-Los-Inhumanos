@@ -141,12 +141,12 @@ namespace Votify.Services.Implementations
 
                 if (votanteFinal != null)
                 {
-                    voto.Votante = votanteFinal;
+                    voto.AsignarEmisorId(votanteFinal.Id);
                 }
                 else
                 {
                     // Por si acaso votan sin correo, dejamos el que venía por defecto
-                    voto.VotanteId = request.VotanteId;
+                    voto.AsignarEmisorId(request.VotanteId);
                 }
 
 
