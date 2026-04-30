@@ -52,5 +52,11 @@ namespace Votify.Persistence.Repositories
             return await _context.Votos.OfType<VotoPublico>()
                 .AnyAsync(v => v.VotanteId == votanteId && v.VotacionId == votacionId);
         }
+        public async Task<bool> EmailYaVotoEnVotacionAsync(int votacionId, string email)
+        {
+            return await _context.Votos
+                .OfType<VotoPublico>()
+                .AnyAsync(v => v.VotacionId == votacionId && v.Votante != null && v.Votante.Email == email);
+        }
     }
 }

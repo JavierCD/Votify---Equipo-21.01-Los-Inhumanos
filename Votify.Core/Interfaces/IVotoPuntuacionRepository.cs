@@ -14,5 +14,6 @@ namespace Votify.Core.Interfaces
         Task<Votante?> ObtenerVotantePorIdAsync(int votanteId);
         Task GuardarVotosAsync(List<Voto> votos);
         Task<bool> YaVotoEnEstaVotacionAsync(int votanteId, int votacionId);
+        Task<bool> EmailYaVotoEnVotacionAsync(int votacionId, string email);
     }
 }

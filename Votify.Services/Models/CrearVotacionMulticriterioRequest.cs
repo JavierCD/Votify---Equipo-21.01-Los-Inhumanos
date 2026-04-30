@@ -15,5 +15,7 @@ namespace Votify.Services.Models
         public string Estado { get; set; } = "Abierta";
         public bool EnviarNotificacionApertura { get; set; }
         public List<CriterioDto> Criterios { get; set; } = new();
+        public bool PermiteAutoVoto { get; set; } = false;
+        public bool RestriccionVotoUnico { get; set; } = false;
     }
 }
