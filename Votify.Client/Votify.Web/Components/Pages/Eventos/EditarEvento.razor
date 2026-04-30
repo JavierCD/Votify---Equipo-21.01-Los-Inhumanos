@@ -650,6 +650,7 @@
             // 4. RECOPILAMOS LOS CORREOS DE LOS VOTANTES (Sin duplicados)
             // Extraemos los correos de la tabla de Votos usando la nueva UT que hiciste en VotoPopularUsuario
             var correosVotantes = categoria.Votacion.Votos
+                .OfType<VotoPublico>()
                 .Where(v => v.Votante != null && !string.IsNullOrEmpty(v.Votante.Email))
                 .Select(v => v.Votante.Email)
                 .Distinct() // Evitamos enviar el correo dos veces a la misma persona
