@@ -25,22 +25,25 @@
                 <button type="button"
                         class="btn flex-fill @(tipoVotacion == "Popular" ? "btn-primary" : "btn-outline-primary")"
                         @onclick='() => CambiarTipoVotacion("Popular")'>
-                    🗳️ Popular
+                    Popular
                 </button>
                 <button type="button"
                         class="btn flex-fill @(tipoVotacion == "Multicriterio" ? "btn-primary" : "btn-outline-primary")"
                         @onclick='() => CambiarTipoVotacion("Multicriterio")'>
-                    ⚖️ Multicriterio
+                    Multicriterio
                 </button>
                 <button type="button"
                         class="btn flex-fill @(tipoVotacion == "Puntuacion" ? "btn-primary" : "btn-outline-primary")"
                         @onclick='() => CambiarTipoVotacion("Puntuacion")'>
-                    🏅 Puntuación
+                    Puntuación
                 </button>
             </div>
         </div>
     </div>
 
+    @* ═══════════════════════════════════════════
+       FORMULARIO POPULAR
+       ═══════════════════════════════════════════ *@
     @if (tipoVotacion == "Popular")
     {
         <div class="card shadow-sm border-0 rounded-4 p-4">
@@ -73,19 +76,46 @@
                     <InputNumber @bind-Value="request.MaxSelection" class="form-control" placeholder="Ej: 3" />
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label"><strong>¿Se puede votar uno mismo?</strong></label>
-                    <div>
-                        <button type="button"
-                                class="btn @(PermiteAutoVoto ? "btn-primary" : "btn-outline-primary") me-2"
-                                @onclick="() => PermiteAutoVoto = true">
-                            Sí
-                        </button>
-                        <button type="button"
-                                class="btn @(!PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
-                                @onclick="() => PermiteAutoVoto = false">
-                            No
-                        </button>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Reglas de votación</label>
+                    <div class="p-3 rounded" style="background-color: var(--bs-gray-100);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="d-block fw-semibold" style="font-size:0.9rem;">¿Permitir votar proyectos propios?</span>
+                                <span class="text-muted" style="font-size:0.8rem;">Los participantes podrán seleccionar sus propios proyectos al votar</span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button type="button"
+                                        class="btn btn-sm @(PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
+                                        @onclick="() => PermiteAutoVoto = true">
+                                    Sí
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm @(!PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
+                                        @onclick="() => PermiteAutoVoto = false">
+                                    No
+                                </button>
+                            </div>
+                        </div>
+                        <hr class="my-2" />
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="d-block fw-semibold" style="font-size:0.9rem;">¿Permitir votar más de una vez?</span>
+                                <span class="text-muted" style="font-size:0.8rem;">Un mismo correo electrónico podrá emitir varios votos</span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button type="button"
+                                        class="btn btn-sm @(PermiteVotoMultiple ? "btn-primary" : "btn-outline-primary")"
+                                        @onclick="() => PermiteVotoMultiple = true">
+                                    Sí
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm @(!PermiteVotoMultiple ? "btn-primary" : "btn-outline-primary")"
+                                        @onclick="() => PermiteVotoMultiple = false">
+                                    No
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -97,14 +127,11 @@
                     </div>
                 </div>
 
-
-
                 <hr class="my-3" />
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@isLoading">
                     @if (isLoading)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
-                
                         <span>Guardando...</span>
                     }
                     else
@@ -117,6 +144,9 @@
         </div>
     }
 
+    @* ═══════════════════════════════════════════
+       FORMULARIO PUNTUACIÓN
+       ═══════════════════════════════════════════ *@
     else if (tipoVotacion == "Puntuacion")
     {
         <div class="card shadow-sm border-0 rounded-4 p-4">
@@ -149,19 +179,46 @@
                     <InputNumber @bind-Value="requestPuntuacion.ValorMax" class="form-control" placeholder="Ej: 10" />
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label"><strong>¿Se puede votar uno mismo?</strong></label>
-                    <div>
-                        <button type="button"
-                                class="btn @(PermiteAutoVoto ? "btn-primary" : "btn-outline-primary") me-2"
-                                @onclick="() => PermiteAutoVoto = true">
-                            Sí
-                        </button>
-                        <button type="button"
-                                class="btn @(!PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
-                                @onclick="() => PermiteAutoVoto = false">
-                            No
-                        </button>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Reglas de votación</label>
+                    <div class="p-3 rounded" style="background-color: var(--bs-gray-100);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="d-block fw-semibold" style="font-size:0.9rem;">¿Permitir votar proyectos propios?</span>
+                                <span class="text-muted" style="font-size:0.8rem;">Los participantes podrán seleccionar sus propios proyectos al votar</span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button type="button"
+                                        class="btn btn-sm @(PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
+                                        @onclick="() => PermiteAutoVoto = true">
+                                    Sí
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm @(!PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
+                                        @onclick="() => PermiteAutoVoto = false">
+                                    No
+                                </button>
+                            </div>
+                        </div>
+                        <hr class="my-2" />
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="d-block fw-semibold" style="font-size:0.9rem;">¿Permitir votar más de una vez?</span>
+                                <span class="text-muted" style="font-size:0.8rem;">Un mismo correo electrónico podrá emitir varios votos</span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button type="button"
+                                        class="btn btn-sm @(PermiteVotoMultiple ? "btn-primary" : "btn-outline-primary")"
+                                        @onclick="() => PermiteVotoMultiple = true">
+                                    Sí
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm @(!PermiteVotoMultiple ? "btn-primary" : "btn-outline-primary")"
+                                        @onclick="() => PermiteVotoMultiple = false">
+                                    No
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -178,7 +235,6 @@
                     @if (isLoading)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
-                
                         <span>Guardando...</span>
                     }
                     else
@@ -191,6 +247,9 @@
         </div>
     }
 
+    @* ═══════════════════════════════════════════
+       FORMULARIO MULTICRITERIO
+       ═══════════════════════════════════════════ *@
     else if (tipoVotacion == "Multicriterio")
     {
         <div class="card shadow-sm border-0 rounded-4 p-4">
@@ -256,14 +315,12 @@
                                     <Template Context="criterio">
                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
                                                       Click="@(args => gridCriterios.EditRow(criterio))" @onclick:stopPropagation="true" />
-
                                         <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" Class="ms-1"
                                                       Click="@(args => { requestMulticriterio.Criterios.Remove(criterio); })" @onclick:stopPropagation="true" />
                                     </Template>
                                     <EditTemplate Context="criterio">
                                         <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.ExtraSmall"
                                                       Click="@(args => gridCriterios.UpdateRow(criterio))" />
-
                                         <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall" Class="ms-1"
                                                       Click="@(args => gridCriterios.CancelEditRow(criterio))" />
                                     </EditTemplate>
@@ -278,27 +335,54 @@
                         </div>
                     </div>
 
-                    <div class="d-flex align-items-center mb-4 p-3 bg-light rounded border">
-                        <RadzenSwitch @bind-Value="request.EnviarNotificacionApertura" />
-                        <div class="ms-3">
-                            <span class="d-block fw-bold" style="font-size: 0.9rem;">Notificar al Jurado</span>
-                            <span class="text-muted" style="font-size: 0.8rem;">Envía un aviso automático a los jueces cuando comience esta votación.</span>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Reglas de votación</label>
+                        <div class="p-3 rounded" style="background-color: var(--bs-gray-100);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="d-block fw-semibold" style="font-size:0.9rem;">¿Permitir votar proyectos propios?</span>
+                                    <span class="text-muted" style="font-size:0.8rem;">Los participantes podrán seleccionar sus propios proyectos al votar</span>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <button type="button"
+                                            class="btn btn-sm @(PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
+                                            @onclick="() => PermiteAutoVoto = true">
+                                        Sí
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm @(!PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
+                                            @onclick="() => PermiteAutoVoto = false">
+                                        No
+                                    </button>
+                                </div>
+                            </div>
+                            <hr class="my-2" />
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="d-block fw-semibold" style="font-size:0.9rem;">¿Permitir votar más de una vez?</span>
+                                    <span class="text-muted" style="font-size:0.8rem;">Un mismo correo electrónico podrá emitir varios votos</span>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <button type="button"
+                                            class="btn btn-sm @(PermiteVotoMultiple ? "btn-primary" : "btn-outline-primary")"
+                                            @onclick="() => PermiteVotoMultiple = true">
+                                        Sí
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm @(!PermiteVotoMultiple ? "btn-primary" : "btn-outline-primary")"
+                                            @onclick="() => PermiteVotoMultiple = false">
+                                        No
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label"><strong>¿Se puede votar uno mismo?</strong></label>
-                        <div>
-                            <button type="button"
-                                    class="btn @(PermiteAutoVoto ? "btn-primary" : "btn-outline-primary") me-2"
-                                    @onclick="() => PermiteAutoVoto = true">
-                                Sí
-                            </button>
-                            <button type="button"
-                                    class="btn @(!PermiteAutoVoto ? "btn-primary" : "btn-outline-primary")"
-                                    @onclick="() => PermiteAutoVoto = false">
-                                No
-                            </button>
+                    <div class="d-flex align-items-center mb-4 p-3 bg-light rounded border">
+                        <RadzenSwitch @bind-Value="requestMulticriterio.EnviarNotificacionApertura" />
+                        <div class="ms-3">
+                            <span class="d-block fw-bold" style="font-size: 0.9rem;">Notificar al Jurado</span>
+                            <span class="text-muted" style="font-size: 0.8rem;">Envía un aviso automático a los jueces cuando comience esta votación.</span>
                         </div>
                     </div>
 
@@ -307,7 +391,6 @@
                         @if (isLoading)
                         {
                             <span class="spinner-border spinner-border-sm me-2"></span>
-                
                             <span>Guardando...</span>
                         }
                         else
@@ -330,12 +413,15 @@
     private bool isLoading = false;
     private string? successMessage;
     private string? errorMessage;
+
+    // Variables locales de UI (mismo patrón que master usa para PermiteAutoVoto)
     private bool PermiteAutoVoto = false;
+    private bool PermiteVotoMultiple = false; // true = se puede votar varias veces = RestriccionVotoUnico = false
 
     // --- REQUESTS ---
     private CrearVotacionPopularRequest request = new();
     private CrearVotacionPuntuacionRequest requestPuntuacion = new();
-    private CrearVotacionMulticriterioRequest requestMulticriterio = new(); // Asegúrate de crear este DTO
+    private CrearVotacionMulticriterioRequest requestMulticriterio = new();
 
     // --- MULTICRITERIO STATE ---
     private bool mostrandoConfiguracionMulticriterio = false;
@@ -380,14 +466,16 @@
 
         try
         {
-            // Corrección de bug: Usar request en lugar de requestPuntuacion
             request.FechaApertura = request.FechaApertura.ToUniversalTime();
             request.FechaCierre = request.FechaCierre.ToUniversalTime();
-            request.PermiteAutoVoto =PermiteAutoVoto;
+            request.PermiteAutoVoto = PermiteAutoVoto;
+            request.RestriccionVotoUnico = !PermiteVotoMultiple; // Invertir: "Sí puedo votar varias veces" = RestriccionVotoUnico false
 
             var response = await PopularService.CrearVotacionPopularAsync(request);
             successMessage = $"Votación popular creada correctamente con ID {response.Id}.";
             LimpiarFormularioPopular();
+            await Task.Delay(1500);
+            NavigationManager.NavigateTo($"/eventos/editar/{CategoriaId}");
         }
         catch (ArgumentException ex)
         {
@@ -415,6 +503,7 @@
     private void LimpiarFormularioPopular()
     {
         PermiteAutoVoto = false;
+        PermiteVotoMultiple = false;
         request = new CrearVotacionPopularRequest
         {
             CategoriaId = CategoriaId,
@@ -436,10 +525,14 @@
         {
             requestPuntuacion.FechaApertura = requestPuntuacion.FechaApertura.ToUniversalTime();
             requestPuntuacion.FechaCierre = requestPuntuacion.FechaCierre.ToUniversalTime();
+            requestPuntuacion.PermiteAutoVoto = PermiteAutoVoto;
+            requestPuntuacion.RestriccionVotoUnico = !PermiteVotoMultiple;
 
             var response = await PuntuacionService.CrearVotacionPuntuacionAsync(requestPuntuacion);
             successMessage = $"Votación por puntuación creada correctamente con ID {response.Id}.";
 
+            PermiteAutoVoto = false;
+            PermiteVotoMultiple = false;
             requestPuntuacion = new CrearVotacionPuntuacionRequest
             {
                 CategoriaId = CategoriaId,
@@ -448,6 +541,8 @@
                 Estado = "Abierta",
                 ValorMax = 10
             };
+            await Task.Delay(1500);
+            NavigationManager.NavigateTo($"/eventos/editar/{CategoriaId}");
         }
         catch (Exception ex)
         {
@@ -462,7 +557,6 @@
     // --- MÉTODOS MULTICRITERIO ---
     private void AplicarPlantillaMulticriterio(List<CriterioDto> criteriosSeleccionados)
     {
-        // Clonamos la lista para evitar alterar el objeto en memoria del servicio
         requestMulticriterio.Criterios = criteriosSeleccionados.Select(c => new CriterioDto { Nombre = c.Nombre, Peso = c.Peso }).ToList();
         mostrandoConfiguracionMulticriterio = true;
         successMessage = null;
@@ -471,7 +565,7 @@
 
     private async Task AñadirFilaCriterio()
     {
-        var nuevo = new CriterioDto{Nombre = "Nuevo Criterio", Peso = 10};
+        var nuevo = new CriterioDto { Nombre = "Nuevo Criterio", Peso = 10 };
         requestMulticriterio.Criterios.Add(nuevo);
         await gridCriterios.Reload();
         await gridCriterios.EditRow(nuevo);
@@ -499,16 +593,16 @@
         {
             requestMulticriterio.FechaApertura = requestMulticriterio.FechaApertura.ToUniversalTime();
             requestMulticriterio.FechaCierre = requestMulticriterio.FechaCierre.ToUniversalTime();
+            requestMulticriterio.PermiteAutoVoto = PermiteAutoVoto;
+            requestMulticriterio.RestriccionVotoUnico = !PermiteVotoMultiple;
 
-            // Capturamos el ID devuelto por el servicio
             int votacionId = await MulticriterioService.CrearVotacionAsync(requestMulticriterio);
 
             if (votacionId > 0)
             {
-                // Incluimos el ID en el mensaje
                 successMessage = $"Votación Multicriterio creada correctamente con ID: {votacionId}";
-
-                // Opcional: Esperar un segundo para que el usuario lea el ID antes de redirigir
+                PermiteAutoVoto = false;
+                PermiteVotoMultiple = false;
                 await Task.Delay(1500);
                 NavigationManager.NavigateTo($"/eventos/editar/{CategoriaId}");
             }
@@ -523,7 +617,7 @@
         }
     }
 
-    // --- RENDER FRAGMENTS (Para evitar repetir código de alertas) ---
+    // --- RENDER FRAGMENTS ---
     private RenderFragment RenderMensajes() => __builder =>
     {
         if (!string.IsNullOrWhiteSpace(successMessage))

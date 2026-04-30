@@ -41,7 +41,8 @@ namespace Votify.Services.Implementations
                 FechaCierre = request.FechaCierre,
                 Estado = request.Estado,
                 MaxSelection = request.MaxSelection,
-                PermiteAutoVoto = request.PermiteAutoVoto
+                PermiteAutoVoto = request.PermiteAutoVoto,
+                RestriccionVotoUnico = request.RestriccionVotoUnico,
             };
 
             var creada = await _popularRepository.CrearAsync(popular);

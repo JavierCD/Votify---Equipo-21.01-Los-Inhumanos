@@ -57,14 +57,14 @@ namespace Votify.Persistence.Repositories
         }
         public async Task<bool> YaVotoEnEstaVotacionAsync(int votanteId, int votacionId)
         {
-            // Usamos OfType<VotoPublico> para acceder al VotanteId
-            return await _context.Votos.OfType<VotoPublico>()
+            return await _context.Votos
+                .OfType<VotoPublico>()
                 .AnyAsync(v => v.VotanteId == votanteId && v.VotacionId == votacionId);
         }
         public async Task<bool> EmailYaVotoEnVotacionAsync(int votacionId, string email)
         {
-            // Usamos OfType<VotoPublico> para acceder a la relación Votante
-            return await _context.Votos.OfType<VotoPublico>()
+            return await _context.Votos
+                .OfType<VotoPublico>()
                 .AnyAsync(v => v.VotacionId == votacionId && v.Votante != null && v.Votante.Email == email);
         }
     }

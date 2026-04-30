@@ -3,6 +3,7 @@ using System.Text;
 using Votify.Core.Factories;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
+using Votify.Persistence.Repositories;
 using Votify.Services.Interfaces;
 using Votify.Services.Models;
 
@@ -68,6 +69,12 @@ namespace Votify.Services.Implementations
             if (request.PuntuacionesPorProyecto.Keys.Any(id => !proyectosValidosIds.Contains(id)))
                 throw new ArgumentException("Uno o más proyectos no pertenecen a la categoría de la votación.");
 
+            if (!string.IsNullOrWhiteSpace(request.Email) && votacion.RestriccionVotoUnico)
+            {
+                bool yaVoto = await _votoPuntuacionRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
+                if (yaVoto)
+                    throw new InvalidOperationException("Este correo electrónico ya ha emitido su voto en esta votación.");
+            }
             int votanteIdFinal = request.VotanteId;
 
             Votante votanteFinal = null;

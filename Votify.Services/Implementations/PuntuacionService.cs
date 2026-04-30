@@ -45,7 +45,9 @@ namespace Votify.Services.Implementations
                 FechaApertura = request.FechaApertura,
                 FechaCierre = request.FechaCierre,
                 Estado = request.Estado,
-                ValorMax = request.ValorMax
+                ValorMax = request.ValorMax,
+                PermiteAutoVoto=request.PermiteAutoVoto,
+                RestriccionVotoUnico=request.RestriccionVotoUnico,
             };
 
             var resultado = await _puntuacionRepository.CrearAsync(puntuacion);
