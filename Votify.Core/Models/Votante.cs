@@ -23,6 +23,7 @@ namespace Votify.Core.Models
 
         // Relación UNO A MUCHOS: Un votante emite varios votos 
         // (Corregido a lista para que pueda votar en distintas categorías)
-        public List<Voto> Votos { get; set; } = new List<Voto>();
+        // public List<Voto> Votos { get; set; } = new List<Voto>(); Cambiado a VotoPublico para que solo tenga acceso a sus votos públicos, no a los votos de jurado
+        public List<VotoPublico> Votos { get; set; } = new List<VotoPublico>();
     }
 }
