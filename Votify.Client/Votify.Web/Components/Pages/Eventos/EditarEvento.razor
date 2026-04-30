@@ -12,6 +12,7 @@
 @inject IEmailService EmailService
 @* NUEVA INYECCIÓN PARA LISTAR JUECES *@
 @inject IGenericRepository<Juez> JuezRepository
+@inject IAuditoriaService AuditoriaService
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -45,6 +46,11 @@
             <li class="nav-item">
                 <a class="nav-link @(tabActivo == "Jurado" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Jurado"' style="cursor:pointer">
                     <RadzenIcon Icon="gavel" class="me-1" /> Jurado
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(tabActivo == "Auditoria" ? "active fw-bold" : "")" @onclick='() => CambiarTab("Auditoria")' style="cursor:pointer">
+                    <RadzenIcon Icon="verified_user" class="me-1" /> Auditoría
                 </a>
             </li>
         </ul>
@@ -343,6 +349,71 @@
                 </div>
             </div>
         }
+
+        @* NUEVA SECCIÓN COMPLETA DE AUDITORIAS *@
+
+        else if (tabActivo == "Auditoria")
+        {
+            <div class="card shadow-sm p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4><RadzenIcon Icon="security" class="me-2 text-success" /> Trazabilidad de Votos</h4>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="CargarAuditoria">
+                        <RadzenIcon Icon="refresh" style="vertical-align: middle;" /> Actualizar
+                    </button>
+                </div>
+
+                @if (cargandoAuditoria)
+                {
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-success" role="status"></div>
+                        <p class="mt-2">Verificando integridad de los votos...</p>
+                    </div>
+                }
+                else if (!historialVotos.Any())
+                {
+                    <div class="alert alert-info">Aún no se han registrado votos en este evento.</div>
+                }
+                else
+                {
+                    @* --- TABLA RADZEN CON FILTROS INTEGADOS --- *@
+                    <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false"
+                                    FilterMode="FilterMode.Simple" AllowSorting="true" PageSize="10"
+                                    AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                                    Data="@historialVotos" TItem="AuditoriaVotoResponse" LogicalFilterOperator="LogicalFilterOperator.Or">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="FechaEmision" Title="Fecha (UTC)" FormatString="{0:dd/MM/yyyy HH:mm:ss}" Width="180px" />
+
+                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="ProyectoNombre" Title="Proyecto Votado" />
+
+                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="TipoVotacion" Title="Tipo de Voto" Width="150px">
+                                <Template Context="v">
+                                    <span class="badge @(v.TipoVotacion == "EXPERT" ? "bg-primary" : "bg-info text-dark")">
+                                        @(v.TipoVotacion == "EXPERT" ? "Jurado" : "Popular")
+                                    </span>
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="IdentificadorVotante" Title="Identificador del Votante">
+                                <Template Context="v">
+                                    @if (v.EsAnonimo)
+                                    {
+                                        <span class="text-muted" title="Voto cifrado y anónimo">
+                                            <RadzenIcon Icon="lock" Style="font-size:14px" /> <code>@v.IdentificadorVotante</code>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            <RadzenIcon Icon="person" Style="font-size:14px" /> @v.IdentificadorVotante
+                                        </span>
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+            </div>
+        }
     }
 </div>
 
@@ -372,6 +443,10 @@
 
     private EditarEventoRequest requestModel = new EditarEventoRequest();
     private AgregarPremioRequest requestPremio = new AgregarPremioRequest();
+
+    // Auditoría
+    private List<AuditoriaVotoResponse> historialVotos = new();
+    private bool cargandoAuditoria = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -575,6 +650,7 @@
             // 4. RECOPILAMOS LOS CORREOS DE LOS VOTANTES (Sin duplicados)
             // Extraemos los correos de la tabla de Votos usando la nueva UT que hiciste en VotoPopularUsuario
             var correosVotantes = categoria.Votacion.Votos
+                .OfType<VotoPublico>()
                 .Where(v => v.Votante != null && !string.IsNullOrEmpty(v.Votante.Email))
                 .Select(v => v.Votante.Email)
                 .Distinct() // Evitamos enviar el correo dos veces a la misma persona
@@ -593,6 +669,29 @@
         catch (Exception ex)
         {
             mensajeError = $"Error al compartir: {ex.Message}";
+        }
+    }
+
+    // Auditoría
+    private async Task CambiarTab(string nuevoTab)
+    {
+        tabActivo = nuevoTab;
+        if (tabActivo == "Auditoria")
+        {
+            await CargarAuditoria();
+        }
+    }
+
+    private async Task CargarAuditoria()
+    {
+        cargandoAuditoria = true;
+        try
+        {
+            historialVotos = await AuditoriaService.ObtenerHistorialPorEventoAsync(EventoId);
+        }
+        finally
+        {
+            cargandoAuditoria = false;
         }
     }
 }

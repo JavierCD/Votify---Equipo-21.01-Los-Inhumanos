@@ -47,7 +47,7 @@ namespace Votify.Services.Implementations
             var voto = creador.CrearVoto(votacionId, proyectoId, puntuacionBase, esAnonimo, hash, comentario);
 
             // 4. Asignación del Juez
-            voto.AssignId(juezId);
+            voto.AsignarEmisorId(juezId);
 
             // 5. Guardar
             await _repo.GuardarComentarioAsync(voto);

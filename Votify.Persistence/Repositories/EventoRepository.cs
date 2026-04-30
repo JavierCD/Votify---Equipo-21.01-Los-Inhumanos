@@ -25,7 +25,8 @@ namespace Votify.Persistence.Repositories
                 .Include(e => e.CategoriasEvento)
                     .ThenInclude(c => c.Votacion)
                         .ThenInclude(v => v.Votos)
-                            .ThenInclude(v => v.Votante)
+                            // casting para acceder a Votante en VotoPublico
+                            .ThenInclude(v => (v as VotoPublico)!.Votante)
                 .Include(e => e.CategoriasEvento)
                     .ThenInclude(c => c.Proyectos)
                         .ThenInclude(p => p.Participante)
