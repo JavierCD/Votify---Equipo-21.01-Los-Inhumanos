@@ -216,11 +216,16 @@ namespace Votify.Persistence.Context
                 entity.HasKey(v => v.Id);
                 entity.Property(v => v.Email).IsRequired().HasMaxLength(150);
                 entity.Property(v => v.Anonimo).HasDefaultValue(false);
-                entity.Property(v => v.votacionId).IsRequired();
 
                 entity.HasMany(v => v.Eventos)
                       .WithMany(e => e.Votantes)
                       .UsingEntity(j => j.ToTable("EventosVotantes"));
+
+                // ¡AQUÍ ESTÁ LA MAGIA! Le decimos explícitamente cómo se relaciona con VotoPublico
+                entity.HasMany(v => v.Votos)
+                      .WithOne(vp => vp.Votante)
+                      .HasForeignKey(vp => vp.VotanteId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // 10. CONFIGURACIÓN DE VOTO
@@ -244,6 +249,15 @@ namespace Votify.Persistence.Context
                       .WithMany(p => p.Votos)
                       .HasForeignKey(v => v.ProyectoId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // 11. CONFIGURACIÓN EXCLUSIVA DE VOTO EXPERTO
+            modelBuilder.Entity<VotoExperto>(entity =>
+            {
+                entity.HasOne(ve => ve.Juez)
+                      .WithMany() // Un juez no tiene una lista de VotoExperto en su clase de momento
+                      .HasForeignKey(ve => ve.JuezId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }
