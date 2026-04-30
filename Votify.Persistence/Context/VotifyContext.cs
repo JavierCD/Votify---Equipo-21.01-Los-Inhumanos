@@ -24,6 +24,7 @@ namespace Votify.Persistence.Context
         public DbSet<Premio> Premios { get; set; }
         public DbSet<Voto> Votos { get; set; }
         public DbSet<Criterio> Criterios { get; set; }
+        public DbSet<DetalleVoto> DetallesVoto { get; set; }
 
         // --- Tablas con Herencia (Base) ---
         public DbSet<Miembro> Miembros { get; set; }
@@ -257,6 +258,31 @@ namespace Votify.Persistence.Context
                 entity.HasOne(ve => ve.Juez)
                       .WithMany() // Un juez no tiene una lista de VotoExperto en su clase de momento
                       .HasForeignKey(ve => ve.JuezId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // 12. CONFIGURACIÓN DE DETALLE VOTO
+            modelBuilder.Entity<DetalleVoto>(entity =>
+            {
+                entity.ToTable("DetallesVoto"); // Obligamos a que la tabla se llame así
+                entity.HasKey(d => d.Id);
+
+                // Relación con Voto
+                entity.HasOne(d => d.Voto)
+                      .WithMany(v => v.Detalles)
+                      .HasForeignKey(d => d.VotoId)
+                      .OnDelete(DeleteBehavior.Cascade); // Si borramos el voto, borramos sus detalles
+
+                // Relación con Proyecto
+                entity.HasOne(d => d.Proyecto)
+                      .WithMany() // Suponiendo que Proyecto no tiene List<DetalleVoto>
+                      .HasForeignKey(d => d.ProyectoId)
+                      .OnDelete(DeleteBehavior.Restrict); // Evita borrado múltiple en cascada
+
+                // Relación con Criterio (opcional)
+                entity.HasOne(d => d.Criterio)
+                      .WithMany()
+                      .HasForeignKey(d => d.CriterioId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
         }
