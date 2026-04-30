@@ -3,21 +3,21 @@
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
 
-@inject IVotoMulticriterioService VotoMulticriterioService
+@inject IMulticriterioService MulticriterioService
 @inject ILogger<VotoMulticriterioUsuario> Logger
 
 <div class="container py-4" style="max-width:720px">
 
     <div class="mb-4">
-        <h2 class="fw-bold mb-1">Votación Multicriterio</h2>
-        <p class="text-muted small mb-0">Evalúa cada proyecto basándote en los criterios del baremo (0 a 10 puntos).</p>
+        <h2 class="fw-bold mb-1">Evaluación Multicriterio</h2>
+        <p class="text-muted small mb-0">Evalúa cada proyecto basándote en los criterios establecidos en el baremo (0 a 10 puntos).</p>
     </div>
 
     @if (cargando)
     {
         <div class="d-flex align-items-center gap-2 text-muted">
             <span class="spinner-border spinner-border-sm"></span>
-            <span>Cargando baremo de evaluación...</span>
+            <span>Cargando matriz de evaluación...</span>
         </div>
     }
     else if (votacion is null)
@@ -30,7 +30,7 @@
             <div>
                 <h4 class="fw-bold mb-1">@votacion.CategoriaNombre</h4>
                 <span class="badge bg-success-subtle text-success me-2">@votacion.Estado</span>
-                <span class="badge bg-primary-subtle text-primary">@votacion.Criterios.Count Criterios a evaluar</span>
+                <span class="badge bg-primary-subtle text-primary">@votacion.Criterios.Count Criterios de evaluación</span>
             </div>
         </div>
 
@@ -50,13 +50,13 @@
 
         @if (string.IsNullOrWhiteSpace(successMessage))
         {
-            @* ── PASO 1: PANTALLA DE IDENTIFICACIÓN (Doble Bóveda) ── *@
+            @* ── PASO 1: PANTALLA DE IDENTIFICACIÓN ── *@
             @if (!identificado)
             {
                 <div class="card border-0 shadow-sm rounded-4 p-4">
-                    <h5 class="fw-bold mb-3">Identificación</h5>
+                    <h5 class="fw-bold mb-3">Identificación Segura</h5>
                     <p class="text-muted small mb-4">
-                        Introduce tu email para verificar que no has votado antes. Mantendremos el anonimato separando tu correo de los votos emitidos.
+                        Introduce tu correo para verificar tu participación. Mantenemos el anonimato total separando tu identidad de la evaluación emitida.
                     </p>
 
                     <div class="mb-4">
@@ -76,12 +76,12 @@
             }
             else
             {
-                @* ── PASO 2: FORMULARIO DE EVALUACIÓN MULTICRITERIO ── *@
+                @* ── PASO 2: MATRIZ DE EVALUACIÓN MULTICRITERIO ── *@
                 <div class="card border-0 shadow-sm rounded-4 p-4 bg-light">
 
                     <div class="alert alert-info py-2 small mb-4 d-flex justify-content-between align-items-center bg-white border-info">
-                        <span>Evaluando como: <strong>@emailVotante</strong></span>
-                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => identificado = false">Cambiar</button>
+                        <span>Evaluando de forma anónima como: <strong>@emailVotante</strong></span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => identificado = false">Cambiar correo</button>
                     </div>
 
                     <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoAsync">
@@ -108,7 +108,7 @@
                                                                value="@ObtenerPuntuacion(proyecto.Id, criterio.Id)"
                                                                @onchange="e => ActualizarPuntuacion(proyecto.Id, criterio.Id, e.Value?.ToString())" />
                                                     </div>
-                                                    <small class="text-muted d-block" style="font-size: 0.7rem;">Peso en el baremo: @criterio.Peso%</small>
+                                                    <small class="text-muted d-block" style="font-size: 0.7rem;">Peso de evaluación: @criterio.Peso pts</small>
                                                 </div>
                                             </div>
                                         }
@@ -123,12 +123,10 @@
                             @if (enviando)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                <span>Procesando evaluación...</span>
+                                <span>Procesando y encriptando evaluación...</span>
                             }
                             else
                             {
-                                <i class="bi bi-send-fill me-2"></i>
-                
                                 <span>Enviar Evaluación Completa</span>
                             }
                         </button>
@@ -148,12 +146,11 @@
     private bool identificado = false;
     private string errorEmail = "";
 
-    // --- VARIABLES ORIGINALES ---
-    // NOTA: Asegúrate de tener este DTO con las listas de Proyectos y Criterios
+    // --- VARIABLES DE NEGOCIO ---
     private VotacionMulticriterioDetalleResponse? votacion;
     private object formModel = new();
 
-    // Diccionario anidado: ProyectoId -> CriterioId -> Puntuacion
+    // Matriz de puntuaciones: ProyectoId -> CriterioId -> Puntuacion
     private Dictionary<int, Dictionary<int, int>> puntuaciones = new();
 
     private bool cargando = true;
@@ -165,9 +162,8 @@
     {
         try
         {
-            votacion = await VotoMulticriterioService.ObtenerDetallePorIdAsync(VotacionId);
+            votacion = await MulticriterioService.ObtenerDetallePorIdAsync(VotacionId);
 
-            // Inicializamos la matriz de puntuaciones a 0
             if (votacion != null && votacion.Proyectos != null && votacion.Criterios != null)
             {
                 foreach (var p in votacion.Proyectos)
@@ -183,7 +179,7 @@
         catch (Exception ex)
         {
             errorMessage = ex.Message;
-            Logger.LogError(ex, "Error cargando baremo multicriterio.");
+            Logger.LogError(ex, "Error cargando la matriz multicriterio.");
         }
         finally
         {
@@ -216,7 +212,6 @@
     {
         if (int.TryParse(valor, out var num))
         {
-            // Restringimos la nota del 0 al 10 (Ajusta si tu negocio usa 0-100)
             if (num > 10) num = 10;
             if (num < 0) num = 0;
 
@@ -242,11 +237,9 @@
                 Puntuaciones = puntuaciones
             };
 
-            await VotoMulticriterioService.EmitirVotoAsync(request);
+            await MulticriterioService.EmitirVotoAsync(request);
 
-            successMessage = "¡Evaluación multicriterio registrada correctamente!";
-
-            // Limpiamos en caso de querer votar por otra persona desde el mismo equipo físico
+            successMessage = "¡Evaluación multicriterio registrada correctamente! Gracias por participar.";
             identificado = false;
             emailVotante = "";
         }
