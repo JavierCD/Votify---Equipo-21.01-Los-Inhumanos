@@ -124,9 +124,12 @@ namespace Votify.Services.Implementations
                 string? hash = null;
                 if (request.Anonimo)
                 {
+                    // Usamos el Email si lo hay, o el ID del votante, combinado con el ID de la votación y un "Salt" secreto.
+                    string identificadorSecreto = !string.IsNullOrWhiteSpace(request.Email) ? request.Email : request.VotanteId.ToString();
+
                     hash = Convert.ToHexString(
                         SHA256.HashData(
-                            Encoding.UTF8.GetBytes($"{request.VotacionId}-{proyectoId}-{DateTime.UtcNow.Ticks}")
+                            Encoding.UTF8.GetBytes($"{request.VotacionId}-{identificadorSecreto}-VotifySecretSalt2026")
                         )
                     ).Substring(0, 16);
                 }
@@ -141,12 +144,12 @@ namespace Votify.Services.Implementations
 
                 if (votanteFinal != null)
                 {
-                    voto.Votante = votanteFinal;
+                    voto.AsignarEmisorId(votanteFinal.Id);
                 }
                 else
                 {
                     // Por si acaso votan sin correo, dejamos el que venía por defecto
-                    voto.VotanteId = request.VotanteId;
+                    voto.AsignarEmisorId(request.VotanteId);
                 }
 
 

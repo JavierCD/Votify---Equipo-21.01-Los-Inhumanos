@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Votify.Core.Models;
-
-namespace Votify.Core.Models
+﻿namespace Votify.Core.Models
 {
     public abstract class Voto
     {
@@ -14,16 +7,10 @@ namespace Votify.Core.Models
         public bool Anonimo { get; set; }
         public string? HashAnonimo { get; set; }
         public string? Comentario { get; set; }
-
         public double PuntuacionBase { get; set; }
 
-        // La votación en la que se emite (Obligatorio)
-        public int? VotanteId { get; set; }
-        public virtual Votante? Votante { get; set; }
         public int VotacionId { get; set; }
         public Votacion? Votacion { get; set; }
-
-        // ---> ¡LO NUEVO! El proyecto al que se le da el voto (Obligatorio) <---
         public int ProyectoId { get; set; }
         public Proyecto? Proyecto { get; set; }
 
@@ -31,7 +18,7 @@ namespace Votify.Core.Models
 
         protected Voto() { }
 
-        protected Voto(int votacionId, int proyectoId, double puntuacionBase, bool anonimo = false, string? hashAnonimo = null,string? comentario=null)
+        protected Voto(int votacionId, int proyectoId, double puntuacionBase, bool anonimo = false, string? hashAnonimo = null, string? comentario = null)
         {
             VotacionId = votacionId;
             ProyectoId = proyectoId;
@@ -42,13 +29,13 @@ namespace Votify.Core.Models
             Fecha = DateTime.UtcNow;
         }
 
-        public void AssignId(int id)
-        {
-            VotanteId = id;
-        }
-
-        public abstract double CalcularPuntuacionNormalizada(); 
+        public abstract double CalcularPuntuacionNormalizada();
         public abstract string RolVotante();
 
+        // Métodos abstractos para manejar al emisor correctamente
+        public abstract void AsignarEmisorId(int id);
+
+        // Metodo para la Auditoría de votos
+        public abstract string ObtenerIdentificadorAuditoria();
     }
 }
