@@ -65,8 +65,9 @@ namespace Votify.Persistence.Repositories
         }
         public async Task<bool> EmailYaVotoEnVotacionAsync(int votacionId, string email)
         {
-            return await _context.Votos
-                .AnyAsync(v => v.VotacionId == votacionId && v.Votante != null && v.Votante.Email == email);
+            // Buscamos en Votantes para mantener la Doble Bóveda intacta
+            return await _context.Votantes
+                .AnyAsync(v => v.votacionId == votacionId && v.Email == email);
         }
 
     }

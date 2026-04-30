@@ -24,7 +24,7 @@ namespace Votify.Services.Models
         {
             public int Id { get; set; }
             public string Nombre { get; set; } = string.Empty;
-            public int Peso { get; set; }
+            public float Peso { get; set; }
         }
     }
 }
