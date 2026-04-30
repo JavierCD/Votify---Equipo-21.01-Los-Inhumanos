@@ -127,9 +127,7 @@ namespace Votify.Services.Implementations
             // 5. REGISTRAR VOTANTE PARA BLOQUEAR FUTUROS INTENTOS
             var registroVotante = new Votante
             {
-                Email = request.Email,
-                Anonimo = true,
-                votacionId = request.VotacionId
+                Email = request.Email
             };
 
             await _votanteRepo.AddAsync(registroVotante);
