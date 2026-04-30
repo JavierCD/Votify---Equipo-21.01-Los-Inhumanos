@@ -16,6 +16,7 @@ namespace Votify.Core.Models
         // Para saber si su identidad debe ocultarse al público/organizador
         public bool Anonimo { get; set; }
         //public string Rol {  get; set; }
+        public int votacionId { get ; set; }
 
         // Relación MUCHOS A MUCHOS: Un votante participa en varios eventos
         // y un evento tiene varios votantes.
