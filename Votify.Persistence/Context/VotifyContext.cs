@@ -216,6 +216,7 @@ namespace Votify.Persistence.Context
                 entity.HasKey(v => v.Id);
                 entity.Property(v => v.Email).IsRequired().HasMaxLength(150);
                 entity.Property(v => v.Anonimo).HasDefaultValue(false);
+                entity.Property(v => v.votacionId).IsRequired();
 
                 entity.HasMany(v => v.Eventos)
                       .WithMany(e => e.Votantes)

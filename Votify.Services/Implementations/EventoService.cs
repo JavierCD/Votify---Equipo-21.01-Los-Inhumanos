@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Votify.Core;
+using Votify.Core.Enums;
+using Votify.Core.Factories;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
-using Votify.Core.Enums;
 using Votify.Services.Models;
 
 namespace Votify.Services.Implementations
@@ -152,6 +153,40 @@ namespace Votify.Services.Implementations
             // Lo quitamos de la lista y actualizamos
             evento.Jurado.Remove(juezARemover);
             await _repository.UpdateAsync(evento);
+        }
+
+        public async Task CrearEventoDesdeFormularioAsync(CrearEventoRequest modelo)
+        {
+            // 1. Resolvemos dependencias internas (como el organizador)
+            int organizadorRealId = await ObtenerOrganizadorMockIdAsync();
+
+            // 2. Usamos el Factory Pattern en la capa de Aplicación/Dominio, NO en la UI
+            EventoCreator creator = modelo.TipoEvento switch
+            {
+                "Hackathon" => new HackathonEventCreator(),
+                "Feria de Innovación" => new InnovationFairEventCreator(),
+                "E-Sports" => new ESportsEventCreator(),
+                _ => new HackathonEventCreator() // Fallback
+            };
+
+            // 3. Instanciamos la entidad de Dominio
+            Evento nuevoEvento = creator.CrearEvento(
+                modelo.Nombre,
+                modelo.FechaInicio.ToUniversalTime(),
+                modelo.FechaFin.ToUniversalTime(),
+                organizadorRealId,
+                modelo.Descripcion
+            );
+
+            // 4. Delegamos al Aggregate Root la creación de sus hijos (Categorías)
+            foreach (var cat in modelo.Categorias)
+            {
+                nuevoEvento.AgregarCategoria(cat.Nombre, cat.Descripcion);
+            }
+
+            // 5. Persistimos a través de Infraestructura
+            await _repository.AddAsync(nuevoEvento);
+            // (Asegúrate de que AddAsync llame a SaveChangesAsync internamente, o llámalo aquí)
         }
     }
 }
