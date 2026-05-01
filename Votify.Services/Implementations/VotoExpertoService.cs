@@ -7,6 +7,7 @@ using Votify.Core.Factories;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Interfaces;
+using Votify.Services.Models;
 
 namespace Votify.Services.Implementations
 {
@@ -59,6 +60,22 @@ namespace Votify.Services.Implementations
                 throw new ArgumentException("CategoriaId no válido.");
 
             return await _repo.ObtenerComentariosPorCategoriaAsync(categoriaId);
+        }
+        public async Task<List<EvaluacionJuezResponse>> ObtenerEvaluacionesParaParticipanteAsync(int proyectoId,int categoriaId)
+        {
+            if (proyectoId <= 0)
+                throw new ArgumentException("ProyectoId no valido.");
+            if (categoriaId <= 0)
+                throw new ArgumentException("CategoriaId no valido.");
+
+            var votos = await _repo.ObtenerEvaluacionesPorProyectoYCategoriaAsync(proyectoId, categoriaId);
+            return votos.Select(v => new EvaluacionJuezResponse
+            {
+                NombreJuez = v.Juez?.Name ?? "Juez anonimo",
+                Puntuacion = v.PuntuacionBase,
+                Comentario = v.Comentario,
+                Fecha = v.Fecha
+            }).ToList();
         }
     }
 }
