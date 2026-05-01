@@ -49,7 +49,7 @@ namespace Votify.Core.Models
             Votacion = votacion ?? throw new ArgumentNullException(nameof(votacion));
         }
 
-        public void AsignarPremio(string nombre, string descripcion, int puesto)
+        public void AsignarPremio(string nombre, string descripcion, int puesto, bool permiteEmpate = false)
         {
             if (puesto <= 0)
                 throw new ArgumentException("El puesto debe ser mayor a cero.");

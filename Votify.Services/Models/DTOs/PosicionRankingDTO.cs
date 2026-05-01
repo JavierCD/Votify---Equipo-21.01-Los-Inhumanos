@@ -11,6 +11,9 @@ namespace Votify.Services.Models.DTOs
         public int Posicion { get; set; }
         public string NombreProyecto { get; set; } = string.Empty;
         public double PuntosTotales { get; set; }
+        public string PremioGanado { get; set; } = "Sin premio";
+        // Propiedad auxiliar para desempatar internamente si no se permite empate
+        internal DateTime FechaInscripcion { get; set; }
         public string Medalla => Posicion == 1 ? "🥇 " : Posicion == 2 ? "🥈 " : Posicion == 3 ? "🥉 " : "";
     }
 }
