@@ -299,7 +299,7 @@
                             </button>
                         </div>
 
-                        <RadzenDataGrid @ref="gridCriterios" Data="@requestMulticriterio.Criterios" TItem="CriterioDto" EditMode="DataGridEditMode.Single" EmptyText="No hay criterios configurados.">
+                        <RadzenDataGrid @ref="gridCriterios" Data="@requestMulticriterio.Criterios" TItem="CriterioDto" KeyProperty="Id" EditMode="DataGridEditMode.Single" EmptyText="No hay criterios configurados.">
                             <Columns>
                                 <RadzenDataGridColumn TItem="CriterioDto" Property="Nombre" Title="Nombre">
                                     <EditTemplate Context="criterio">
