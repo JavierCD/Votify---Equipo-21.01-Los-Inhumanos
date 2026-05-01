@@ -76,6 +76,8 @@ builder.Services.AddScoped<IVotoMulticriterioRepository, VotoMulticriterioReposi
 builder.Services.AddScoped<IVotoMulticriterioService, VotoMulticriterioService>();
 builder.Services.AddScoped<IResultadosService, ResultadosService>();
 builder.Services.AddScoped<IEmailTemplateBuilder, EmailTemplateBuilder>();
+builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 builder.Services.AddScoped<IGenericRepository<Juez>, GenericRepository<Juez>>();
 

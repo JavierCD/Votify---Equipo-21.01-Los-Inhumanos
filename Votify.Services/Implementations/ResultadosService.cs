@@ -12,13 +12,14 @@ namespace Votify.Services.Implementations
 {
     public class ResultadosService : IResultadosService
     {
-        private readonly IGenericRepository<Categoria> _categoriaRepo;
+
         private readonly IGenericRepository<Voto> _votoRepo;
+        private readonly ICategoriaRepository _categoriaRepo; // Para obtener la categoría con su votación y votos
         private readonly IEmailService _emailService;
         private readonly IEmailTemplateBuilder _templateBuilder; // Ver Paso 3
 
         public ResultadosService(
-            IGenericRepository<Categoria> categoriaRepo,
+            ICategoriaRepository categoriaRepo,
             IGenericRepository<Voto> votoRepo,
             IEmailService emailService,
             IEmailTemplateBuilder templateBuilder)
@@ -32,14 +33,7 @@ namespace Votify.Services.Implementations
         public async Task<int> CompartirClasificacionAsync(int categoriaId)
         {
             // 1. Obtener la categoría con su votación
-            var categoria = await _categoriaRepo.GetAllAsync()
-                .Include(c => c.Votacion)
-                    .ThenInclude(v => v.Votos)
-                        .ThenInclude(v => v.Proyecto)
-                .Include(c => c.Votacion)
-                    .ThenInclude(v => v.Votos)
-                        .ThenInclude(v => v.Votante)
-                .FirstOrDefaultAsync(c => c.Id == categoriaId);
+            var categoria = await _categoriaRepo.ObtenerCategoriaConVotacionYVotosAsync(categoriaId);
 
             if (categoria == null || categoria.Votacion == null)
                 throw new Exception("Categoría o Votación no encontrada.");
