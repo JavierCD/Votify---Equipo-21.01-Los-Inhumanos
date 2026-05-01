@@ -38,13 +38,17 @@ namespace Votify.Services.Implementations
             }
         }
 
-        public async Task AgregarPremioAsync(AgregarPremioRequest agregarPremioRequest)
+        public async Task AgregarPremioAsync(AgregarPremioRequest request)
         {
-            var categoria = await _categoriaRepository.GetByIdAsync(agregarPremioRequest.categoriaID);
+            var categoria = await _categoriaRepository.GetByIdAsync(request.categoriaID);
             if(categoria != null)
             {
-                
-                categoria.AsignarPremio(agregarPremioRequest.nombrePremio, agregarPremioRequest.premioDesc, agregarPremioRequest.puesto);
+
+                categoria.AsignarPremio(
+                    request.nombrePremio,
+                    request.premioDesc,
+                    request.puesto,
+                    request.PermiteEmpate);
                 await _categoriaRepository.UpdateAsync(categoria);
             }
 

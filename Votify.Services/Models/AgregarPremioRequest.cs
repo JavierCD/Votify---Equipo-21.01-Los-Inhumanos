@@ -12,6 +12,7 @@ namespace Votify.Services.Models
         public string premioDesc {  get; set; }
         public int puesto { get; set; }
         public int categoriaID { get; set; }
+        public bool PermiteEmpate { get; set; }
 
     }
 }

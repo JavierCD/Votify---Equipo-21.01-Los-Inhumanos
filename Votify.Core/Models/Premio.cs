@@ -17,6 +17,7 @@ namespace Votify.Core.Models
         public string? Descripcion { get; set; }
 
         public int Posicion { get; set; }
+        public bool PermiteEmpate { get; set; }
 
         public int CategoriaId { get; set; }
 
@@ -24,11 +25,12 @@ namespace Votify.Core.Models
 
         protected Premio() { }
 
-        public Premio(string nombre, string? desc, int puesto)
+        public Premio(string nombre, string? desc, int puesto, bool permiteEmpate = false)
         {
             Name = nombre;
             Descripcion = desc;
             Posicion = puesto;
+            PermiteEmpate = permiteEmpate;
         }
     }
 }
