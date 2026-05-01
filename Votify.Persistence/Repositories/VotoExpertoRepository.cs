@@ -50,5 +50,13 @@ namespace Votify.Persistence.Repositories
                             && v.ProyectoId == proyectoId
                             && v.Votacion.CategoriaId == categoriaId);
         }
+        public async Task<IEnumerable<VotoExperto>> ObtenerEvaluacionesPorProyectoYCategoriaAsync(int proyectoId, int categoriaId)
+        {
+            return await _context.Votos.OfType<VotoExperto>()
+                .Include(v => v.Juez)
+                .Where(v => v.ProyectoId == proyectoId && v.Votacion.CategoriaId == categoriaId)
+                .OrderByDescending(v => v.Fecha)
+                .ToListAsync();
+        }
     }
 }

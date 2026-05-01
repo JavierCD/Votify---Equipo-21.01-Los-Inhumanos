@@ -89,6 +89,12 @@ else
                                               ButtonStyle="ButtonStyle.Warning"
                                               class="w-100"
                                               Click="@(() => proyectoComentariosAbierto = proyectoComentariosAbierto == proyecto.Id ? 0 : proyecto.Id)" />
+                              
+                                              <RadzenButton Text="Ver Evaluación"
+                                              Icon="assessment"
+                                              ButtonStyle="ButtonStyle.Info"
+                                              class="w-100"
+                                              Click="@(() => NavManager.NavigateTo($"/evaluacion-proyecto/{proyecto.Id}"))" />
 
                                 @if (proyectoComentariosAbierto == proyecto.Id)
                                 {

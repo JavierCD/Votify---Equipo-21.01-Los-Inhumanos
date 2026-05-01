@@ -14,5 +14,7 @@ namespace Votify.Core.Interfaces
         Task GuardarComentarioAsync(Voto voto);
         Task<IEnumerable<Voto>> ObtenerComentariosPorCategoriaAsync(int categoriaId);
         Task<bool> YaComentoPorProyectoAsync(int juezId, int proyectoId, int categoriaId);
+        Task<IEnumerable<VotoExperto>> ObtenerEvaluacionesPorProyectoYCategoriaAsync(int proyectoId, int categoriaId);
+
     }
 }
