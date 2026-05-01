@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Models;
+using Votify.Services.Models;
 
 namespace Votify.Services.Interfaces
 {
@@ -15,5 +16,6 @@ namespace Votify.Services.Interfaces
         Task GuardarComentarioAsync(int juezId, int proyectoId, int votacionId, int categoriaId, string comentario);
 
         Task<IEnumerable<Voto>> ObtenerComentariosPorCategoriaAsync(int categoriaId);
+        Task<List<EvaluacionJuezResponse>> ObtenerEvaluacionesParaParticipanteAsync(int proyectoId, int categoriaId);
     }
 }
