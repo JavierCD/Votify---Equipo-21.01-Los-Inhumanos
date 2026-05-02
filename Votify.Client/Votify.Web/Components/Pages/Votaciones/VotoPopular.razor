@@ -317,7 +317,7 @@
                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
                                                       Click="@(args => gridCriterios.EditRow(criterio))" @onclick:stopPropagation="true" />
                                         <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" Class="ms-1"
-                                                      Click="@(args => { requestMulticriterio.Criterios.Remove(criterio); })" @onclick:stopPropagation="true" />
+                                                      Click="@(args => EliminarCriterio(criterio))" @onclick:stopPropagation="true" />
                                     </Template>
                                     <EditTemplate Context="criterio">
                                         <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.ExtraSmall"
@@ -570,6 +570,13 @@
         requestMulticriterio.Criterios.Add(nuevo);
         await gridCriterios.Reload();
         await gridCriterios.EditRow(nuevo);
+    }
+
+    private async Task EliminarCriterio(CriterioDto criterio)
+    {
+        requestMulticriterio.Criterios.Remove(criterio);
+        await gridCriterios.Reload();
+        StateHasChanged();
     }
 
     private async Task CrearVotacionMulticriterioAsync()

@@ -59,7 +59,6 @@ builder.Services.AddScoped<IVotoExpertoServices, VotoExpertoService>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IGenericRepository<Votante>, GenericRepository<Votante>>();
 builder.Services.AddScoped<IPlantillaBaremoService, PlantillaBaremoService>();
 builder.Services.AddScoped<IMulticriterioService, MulticriterioService>();
 builder.Services.AddScoped<IVotoMulticriterioService, VotoMulticriterioService>();
