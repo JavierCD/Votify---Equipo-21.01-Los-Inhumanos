@@ -26,5 +26,6 @@ namespace Votify.Core.Interfaces
         Task<int> ObtenerOrganizadorMockIdAsync();
 
         Task CrearEventoDesdeFormularioAsync(CrearEventoRequest request);
+        Task<List<Juez>> ObtenerTodosLosJuecesAsync();
     }
 }

@@ -1,5 +1,6 @@
 ﻿@page "/eventos/editar/{EventoId:int}"
 @rendermode InteractiveServer
+@implements IDisposable
 @using System.Text
 @using Votify.Core.Factories
 @using Votify.Services.Models
@@ -7,13 +8,15 @@
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
 @inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
 @inject IEventoService EventoService
 @inject ICategoriaService CategoriaService
 @inject IEmailService EmailService
-@* NUEVA INYECCIÓN PARA LISTAR JUECES *@
-@inject IGenericRepository<Juez> JuezRepository
+@* NUEVA INYECCIÓN PARA LISTAR JUECES 
+@inject IGenericRepository<Juez> JuezRepository *@
 @inject IAuditoriaService AuditoriaService
 @inject IResultadosService ResultadosService
+@inject IVotacionService VotacionService
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -113,7 +116,9 @@
                             <div class="card-body row">
 
                                 <div class="col-md-5 border-end">
-                                    <h6>Estado de la Votación</h6>
+                                    <h6>
+                                        Estado de la Votación
+                                    </h6>
 
                                     @if (categoria.Votacion == null)
                                     {
@@ -123,65 +128,110 @@
                                             Configurar Votación
                                         </button>
                                     }
-                                    else if (!categoria.Votacion.EstaCerrada)
-                                    {
-                                        <div class="alert alert-success p-2 small d-flex justify-content-between align-items-center">
-                                            <span><RadzenIcon Icon="how_to_vote" class="me-1" /> En curso</span>
-                                            <span class="badge bg-success">@(categoria.Votacion.Votos?.Count ?? 0) votos</span>
-                                        </div>
-
-                                        <div class="alert alert-success p-2 small d-flex justify-content-between align-items-center">
-                                            <RadzenBadge BadgeStyle="BadgeStyle.Info"
-                                                         Text="@($"ID Votación: {categoria.Votacion.Id}")" />
-                                        </div>
-
-                                        <button class="btn btn-sm btn-warning w-100 fw-bold shadow-sm"
-                                                @onclick="() => CerrarVotacionCategoria(categoria.Id)">
-                                            <RadzenIcon Icon="lock" class="me-1" /> Cerrar Votación
-                                        </button>
-                                    }
                                     else
                                     {
-                                        <div class="alert alert-secondary p-2 small mb-2">
-                                            <RadzenIcon Icon="lock" class="me-1" /> Votación Cerrada
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-muted small">
+                                                <RadzenIcon Icon="tag" Style="font-size: 14px;" /> ID Votación: <strong>@categoria.Votacion.Id</strong>
+                                            </span>
                                         </div>
-
-                                        <div class="bg-white border rounded p-2 mb-3">
-                                            <strong class="small d-block mb-2 border-bottom pb-1">Clasificación Actual:</strong>
-
-                                            @{
-                                                var ranking = categoria.Votacion.Votos
-                                                .GroupBy(v => v.Proyecto)
-                                                .Select(g => new { Proyecto = g.Key, Votos = g.Count() })
-                                                .OrderByDescending(x => x.Votos)
-                                                .ToList();
-                                            }
-
-                                            @if (!ranking.Any())
+                                        <!-- 1. SECCIÓN DE FECHAS Y EDICIÓN -->
+                                        <div class="bg-light p-2 rounded mb-3 border">
+                                            @if (editandoFechas.ContainsKey(categoria.Id) && editandoFechas[categoria.Id])
                                             {
-                                                <span class="text-muted small">Nadie votó en esta categoría.</span>
+                                                <label class="small fw-bold text-muted">Nueva Apertura:</label>
+                                                <RadzenDatePicker @bind-Value="fechasEdicion[categoria.Id].Apertura" ShowTime="true" DateFormat="dd/MM/yyyy HH:mm" class="w-100 mb-2" />
+
+                                                <label class="small fw-bold text-muted">Nuevo Cierre:</label>
+                                                <RadzenDatePicker @bind-Value="fechasEdicion[categoria.Id].Cierre" ShowTime="true" DateFormat="dd/MM/yyyy HH:mm" class="w-100 mb-2" />
+
+                                                <div class="d-flex gap-1">
+                                                    <button class="btn btn-sm btn-success flex-fill" @onclick="() => GuardarFechasAsync(categoria)">Guardar</button>
+                                                    <button class="btn btn-sm btn-outline-secondary flex-fill" @onclick="() => CancelarEdicionFechas(categoria.Id)">Cancelar</button>
+                                                </div>
                                             }
                                             else
                                             {
-                                                <ul class="list-unstyled mb-0 small">
-                                                    @for (int i = 0; i < Math.Min(3, ranking.Count); i++)
-                                                    {
-                                                        var posicion = ranking[i];
-                                                        <li class="mb-1">
-                                                            <strong>@(i + 1)º</strong> @(posicion.Proyecto?.Name ?? "Proyecto Eliminado")
-                                                            <span class="badge bg-light text-dark float-end">@posicion.Votos pts</span>
-                                                        </li>
-                                                    }
-                                                </ul>
+                                                <p class="small mb-1"><strong>Apertura:</strong> @categoria.Votacion.FechaApertura.ToLocalTime().ToString("g")</p>
+                                                <p class="small mb-2"><strong>Cierre:</strong> @categoria.Votacion.FechaCierre.ToLocalTime().ToString("g")</p>
+                                                <button class="btn btn-sm btn-outline-primary w-100" @onclick="() => IniciarEdicionFechas(categoria)">
+                                                    <RadzenIcon Icon="edit_calendar" class="me-1" /> Editar ventanas de tiempo
+                                                </button>
                                             }
                                         </div>
 
-                                        <button class="btn btn-sm w-100 fw-bold shadow-sm @(categoria.Votacion.ResultadosPublicados ? "btn-success disabled" : "btn-primary")"
-                                                @onclick="() => CompartirClasificacion(categoria)">
+                                        <!-- 2. SECCIÓN DE ESTADO ACTUAL -->
+                                        <div class="bg-light p-3 rounded mb-3 border">
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" class="fw-bold mb-2">Control de Estado:</RadzenText>
 
-                                            <RadzenIcon Icon="@(categoria.Votacion.ResultadosPublicados ? "check_circle" : "send")" class="me-1" />
-                                            @(categoria.Votacion.ResultadosPublicados ? "Clasificación Compartida" : "Compartir Clasificación")
-                                        </button>
+                                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                                <RadzenBadge BadgeStyle="GetBadgeStyle(categoria.Votacion.Estado)" Text="@categoria.Votacion.Estado" class="fs-6 px-3 py-2" />
+                                                <span class="badge bg-success fs-6">@(categoria.Votacion.Votos?.Count ?? 0) votos</span>
+                                            </div>
+
+                                            <RadzenDropDown TValue="string"
+                                                            Data="@estadosPosibles"
+                                                            Value="@categoria.Votacion.Estado"
+                                                            ValueChanged="@(args => OnEstadoCambiado(categoria, args.ToString()))"
+                                                            Style="width: 100%;"
+                                                            Disabled="@categoria.Votacion.ResultadosPublicados" />
+                                        </div>
+
+                                        @if (categoria.Votacion.EstaCerrada || categoria.Votacion.Estado == "CerradaManual" || categoria.Votacion.Estado == "Cerrada")
+                                        {
+                                            @*
+                                            <div class="alert alert-success p-2 small d-flex justify-content-between align-items-center">
+                                                <span><RadzenIcon Icon="how_to_vote" class="me-1" /> En curso (@categoria.Votacion.Estado)</span>
+                                                <span class="badge bg-success">@(categoria.Votacion.Votos?.Count ?? 0) votos</span>
+                                            </div> *@
+
+                                            <div class="bg-white border rounded p-2 mb-3">
+                                                <strong class="small d-block mb-2 border-bottom pb-1">Clasificación Actual:</strong>
+
+                                                @{
+                                                    var ranking = categoria.Votacion.Votos
+                                                    .GroupBy(v => v.Proyecto)
+                                                    .Select(g => new { Proyecto = g.Key, Votos = g.Count() })
+                                                    .OrderByDescending(x => x.Votos)
+                                                    .ToList();
+                                                }
+
+                                                @if (!ranking.Any())
+                                                {
+                                                    <span class="text-muted small">Nadie votó en esta categoría.</span>
+                                                }
+                                                else
+                                                {
+                                                    <ul class="list-unstyled mb-0 small">
+                                                        @for (int i = 0; i < Math.Min(3, ranking.Count); i++)
+                                                        {
+                                                            var posicion = ranking[i];
+                                                            <li class="mb-1">
+                                                                <strong>@(i + 1)º</strong> @(posicion.Proyecto?.Name ?? "Proyecto Eliminado")
+                                                                <span class="badge bg-light text-dark float-end">@posicion.Votos pts</span>
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </div>
+
+                                            <button class="btn btn-sm w-100 fw-bold shadow-sm @(categoria.Votacion.ResultadosPublicados ? "btn-success disabled" : "btn-primary")"
+                                                    @onclick="() => CompartirClasificacion(categoria)">
+
+                                                <RadzenIcon Icon="@(categoria.Votacion.ResultadosPublicados ? "check_circle" : "send")" class="me-1" />
+                                                @(categoria.Votacion.ResultadosPublicados ? "Clasificación Compartida" : "Compartir Clasificación")
+                                            </button>
+                                            
+                                        }
+                                        else
+                                        {
+
+                                            <button class="btn btn-sm btn-warning w-100 fw-bold shadow-sm"
+                                                    @onclick="() => CerrarVotacionCategoria(categoria.Id)">
+                                                <RadzenIcon Icon="lock" class="me-1" /> Forzar Cierre
+                                            </button>
+                                            
+                                        }
                                     }
                                 </div>
 
@@ -457,9 +507,89 @@
     private List<AuditoriaVotoResponse> historialVotos = new();
     private bool cargandoAuditoria = false;
 
+    // Timer 
+    private System.Timers.Timer _timer;
+
+    //fechas
+    // --- ESTADO PARA EDICIÓN DE FECHAS ---
+    // Controla qué categoría está en modo edición
+    private Dictionary<int, bool> editandoFechas = new();
+    private List<string> estadosPosibles = new List<string> { "Programada", "Abierta", "Pausada", "Cerrada" };
+
+    // Almacena las fechas temporales mientras el usuario edita (antes de guardar)
+    public class FechasEdicionDto
+    {
+        public DateTime Apertura { get; set; }
+        public DateTime Cierre { get; set; }
+    }
+    private Dictionary<int, FechasEdicionDto> fechasEdicion = new();
+
+    private void IniciarEdicionFechas(Categoria categoria)
+    {
+        editandoFechas[categoria.Id] = true;
+        // Convertimos a Local para que el admin vea la hora en su zona horaria en el picker
+        fechasEdicion[categoria.Id] = new FechasEdicionDto
+        {
+            Apertura = categoria.Votacion.FechaApertura.ToLocalTime(),
+            Cierre = categoria.Votacion.FechaCierre.ToLocalTime()
+        };
+    }
+
+    private void CancelarEdicionFechas(int categoriaId)
+    {
+        editandoFechas[categoriaId] = false;
+    }
+
+    private async Task GuardarFechasAsync(Categoria categoria)
+    {
+        mensajeError = null;
+        mensajeExito = null;
+
+        try
+        {
+            var nuevasFechas = fechasEdicion[categoria.Id];
+
+            // 1. Llamamos a la capa de Aplicación
+            await VotacionService.ActualizarFechasVotacionAsync(
+                categoria.Votacion.Id,
+                nuevasFechas.Apertura.ToUniversalTime(), // Volvemos a UTC para la base de datos
+                nuevasFechas.Cierre.ToUniversalTime());
+
+            // 2. Actualizamos la entidad en memoria para que la UI reaccione
+            await CategoriaService.ConfigurarFechas(categoria, nuevasFechas.Apertura, nuevasFechas.Cierre);
+
+
+            // 3. Salimos del modo edición
+            editandoFechas[categoria.Id] = false;
+            mensajeExito = $"Las fechas de la categoría '{categoria.Name}' se han actualizado.";
+        }
+        catch (ArgumentException ex)
+        {
+            // Atrapamos la regla de negocio del Dominio (Apertura >= Cierre)
+            mensajeError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al actualizar fechas: {ex.Message}";
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        await CargarEventoYJueces();
+        try
+        {
+            await CargarEventoYJueces();
+
+            // Configuramos un timer para que revise el estado cada 10 segundos
+            _timer = new System.Timers.Timer(10000);
+            _timer.Elapsed += async (sender, e) => await ReevaluarEstadosEnVivo();
+            _timer.Start();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error crítico al cargar el evento: {ex.Message}";
+            Console.WriteLine(ex.ToString());
+        }
     }
 
     private async Task CargarEventoYJueces()
@@ -468,7 +598,7 @@
         evento = await EventoService.ObtenerEventoConDetallesAsync(EventoId);
 
         // 2. Cargamos TODOS los jueces disponibles en el sistema para el Dropdown
-        todosLosJueces = (await JuezRepository.GetAllAsync()).ToList();
+        todosLosJueces = await EventoService.ObtenerTodosLosJuecesAsync();
 
         if (evento != null)
         {
@@ -480,6 +610,63 @@
             requestModel.FechaInicio = evento.FechaInicio;
             requestModel.FechaFin = evento.FechaFin;
             requestModel.Description = evento.Description;
+
+            if (evento.CategoriasEvento != null)
+            {
+                var ahora = DateTime.UtcNow;
+                foreach (var cat in evento.CategoriasEvento)
+                {
+                    if (cat.Votacion != null)
+                    {
+                        cat.Votacion.EvaluarEstadoTemporal(ahora);
+                    }
+                }
+            }
+        }
+    }
+
+    // NUEVO: Método que ejecuta el Timer en segundo plano
+    private async Task ReevaluarEstadosEnVivo()
+    {
+        if (evento?.CategoriasEvento == null) return;
+
+        bool cambioDetectado = false;
+        var ahora = DateTime.UtcNow;
+
+        foreach (var cat in evento.CategoriasEvento)
+        {
+            if (cat.Votacion != null)
+            {
+                var estadoAnterior = cat.Votacion.Estado;
+
+                // El modelo de dominio hace el cálculo
+                cat.Votacion.EvaluarEstadoTemporal(ahora);
+
+                // Si el estado de dominio cambió mágicamente por el paso del tiempo
+                if (estadoAnterior != cat.Votacion.Estado)
+                {
+                    cambioDetectado = true;
+                    // NOTA: Podrías llamar al servicio aquí para guardar el nuevo estado en BD
+                    // si lo consideras estrictamente necesario, aunque al estar el cálculo
+                    // basado en fechas, no es 100% obligatorio persistir el string inmediatamente.
+                }
+            }
+        }
+
+        // Si alguna votación cambió de estado (ej: de Programada a Abierta), actualizamos la UI
+        if (cambioDetectado)
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // NUEVO: Limpiamos la memoria cuando el componente se destruye
+    public void Dispose()
+    {
+        if (_timer != null)
+        {
+            _timer.Stop();
+            _timer.Dispose();
         }
     }
 
@@ -594,6 +781,8 @@
         try
         {
             await CategoriaService.CerrarVotacionAsync(categoriaId);
+            await OnEstadoCambiado(evento!.CategoriasEvento.First(c => c.Id == categoriaId), "Cerrada");
+            await CategoriaService.ConfigurarFechas(evento.CategoriasEvento.First(c => c.Id == categoriaId), DateTime.UtcNow, DateTime.UtcNow); // Para actualizar las fechas en la UI si se expande el modal
 
         }
         catch (Exception ex) { mensajeError = ex.Message; }
@@ -641,5 +830,56 @@
         {
             cargandoAuditoria = false;
         }
+    }
+
+    private async Task OnEstadoCambiado(Categoria categoria, string nuevoEstado)
+    {
+        if (categoria.Votacion.Estado == nuevoEstado) return;
+
+        if(categoria.Votacion.Estado == "ResultadosPublicados")
+        {
+
+            return;
+        }
+
+        bool exito = await VotacionService.CambiarEstadoVotacionManualAsync(categoria.Votacion.Id, nuevoEstado);
+
+        if (exito)
+        {
+            // Actualizamos la entidad en la UI localmente para que se reflejen los cambios sin recargar
+            switch (nuevoEstado)
+            {
+                case "Abierta": await CategoriaService.ForzarApertura(categoria); break;
+                case "Cerrada": await CategoriaService.ForzarCierre(categoria); break;
+                case "Pausada": await CategoriaService.PausarVotacion(categoria); break;
+                case "Programada": await CategoriaService.ForzarProgramada(categoria); break;
+            }
+
+            // Actualizamos las fechas del modal de edición en la UI por si se expande
+            if (fechasEdicion.ContainsKey(categoria.Id))
+            {
+                fechasEdicion[categoria.Id].Apertura = categoria.Votacion.FechaApertura.ToLocalTime();
+                fechasEdicion[categoria.Id].Cierre = categoria.Votacion.FechaCierre.ToLocalTime();
+            }
+
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Estado Actualizado", Detail = $"Votación cambiada a {nuevoEstado}" });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = "No se pudo actualizar el estado en el servidor." });
+        }
+    }
+
+    private BadgeStyle GetBadgeStyle(string estado)
+    {
+        return estado switch
+        {
+            "Programada" => BadgeStyle.Info,
+            "Abierta" => BadgeStyle.Success,
+            "Pausada" => BadgeStyle.Warning,
+            "Cerrada" or "CerradaManual" => BadgeStyle.Danger,
+            "ResultadosPublicados" => BadgeStyle.Dark,
+            _ => BadgeStyle.Light
+        };
     }
 }
