@@ -7,40 +7,43 @@ namespace Votify.Services.Implementations
 {
     public class CategoriaService : ICategoriaService
     {
-        private readonly IGenericRepository<Categoria> _categoriaRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CategoriaService(IGenericRepository<Categoria> categoriaRepository)
+        public CategoriaService(IUnitOfWork unitOfWork)
         {
-            _categoriaRepository = categoriaRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Categoria?> ObtenerPorIdAsync(int id)
         {
-            return await _categoriaRepository.GetByIdAsync(id);
+            return await _unitOfWork.Categorias.GetByIdAsync(id);
         }
 
         public async Task UpdateAsync(Categoria categoria)
         {
-            await _categoriaRepository.UpdateAsync(categoria);
+            await _unitOfWork.Categorias.UpdateAsync(categoria);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task CrearAsync(Categoria categoria)
         {
-            await _categoriaRepository.AddAsync(categoria);
+            await _unitOfWork.Categorias.AddAsync(categoria);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var categoria = await _categoriaRepository.GetByIdAsync(id);
+            var categoria = await _unitOfWork.Categorias.GetByIdAsync(id);
             if (categoria != null)
             {
-                await _categoriaRepository.DeleteAsync(categoria.Id);
+                await _unitOfWork.Categorias.DeleteAsync(categoria.Id);
+                await _unitOfWork.SaveChangesAsync();
             }
         }
 
         public async Task AgregarPremioAsync(AgregarPremioRequest request)
         {
-            var categoria = await _categoriaRepository.GetByIdAsync(request.categoriaID);
+            var categoria = await _unitOfWork.Categorias.GetByIdAsync(request.categoriaID);
             if (categoria != null)
             {
 
@@ -49,37 +52,29 @@ namespace Votify.Services.Implementations
                     request.premioDesc,
                     request.puesto,
                     request.PermiteEmpate);
-                await _categoriaRepository.UpdateAsync(categoria);
+                await _unitOfWork.Categorias.UpdateAsync(categoria);
+                await _unitOfWork.SaveChangesAsync();
             }
-
-
         }
 
         public async Task EliminarPremioAsync(int categoriaId, int premioId)
         {
-            // 1. Recuperamos el Aggregate Root
-            var categoria = await _categoriaRepository.GetByIdAsync(categoriaId);
+            var categoria = await _unitOfWork.Categorias.GetByIdAsync(categoriaId);
 
             if (categoria == null)
             {
                 throw new KeyNotFoundException($"No se encontró la categoría {categoriaId}");
             }
 
-            // 2. Delegamos la lógica al Dominio
             categoria.EliminarPremio(premioId);
 
-            // 3. Persistimos los cambios
-            await _categoriaRepository.UpdateAsync(categoria);
+            await _unitOfWork.Categorias.UpdateAsync(categoria);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task CerrarVotacionAsync(int categoriaId)
         {
-            // 1. Orquestación: Obtener el Aggregate Root (incluyendo la entidad Votacion)
-            // Es vital usar Includes porque EF Core necesita la Votacion cargada en memoria para mutarla.
-            var categoria = await _categoriaRepository.GetWithIncludesAsync(
-                c => c.Id == categoriaId,
-                c => c.Votacion
-            );
+            var categoria = await _unitOfWork.CategoriaRepository.ObtenerCategoriaConVotacionYVotosAsync(categoriaId);
 
             if (categoria == null)
             {
@@ -91,43 +86,45 @@ namespace Votify.Services.Implementations
                 throw new InvalidOperationException($"La categoría '{categoria.Name}' no tiene una votación configurada.");
             }
 
-            // 2. Ejecución: Delegar el comportamiento al Dominio Puro
-            // La entidad Votacion se encarga de cambiar su propio estado (EstaCerrada = true, etc.)
             categoria.Votacion.CerrarVotacion();
 
-            // 3. Orquestación: Persistir los cambios en Infraestructura
-            await _categoriaRepository.UpdateAsync(categoria);
+            await _unitOfWork.Categorias.UpdateAsync(categoria);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task ConfigurarFechas(Categoria categoria, DateTime fechaInicio, DateTime fechaFin)
         {
             categoria.Votacion.ConfigurarFechas(fechaInicio, fechaFin);
-            await _categoriaRepository.UpdateAsync(categoria);
+            await _unitOfWork.Categorias.UpdateAsync(categoria);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task ForzarCierre(Categoria categoria)
         {
             categoria.Votacion.ForzarCierre();
-            await _categoriaRepository.UpdateAsync(categoria);
-
+            await _unitOfWork.Categorias.UpdateAsync(categoria);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task ForzarApertura(Categoria categoria)
         {
             categoria.Votacion.ForzarApertura();
-            await _categoriaRepository.UpdateAsync(categoria);
+            await _unitOfWork.Categorias.UpdateAsync(categoria);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task PausarVotacion(Categoria categoria)
         {
             categoria.Votacion.PausarVotacion();
-            await _categoriaRepository.UpdateAsync(categoria);
+            await _unitOfWork.Categorias.UpdateAsync(categoria);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task ForzarProgramada(Categoria categoria)
         {
             categoria.Votacion.ForzarProgramada();
-            await _categoriaRepository.UpdateAsync(categoria);
+            await _unitOfWork.Categorias.UpdateAsync(categoria);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

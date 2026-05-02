@@ -7,11 +7,11 @@ namespace Votify.Services.Implementations
 {
     public class PopularService : IPopularService
     {
-        private readonly IPopularRepository _popularRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public PopularService(IPopularRepository popularRepository)
+        public PopularService(IUnitOfWork unitOfWork)
         {
-            _popularRepository = popularRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<PopularResponse> CrearVotacionPopularAsync(CrearVotacionPopularRequest request)
@@ -19,7 +19,7 @@ namespace Votify.Services.Implementations
             if (request == null)
                 throw new ArgumentNullException(nameof(request), "La solicitud no puede ser nula.");
 
-            if (!await _popularRepository.CategoriaExisteAsync(request.CategoriaId))
+            if (!await _unitOfWork.PopularRepository.CategoriaExisteAsync(request.CategoriaId))
                 throw new ArgumentException("La categoría no existe.");
 
             if (request.FechaApertura >= request.FechaCierre)
@@ -31,7 +31,7 @@ namespace Votify.Services.Implementations
             if (string.IsNullOrWhiteSpace(request.Estado))
                 throw new ArgumentException("El estado es obligatorio.");
 
-            if (await _popularRepository.YaExisteVotacionParaCategoriaAsync(request.CategoriaId))
+            if (await _unitOfWork.PopularRepository.YaExisteVotacionParaCategoriaAsync(request.CategoriaId))
                 throw new InvalidOperationException("Ya existe una votacion asociada a esta categoria");
 
             var popular = new Popular
@@ -45,7 +45,8 @@ namespace Votify.Services.Implementations
                 RestriccionVotoUnico = request.RestriccionVotoUnico,
             };
 
-            var creada = await _popularRepository.CrearAsync(popular);
+            var creada = await _unitOfWork.PopularRepository.CrearAsync(popular);
+            await _unitOfWork.SaveChangesAsync();
 
             return new PopularResponse
             {
@@ -60,7 +61,7 @@ namespace Votify.Services.Implementations
         }
         public async Task<VotacionPopularDisponibleResponse> ObtenerProyectosParaVotarAsync(int votacionId, int votanteId)
         {
-            var votacion = await _popularRepository.ObtenerPorIdConCategoriaAsync(votacionId);
+            var votacion = await _unitOfWork.PopularRepository.ObtenerPorIdConCategoriaAsync(votacionId);
             if (votacion == null)
                 throw new ArgumentException("La votacion no existe");
 

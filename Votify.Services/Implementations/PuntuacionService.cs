@@ -12,11 +12,11 @@ namespace Votify.Services.Implementations
 {
     public class PuntuacionService : IPuntuacionService
     {
-        private readonly IPuntuacionRepository _puntuacionRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public PuntuacionService(IPuntuacionRepository puntuacionRepository)
+        public PuntuacionService(IUnitOfWork unitOfWork)
         {
-            _puntuacionRepository = puntuacionRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<PuntuacionResponse> CrearVotacionPuntuacionAsync(CrearVotacionPuntuacionRequest request)
@@ -24,7 +24,7 @@ namespace Votify.Services.Implementations
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            if (!await _puntuacionRepository.CategoriaExisteAsync(request.CategoriaId))
+            if (!await _unitOfWork.PuntuacionRepository.CategoriaExisteAsync(request.CategoriaId))
                 throw new ArgumentException("La categoría especificada no existe.");
 
             if (request.FechaApertura >= request.FechaCierre)
@@ -36,7 +36,7 @@ namespace Votify.Services.Implementations
             if (string.IsNullOrWhiteSpace(request.Estado))
                 throw new ArgumentException("El estado de la votación no puede estar vacío.");
 
-            if (await _puntuacionRepository.YaExisteVotacionParaCategoriaAsync(request.CategoriaId))
+            if (await _unitOfWork.PuntuacionRepository.YaExisteVotacionParaCategoriaAsync(request.CategoriaId))
                 throw new InvalidOperationException("Ya existe una votación de puntuación para esta categoría.");
 
             var puntuacion = new Puntuacion
@@ -50,7 +50,8 @@ namespace Votify.Services.Implementations
                 RestriccionVotoUnico=request.RestriccionVotoUnico,
             };
 
-            var resultado = await _puntuacionRepository.CrearAsync(puntuacion);
+            var resultado = await _unitOfWork.PuntuacionRepository.CrearAsync(puntuacion);
+            await _unitOfWork.SaveChangesAsync();
 
             return new PuntuacionResponse
             {

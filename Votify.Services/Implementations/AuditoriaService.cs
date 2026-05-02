@@ -11,26 +11,25 @@ namespace Votify.Services.Implementations
 {
     public class AuditoriaService : IAuditoriaService
     {
-        private readonly IAuditoriaRepository _auditoriaRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AuditoriaService(IAuditoriaRepository auditoriaRepository)
+        public AuditoriaService(IUnitOfWork unitOfWork)
         {
-            _auditoriaRepository = auditoriaRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<AuditoriaVotoResponse>> ObtenerHistorialPorEventoAsync(int eventoId)
         {
-            var votos = await _auditoriaRepository.ObtenerAuditoriaPorEventoAsync(eventoId);
+            var votos = await _unitOfWork.AuditoriaRepository.ObtenerAuditoriaPorEventoAsync(eventoId);
 
-            // Mapeamos de Entidad a DTO usando el polimorfismo que preparamos antes
             return votos.Select(v => new AuditoriaVotoResponse
             {
                 VotoId = v.Id,
                 FechaEmision = v.Fecha,
                 ProyectoNombre = v.Proyecto?.Name ?? "Proyecto Desconocido o Eliminado",
-                TipoVotacion = v.RolVotante(), // "EXPERT", "PUBLIC", "SPONSOR"
+                TipoVotacion = v.RolVotante(),
                 EsAnonimo = v.Anonimo,
-                IdentificadorVotante = v.ObtenerIdentificadorAuditoria() // Resuelve automáticamente quién es
+                IdentificadorVotante = v.ObtenerIdentificadorAuditoria()
             }).ToList();
         }
     }

@@ -3,33 +3,36 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Votify.Core.Interfaces;
 using Votify.Core.Models;
-using Votify.Persistence.Context;
 using Votify.Services.Interfaces;
 
 namespace Votify.Services.Implementations
 {
     public class NotificacionCronService : INotificacionCronService
     {
-        private readonly VotifyContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public NotificacionCronService(VotifyContext context)
+        public NotificacionCronService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task ProcesarAperturasDeVotacionAsync()
         {
             var ahora = DateTime.UtcNow;
 
-            var votacionesPendientes = await _context.Votaciones
-                .Include(v => v.Categoria)
-                    .ThenInclude(c => c.Evento)
-                        .ThenInclude(e => e.Jurado)
+            var todasVotaciones = await _unitOfWork.Votaciones.GetAllWithIncludesAsync(
+                v => v.Categoria,
+                v => v.Categoria.Evento,
+                v => v.Categoria.Evento.Jurado
+            );
+
+            var votacionesPendientes = todasVotaciones
                 .Where(v => v.FechaApertura <= ahora
                          && v.EnviarNotificacionApertura == true
                          && v.NotificacionAperturaEnviada == false)
-                .ToListAsync();
+                .ToList();
 
             if (!votacionesPendientes.Any()) return;
 
@@ -49,14 +52,15 @@ namespace Votify.Services.Implementations
                         urlAccion: $"/voto-popular-usuario/{votacion.Id}"
                     );
 
-                    _context.Set<Notificacion>().Add(notificacion);
+                    await _unitOfWork.Notificaciones.AddAsync(notificacion);
                 }
 
                 votacion.NotificacionAperturaEnviada = true;
                 votacion.Estado = "Abierta";
+                await _unitOfWork.Votaciones.UpdateAsync(votacion);
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
        
     }
