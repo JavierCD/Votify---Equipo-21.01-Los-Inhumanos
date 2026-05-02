@@ -77,6 +77,8 @@ builder.Services.AddScoped<IVotoMulticriterioService, VotoMulticriterioService>(
 builder.Services.AddScoped<IResultadosService, ResultadosService>();
 builder.Services.AddScoped<IEmailTemplateBuilder, EmailTemplateBuilder>();
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+// Añade esta línea junto al resto de tus servicios
+builder.Services.AddScoped<IVotacionService, VotacionService>();
 
 // builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
 builder.Services.AddScoped<IGenericRepository<Juez>, GenericRepository<Juez>>();

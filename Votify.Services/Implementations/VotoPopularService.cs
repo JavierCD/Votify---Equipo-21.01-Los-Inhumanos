@@ -72,7 +72,12 @@ namespace Votify.Services.Implementations
             if (votacion == null)
                 throw new ArgumentException("La votación popular no existe.");
 
-            
+            // Evaluamos la regla de negocio pura de la máquina de estados.
+            // Si la fecha actual no está dentro de la ventana de tiempo, lanzamos excepción.
+            if (!votacion.PuedeVotar(DateTime.UtcNow))
+                throw new InvalidOperationException("La votación no está abierta en este momento.");
+
+
             if (request.ProyectosSeleccionadosIds == null || !request.ProyectosSeleccionadosIds.Any())
                 throw new ArgumentException("Debes seleccionar al menos un proyecto.");
 

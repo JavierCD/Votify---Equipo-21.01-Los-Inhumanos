@@ -13,6 +13,11 @@ namespace Votify.Core.Interfaces
         Task AgregarPremioAsync(AgregarPremioRequest agregarPremioRequest);
         Task EliminarPremioAsync(int categoriaId, int premioId);
         Task CerrarVotacionAsync(int categoriaId);
+        Task ConfigurarFechas(Categoria categoria, DateTime fechaInicio, DateTime fechaFin);
 
+        Task ForzarCierre(Categoria categoria);
+        Task ForzarApertura(Categoria categoria);
+        Task PausarVotacion(Categoria categoria);
+        Task ForzarProgramada(Categoria categoria);
     }
 }

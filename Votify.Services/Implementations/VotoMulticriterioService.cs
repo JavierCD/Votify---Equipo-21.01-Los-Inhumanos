@@ -74,6 +74,18 @@ namespace Votify.Services.Implementations
 
         public async Task EmitirVotoMulticriterioAsync(EmitirVotoMulticriterioRequest request)
         {
+            // 0. OBTENER LA VOTACIÓN Y VALIDAR REGLAS DE DOMINIO (VENTANA DE TIEMPO)
+            // Recuperamos la entidad rica desde la base de datos
+            var votacion = await _votoRepo.ObtenerVotacionMulticriterioPorIdAsync(request.VotacionId);
+
+            if (votacion == null)
+                throw new Exception("La votación especificada no existe.");
+
+            // Evaluamos la regla de negocio pura de la máquina de estados.
+            // Si la fecha actual no está dentro de la ventana de tiempo, lanzamos excepción.
+            if (!votacion.PuedeVotar(DateTime.UtcNow))
+                throw new InvalidOperationException("La votación no está abierta en este momento.");
+
             // 1. Validar Doble Bóveda: Comprobar si el Email ya votó usando el repositorio correcto
             var yaVoto = await _votoRepo.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
             if (yaVoto) throw new Exception("Este correo ya ha emitido una evaluación para esta categoría.");

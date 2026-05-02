@@ -188,5 +188,12 @@ namespace Votify.Services.Implementations
             await _repository.AddAsync(nuevoEvento);
             // (Asegúrate de que AddAsync llame a SaveChangesAsync internamente, o llámalo aquí)
         }
+
+        public async Task<List<Juez>> ObtenerTodosLosJuecesAsync()
+        {
+            // Asumiendo que tienes inyectado un _miembroRepository
+            var miembros = (await _juezRepository.GetAllAsync()).ToList();
+            return miembros.OfType<Juez>().ToList();
+        }
     }
 }

@@ -41,7 +41,7 @@ namespace Votify.Services.Implementations
         public async Task AgregarPremioAsync(AgregarPremioRequest request)
         {
             var categoria = await _categoriaRepository.GetByIdAsync(request.categoriaID);
-            if(categoria != null)
+            if (categoria != null)
             {
 
                 categoria.AsignarPremio(
@@ -52,7 +52,7 @@ namespace Votify.Services.Implementations
                 await _categoriaRepository.UpdateAsync(categoria);
             }
 
-            
+
         }
 
         public async Task EliminarPremioAsync(int categoriaId, int premioId)
@@ -99,5 +99,35 @@ namespace Votify.Services.Implementations
             await _categoriaRepository.UpdateAsync(categoria);
         }
 
+        public async Task ConfigurarFechas(Categoria categoria, DateTime fechaInicio, DateTime fechaFin)
+        {
+            categoria.Votacion.ConfigurarFechas(fechaInicio, fechaFin);
+            await _categoriaRepository.UpdateAsync(categoria);
+        }
+
+        public async Task ForzarCierre(Categoria categoria)
+        {
+            categoria.Votacion.ForzarCierre();
+            await _categoriaRepository.UpdateAsync(categoria);
+
+        }
+
+        public async Task ForzarApertura(Categoria categoria)
+        {
+            categoria.Votacion.ForzarApertura();
+            await _categoriaRepository.UpdateAsync(categoria);
+        }
+
+        public async Task PausarVotacion(Categoria categoria)
+        {
+            categoria.Votacion.PausarVotacion();
+            await _categoriaRepository.UpdateAsync(categoria);
+        }
+
+        public async Task ForzarProgramada(Categoria categoria)
+        {
+            categoria.Votacion.ForzarProgramada();
+            await _categoriaRepository.UpdateAsync(categoria);
+        }
     }
 }
