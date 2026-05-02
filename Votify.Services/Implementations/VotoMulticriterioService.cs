@@ -130,19 +130,24 @@ namespace Votify.Services.Implementations
                 }
             }
 
-            // 4. GUARDAR TODOS LOS VOTOS
-            if (votosAInsertar.Any())
-            {
-                await _votoRepo.GuardarVotosAsync(votosAInsertar);
-            }
-
-            // 5. REGISTRAR VOTANTE PARA BLOQUEAR FUTUROS INTENTOS
+            // 4. REGISTRAR VOTANTE PRIMERO
             var registroVotante = new Votante
             {
                 Email = request.Email
             };
-
             await _votanteRepo.AddAsync(registroVotante);
+
+            // 5. ASIGNAR VOTANTE A CADA VOTO
+            foreach (var voto in votosAInsertar)
+            {
+                voto.AsignarEmisorId(registroVotante.Id);
+            }
+
+            // 6. GUARDAR TODOS LOS VOTOS
+            if (votosAInsertar.Any())
+            {
+                await _votoRepo.GuardarVotosAsync(votosAInsertar);
+            }
         }
     }
 }

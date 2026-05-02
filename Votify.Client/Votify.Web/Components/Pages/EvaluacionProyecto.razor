@@ -2,9 +2,9 @@
 @rendermode InteractiveServer
 
 @using Votify.Core.Models
+@using Votify.Core.Interfaces
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
-@using Votify.Core.Interfaces
 
 @inject IVotoExpertoServices VotoExpertoService
 @inject IGenericRepository<Proyecto> ProyectoRepo
@@ -38,68 +38,77 @@
 
             <RadzenText TextStyle="TextStyle.H5" class="fw-bold rz-mb-3">@proyecto.Name</RadzenText>
 
-            @* --- SELECTOR DE CATEGORÍA --- *@
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="1rem" class="rz-mb-4">
-                <div style="flex: 1;">
-                    <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mb-1">Selecciona una categoría</RadzenText>
-                    <RadzenDropDown @bind-Value="categoriaSeleccionadaId"
-                                    Data="@categoriasDelProyecto"
-                                    TextProperty="Name"
-                                    ValueProperty="Id"
-                                    Placeholder="Selecciona una categoría..."
-                                    Style="width: 100%;" />
-                </div>
-                <RadzenButton Text="Buscar" Icon="search" ButtonStyle="ButtonStyle.Primary"
-                              Click="BuscarEvaluaciones"
-                              Disabled="@(categoriaSeleccionadaId == 0)" />
-            </RadzenStack>
-
-            @* --- CONTENIDO --- *@
-            @if (!busquedaRealizada)
-            {
-                <div class="text-center p-5 bg-light rounded border border-dashed">
-                    <RadzenIcon Icon="rate_review" Style="font-size: 3rem; opacity: 0.3;" />
-                    <RadzenText TextStyle="TextStyle.H6" class="text-muted rz-mt-2">
-                        Selecciona una categoría para ver tu evaluación
-                    </RadzenText>
-                </div>
-            }
-            else if (cargandoEvaluaciones)
-            {
-                <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-            }
-            else if (!evaluaciones.Any())
+            @if (!criteriosDelProyecto.Any())
             {
                 <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
-                    Aún no hay evaluaciones de jueces para este proyecto en esta categoría.
+                    No hay criterios de evaluación configurados para este proyecto.
                 </RadzenAlert>
             }
             else
             {
-                <RadzenDataGrid Data="@evaluaciones" TItem="EvaluacionJuezResponse"
-                                AllowSorting="true"
-                                class="rz-mt-2">
-                    <Columns>
-                        <RadzenDataGridColumn TItem="EvaluacionJuezResponse" Property="NombreJuez" Title="Juez" Width="200px" />
-                        <RadzenDataGridColumn TItem="EvaluacionJuezResponse" Property="Puntuacion" Title="Puntuación" Width="120px" TextAlign="TextAlign.Center">
-                            <Template Context="eval">
-                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@eval.Puntuacion.ToString("0.#")" IsPill="true" />
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="EvaluacionJuezResponse" Property="Comentario" Title="Comentario">
-                            <Template Context="eval">
-                                @if (string.IsNullOrEmpty(eval.Comentario))
-                                {
-                                    <span class="text-muted fst-italic">Sin comentario</span>
-                                }
-                                else
-                                {
-                                    @eval.Comentario
-                                }
-                            </Template>
-                        </RadzenDataGridColumn>
-                    </Columns>
-                </RadzenDataGrid>
+                @* --- SELECTOR DE CRITERIO --- *@
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="1rem" class="rz-mb-4">
+                    <div style="flex: 1;">
+                        <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mb-1">Selecciona un criterio</RadzenText>
+                        <RadzenDropDown @bind-Value="criterioSeleccionadoId"
+                                        Data="@criteriosDelProyecto"
+                                        TextProperty="Name"
+                                        ValueProperty="Id"
+                                        Placeholder="Selecciona un criterio..."
+                                        Style="width: 100%;" />
+                    </div>
+                    <RadzenButton Text="Buscar" Icon="search" ButtonStyle="ButtonStyle.Primary"
+                                  Click="BuscarEvaluaciones"
+                                  Disabled="@(criterioSeleccionadoId == 0)" />
+                </RadzenStack>
+
+                @* --- CONTENIDO --- *@
+                @if (!busquedaRealizada)
+                {
+                    <div class="text-center p-5 bg-light rounded border border-dashed">
+                        <RadzenIcon Icon="rate_review" Style="font-size: 3rem; opacity: 0.3;" />
+                        <RadzenText TextStyle="TextStyle.H6" class="text-muted rz-mt-2">
+                            Selecciona un criterio para ver tu evaluación
+                        </RadzenText>
+                    </div>
+                }
+                else if (cargandoEvaluaciones)
+                {
+                    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (!evaluaciones.Any())
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                        Aún no hay evaluaciones para este criterio.
+                    </RadzenAlert>
+                }
+                else
+                {
+                    <RadzenDataGrid Data="@evaluaciones" TItem="EvaluacionJuezResponse"
+                                    AllowSorting="true"
+                                    class="rz-mt-2">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="EvaluacionJuezResponse" Property="NombreJuez" Title="Juez" Width="200px" />
+                            <RadzenDataGridColumn TItem="EvaluacionJuezResponse" Property="Puntuacion" Title="Puntuación" Width="120px" TextAlign="TextAlign.Center">
+                                <Template Context="eval">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@eval.Puntuacion.ToString("0.#")" IsPill="true" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="EvaluacionJuezResponse" Property="Comentario" Title="Comentario">
+                                <Template Context="eval">
+                                    @if (string.IsNullOrEmpty(eval.Comentario))
+                                    {
+                                        <span class="text-muted fst-italic">Sin comentario</span>
+                                    }
+                                    else
+                                    {
+                                        @eval.Comentario
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
             }
 
         </RadzenCard>
@@ -111,8 +120,8 @@
     public int ProyectoId { get; set; }
 
     private Proyecto? proyecto;
-    private List<Categoria> categoriasDelProyecto = new();
-    private int categoriaSeleccionadaId = 0;
+    private List<Criterio> criteriosDelProyecto = new();
+    private int criterioSeleccionadoId = 0;
     private List<EvaluacionJuezResponse> evaluaciones = new();
 
     private bool cargando = true;
@@ -126,13 +135,13 @@
         {
             cargando = true;
 
-            // Obtener el proyecto con sus categorías
             proyecto = await ProyectoRepo.GetByIdAsync(ProyectoId);
 
             if (proyecto != null)
             {
-                categoriasDelProyecto = proyecto.Categorias?.ToList() ?? new();
                 participanteId = proyecto.ParticipanteId;
+                criteriosDelProyecto = (await VotoExpertoService.ObtenerCriteriosPorProyectoAsync(ProyectoId)).ToList();
+               
             }
         }
         catch (Exception ex)
@@ -152,7 +161,7 @@
             cargandoEvaluaciones = true;
             busquedaRealizada = true;
 
-            evaluaciones = await VotoExpertoService.ObtenerEvaluacionesParaParticipanteAsync(ProyectoId, categoriaSeleccionadaId);
+            evaluaciones = await VotoExpertoService.ObtenerEvaluacionesParaParticipanteAsync(ProyectoId, criterioSeleccionadoId);
         }
         catch (Exception ex)
         {
