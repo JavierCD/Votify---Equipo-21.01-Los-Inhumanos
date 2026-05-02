@@ -12,6 +12,5 @@ namespace Votify.Services.Models
         public double Puntuacion { get; set; }
         public string? Comentario { get; set; }
         public DateTime Fecha { get; set; }
-
     }
 }

@@ -50,11 +50,45 @@ namespace Votify.Persistence.Repositories
                             && v.ProyectoId == proyectoId
                             && v.Votacion.CategoriaId == categoriaId);
         }
-        public async Task<IEnumerable<VotoExperto>> ObtenerEvaluacionesPorProyectoYCategoriaAsync(int proyectoId, int categoriaId)
+
+        public async Task<IEnumerable<DetalleVoto>> ObtenerEvaluacionesPorProyectoYCriterioAsync(int proyectoId, int criterioId)
+        {
+            
+            var emailsJueces = await _context.Miembros.OfType<Juez>()
+                .Select(j => j.Email)
+                .ToListAsync();
+
+            
+            return await _context.Set<DetalleVoto>()
+                .Include(d => d.Voto)
+                    .ThenInclude(v => (v as VotoPublico)!.Votante)
+                .Where(d => d.ProyectoId == proyectoId
+                          && d.CriterioId == criterioId
+                          && d.Voto is VotoPublico
+                          && ((VotoPublico)d.Voto).Votante != null
+                          && emailsJueces.Contains(((VotoPublico)d.Voto).Votante!.Email))
+                .OrderByDescending(d => d.Voto.Fecha)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Criterio>> ObtenerCriteriosPorProyectoAsync(int proyectoId)
+        {
+            
+            return await _context.Votaciones
+                .OfType<Multicriterio>()
+                .Where(m => m.Categoria.Proyectos.Any(p => p.Id == proyectoId))
+                .SelectMany(m => m.Criterios)
+                .Distinct()
+                .ToListAsync();
+        }
+   
+        public async Task<IEnumerable<VotoExperto>> ObtenerComentariosJuezPorProyectoAsync(int proyectoId)
         {
             return await _context.Votos.OfType<VotoExperto>()
                 .Include(v => v.Juez)
-                .Where(v => v.ProyectoId == proyectoId && v.Votacion.CategoriaId == categoriaId)
+                .Where(v => v.ProyectoId == proyectoId
+                          && v.Comentario != null
+                          && v.Comentario != "")
                 .OrderByDescending(v => v.Fecha)
                 .ToListAsync();
         }
