@@ -11,22 +11,21 @@ namespace Votify.Services.Implementations
 {
     public class VotoPuntuacionService : IVotoPuntuacionService
     {
-        private readonly IVotoPuntuacionRepository _votoPuntuacionRepository;
-        private readonly IGenericRepository<Votante> _votanteRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public VotoPuntuacionService(IVotoPuntuacionRepository votoPuntuacionRepository)
+        public VotoPuntuacionService(IUnitOfWork unitOfWork)
         {
-            _votoPuntuacionRepository = votoPuntuacionRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<VotacionPuntuacionDetalleResponse> ObtenerDetallePorIdAsync(int votacionId)
         {
-            var votacion = await _votoPuntuacionRepository.ObtenerVotacionPuntuacionPorIdAsync(votacionId);
+            var votacion = await _unitOfWork.VotoPuntuacionRepository.ObtenerVotacionPuntuacionPorIdAsync(votacionId);
 
             if (votacion == null)
                 throw new InvalidOperationException("La votación no existe o no está disponible.");
 
-            var proyectos = await _votoPuntuacionRepository.ObtenerProyectosPorCategoriaAsync(votacion.CategoriaId);
+            var proyectos = await _unitOfWork.VotoPuntuacionRepository.ObtenerProyectosPorCategoriaAsync(votacion.CategoriaId);
 
             return new VotacionPuntuacionDetalleResponse
             {
@@ -48,13 +47,11 @@ namespace Votify.Services.Implementations
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            var votacion = await _votoPuntuacionRepository.ObtenerVotacionPuntuacionPorIdAsync(request.VotacionId);
+            var votacion = await _unitOfWork.VotoPuntuacionRepository.ObtenerVotacionPuntuacionPorIdAsync(request.VotacionId);
 
             if (votacion == null)
                 throw new ArgumentException("La votación no existe.");
 
-            // Evaluamos la regla de negocio pura de la máquina de estados.
-            // Si la fecha actual no está dentro de la ventana de tiempo, lanzamos excepción.
             if (!votacion.PuedeVotar(DateTime.UtcNow))
                 throw new InvalidOperationException("La votación no está abierta en este momento.");
 
@@ -68,7 +65,7 @@ namespace Votify.Services.Implementations
             if (request.PuntuacionesPorProyecto.Values.Sum() > votacion.ValorMax)
                 throw new ArgumentException($"La suma total de puntuaciones no puede superar {votacion.ValorMax} puntos.");
 
-            var proyectosValidos = await _votoPuntuacionRepository.ObtenerProyectosPorCategoriaAsync(votacion.CategoriaId);
+            var proyectosValidos = await _unitOfWork.VotoPuntuacionRepository.ObtenerProyectosPorCategoriaAsync(votacion.CategoriaId);
             var proyectosValidosIds = proyectosValidos.Select(p => p.Id).ToHashSet();
 
             if (request.PuntuacionesPorProyecto.Keys.Any(id => !proyectosValidosIds.Contains(id)))
@@ -76,7 +73,7 @@ namespace Votify.Services.Implementations
 
             if (!string.IsNullOrWhiteSpace(request.Email) && votacion.RestriccionVotoUnico)
             {
-                bool yaVoto = await _votoPuntuacionRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
+                bool yaVoto = await _unitOfWork.VotoPuntuacionRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
                 if (yaVoto)
                     throw new InvalidOperationException("Este correo electrónico ya ha emitido su voto en esta votación.");
             }
@@ -86,7 +83,7 @@ namespace Votify.Services.Implementations
 
             if (!string.IsNullOrWhiteSpace(request.Email))
             {
-                var todosLosVotantes = await _votanteRepository.GetAllAsync();
+                var todosLosVotantes = await _unitOfWork.Votantes.GetAllAsync();
                 votanteFinal = todosLosVotantes.FirstOrDefault(v => v.Email == request.Email);
 
                 if (votanteFinal == null)
@@ -98,7 +95,7 @@ namespace Votify.Services.Implementations
                     };
 
 
-                    await _votanteRepository.AddAsync(votanteFinal);
+                    await _unitOfWork.Votantes.AddAsync(votanteFinal);
                 }
             }
 
@@ -129,7 +126,8 @@ namespace Votify.Services.Implementations
                 return voto;
             }).ToList();
 
-            await _votoPuntuacionRepository.GuardarVotosAsync(votos);
+            await _unitOfWork.VotoPuntuacionRepository.GuardarVotosAsync(votos);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

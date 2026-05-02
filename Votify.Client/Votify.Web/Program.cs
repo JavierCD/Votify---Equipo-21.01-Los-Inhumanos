@@ -4,6 +4,7 @@ using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Persistence.Context;
 using Votify.Persistence.Repositories;
+using Votify.Persistence.UnitOfWork;
 using Votify.Services.Implementations;
 using Votify.Services.Interfaces;
 using Votify.UI;
@@ -46,55 +47,33 @@ builder.Services.AddCors(options =>
 });
 
 // --- Inyección de Dependencias (Core, Persistence, Services) ---
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-//builder.Services.AddScoped<IVotanteRepository, VotanteRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
-// 2. Registramos el servicio de Eventos que acabamos de crear
 builder.Services.AddScoped<IProyectoService, ProyectoService>();
-builder.Services.AddScoped<UserSession>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPopularService, PopularService>();
-builder.Services.AddScoped<IPopularRepository, PopularRepository>();
-builder.Services.AddScoped<IVotoPopularRepository, VotoPopularRepository>();
 builder.Services.AddScoped<IVotoPopularService, VotoPopularService>();
 builder.Services.AddScoped<IPuntuacionService, PuntuacionService>();
-builder.Services.AddScoped<IPuntuacionRepository, PuntuacionRepository>();
 builder.Services.AddScoped<IVotoPuntuacionService, VotoPuntuacionService>();
-builder.Services.AddScoped<IVotoPuntuacionRepository, VotoPuntuacionRepository>();
-builder.Services.AddScoped<IVotoExpertoRepository, VotoExpertoRepository>();
 builder.Services.AddScoped<IVotoExpertoServices, VotoExpertoService>();
-builder.Services.AddScoped<IEventoRepository, EventoRepository>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
-builder.Services.AddScoped<IGenericRepository<Miembro>, GenericRepository<Miembro>>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IGenericRepository<Votante>, GenericRepository<Votante>>();
 builder.Services.AddScoped<IPlantillaBaremoService, PlantillaBaremoService>();
 builder.Services.AddScoped<IMulticriterioService, MulticriterioService>();
-builder.Services.AddScoped<IVotoMulticriterioRepository, VotoMulticriterioRepository>();
 builder.Services.AddScoped<IVotoMulticriterioService, VotoMulticriterioService>();
 builder.Services.AddScoped<IResultadosService, ResultadosService>();
 builder.Services.AddScoped<IEmailTemplateBuilder, EmailTemplateBuilder>();
-builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
-// Añade esta línea junto al resto de tus servicios
 builder.Services.AddScoped<IVotacionService, VotacionService>();
-
-// builder.Services.AddScoped<IVotanteService, VotanteService>(); // Descomenta cuando lo necesites
-builder.Services.AddScoped<IGenericRepository<Juez>, GenericRepository<Juez>>();
-
-// 3. Registramos el servicio de Participantes 
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
-builder.Services.AddScoped<IParticipanteRepository, ParticipanteRepository>();
-// 4. Registramos el servicio que contiene la lógica
 builder.Services.AddScoped<INotificacionCronService, NotificacionCronService>();
-// 5. Registramos el Vigilante para que .NET lo arranque en segundo plano
 builder.Services.AddHostedService<NoctificacionBackgroundService>();
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
 builder.Services.AddScoped<NotificationService>();
-// 6.Trazabilidad de votos
-builder.Services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
+
+builder.Services.AddSingleton<UserSession>();
 
 var app = builder.Build();
 

@@ -14,18 +14,16 @@ namespace Votify.Services.Implementations
 {
     public class EventoService : IEventoService
     {
-        private readonly IEventoRepository _repository;
-        private readonly IGenericRepository<Juez> _juezRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public EventoService(IEventoRepository repository, IGenericRepository<Juez> juezRepository)
+        public EventoService(IUnitOfWork unitOfWork)
         {
-            _repository = repository;
-            _juezRepository = juezRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task ActualizarAsync(EditarEventoRequest eventoMod)
         {
-            var eventoExistente = await _repository.GetByIdAsync(eventoMod.Id);
+            var eventoExistente = await _unitOfWork.EventoRepository.GetByIdAsync(eventoMod.Id);
             if (eventoExistente == null) 
             {
                 throw new KeyNotFoundException($"No se encontró el evento con ID {eventoMod.Id}");
@@ -37,13 +35,13 @@ namespace Votify.Services.Implementations
                 eventoMod.FechaFin, 
                 eventoMod.Description);
 
-            await _repository.UpdateAsync(eventoExistente);
+            await _unitOfWork.SaveChangesAsync();
 
         }
 
         public async Task<Evento?> ObtenerEventoConDetallesAsync(int id)
         {
-            return await _repository.ObtenerEventoConDetallesAsync(id);
+            return await _unitOfWork.EventoRepository.ObtenerEventoConDetallesAsync(id);
         }
 
         public async Task<Evento> CrearAsync(Evento evento)
@@ -54,12 +52,14 @@ namespace Votify.Services.Implementations
             }
 
 
-            return await _repository.AddAsync(evento);
+            await _unitOfWork.EventoRepository.AddAsync(evento);
+            await _unitOfWork.SaveChangesAsync();
+            return evento;
         }
 
         public async Task EliminarAsync(int id)
         {
-            var evento = await _repository.GetByIdAsync(id);
+            var evento = await _unitOfWork.EventoRepository.GetByIdAsync(id);
             if (evento == null)
             {
                 throw new KeyNotFoundException($"No se encontró el evento con ID {id}");
@@ -68,22 +68,23 @@ namespace Votify.Services.Implementations
             {
                 throw new InvalidOperationException("No se puede eliminar un evento que esta activo o que ya fue cerrado.");
             }
-            await _repository.DeleteAsync(id);
+            await _unitOfWork.EventoRepository.DeleteAsync(id);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<Evento?> ObtenerPorIdAsync(int id)
         {
-            return await _repository.GetByIdAsync(id);
+            return await _unitOfWork.EventoRepository.GetByIdAsync(id);
         }
 
         public async Task<IEnumerable<Evento>> ObtenerTodosAsync()
         {
-            return await _repository.GetAllAsync();
+            return await _unitOfWork.EventoRepository.GetAllAsync();
         }
         public async Task<IEnumerable<Evento>> ObtenerEventosPorOrganizadorAsync(int organizadorId)
         {
             // Traemos todos los eventos incluyendo sus categorías
-            var eventos = await _repository.GetAllWithIncludesAsync(e => e.CategoriasEvento);
+            var eventos = await _unitOfWork.EventoRepository.GetAllWithIncludesAsync(e => e.CategoriasEvento);
 
             // Filtramos por el organizador y devolvemos
             return eventos.Where(e => e.OrganizadorId == organizadorId);
@@ -93,7 +94,7 @@ namespace Votify.Services.Implementations
         {
             // Buscamos cualquier evento que ya exista (el del Seeder) y le "robamos" el ID del organizador.
             // Es un hack inofensivo que no toca la tabla de Usuarios directamente.
-            var eventoDemo = await _repository.GetAllAsync();
+            var eventoDemo = await _unitOfWork.EventoRepository.GetAllAsync();
             return eventoDemo.FirstOrDefault()?.OrganizadorId ?? 1; // Si no hay, devolvemos 1 por si acaso
         }
 
@@ -101,7 +102,7 @@ namespace Votify.Services.Implementations
         {
             if (string.IsNullOrWhiteSpace(codigo)) return null;
 
-            return await _repository.GetWithIncludesAsync(
+            return await _unitOfWork.EventoRepository.GetWithIncludesAsync(
                 e => e.CodigoAcceso.ToUpper() == codigo.ToUpper(),
                 e => e.CategoriasEvento
             );
@@ -111,14 +112,14 @@ namespace Votify.Services.Implementations
             if (juezId <= 0)
                 throw new ArgumentException("El ID del juez no es válido.");
 
-            return await _repository.ObtenerEventosPorJuezAsync(juezId);
+            return await _unitOfWork.EventoRepository.ObtenerEventosPorJuezAsync(juezId);
         }
 
         public async Task AsignarJuezAEventoAsync(int juezId, int eventoId)
         {
             // 1. Usamos tu GenericRepository para traer el evento INCLUYENDO su jurado actual
-            var evento = await _repository.GetWithIncludesAsync(e => e.Id == eventoId, e => e.Jurado);
-            var juez = await _juezRepository.GetByIdAsync(juezId);
+            var evento = await _unitOfWork.EventoRepository.GetWithIncludesAsync(e => e.Id == eventoId, e => e.Jurado);
+            var juez = await _unitOfWork.Jueces.GetByIdAsync(juezId);
 
             if (evento == null || juez == null)
             {
@@ -133,13 +134,12 @@ namespace Votify.Services.Implementations
 
             // 3. Lo añadimos a la lista y actualizamos
             evento.Jurado.Add(juez);
-            await _repository.UpdateAsync(evento);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DesasignarJuezAEventoAsync(int juezId, int eventoId)
         {
-            // Traemos el evento con su lista de jurado usando tu repositorio genérico
-            var evento = await _repository.GetWithIncludesAsync(e => e.Id == eventoId, e => e.Jurado);
+            var evento = await _unitOfWork.EventoRepository.GetWithIncludesAsync(e => e.Id == eventoId, e => e.Jurado);
 
             if (evento == null)
                 throw new ArgumentException("Evento no encontrado.");
@@ -152,7 +152,7 @@ namespace Votify.Services.Implementations
 
             // Lo quitamos de la lista y actualizamos
             evento.Jurado.Remove(juezARemover);
-            await _repository.UpdateAsync(evento);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task CrearEventoDesdeFormularioAsync(CrearEventoRequest modelo)
@@ -185,14 +185,14 @@ namespace Votify.Services.Implementations
             }
 
             // 5. Persistimos a través de Infraestructura
-            await _repository.AddAsync(nuevoEvento);
-            // (Asegúrate de que AddAsync llame a SaveChangesAsync internamente, o llámalo aquí)
+            await _unitOfWork.EventoRepository.AddAsync(nuevoEvento);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<List<Juez>> ObtenerTodosLosJuecesAsync()
         {
             // Asumiendo que tienes inyectado un _miembroRepository
-            var miembros = (await _juezRepository.GetAllAsync()).ToList();
+            var miembros = (await _unitOfWork.Jueces.GetAllAsync()).ToList();
             return miembros.OfType<Juez>().ToList();
         }
     }

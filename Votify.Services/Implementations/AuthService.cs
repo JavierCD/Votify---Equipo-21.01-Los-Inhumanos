@@ -11,18 +11,14 @@ namespace Votify.Services.Implementations
 {
     public class AuthService : IAuthService
     {
-        private readonly IGenericRepository<Miembro> _miembroRepository;
-        public AuthService(IGenericRepository<Miembro> miembroRepository)
+        private readonly IUnitOfWork _unitOfWork;
+        public AuthService(IUnitOfWork unitOfWork)
         {
-            _miembroRepository = miembroRepository;
+            _unitOfWork = unitOfWork;
         }
         public async Task<Miembro> Login(string email, string password)
         {
-            // Aquí deberías implementar la lógica de autenticación, por ejemplo:
-            // 1. Buscar el miembro por su correo electrónico.
-            // 2. Verificar que la contraseña sea correcta (esto debería hacerse con hashing y salting en un entorno real).
-            // 3. Devolver el miembro si la autenticación es exitosa o lanzar una excepción si falla.
-            var miembros = await _miembroRepository.GetAllAsync();
+            var miembros = await _unitOfWork.Miembros.GetAllAsync();
             var miembro = miembros.FirstOrDefault(m => m.Email == email);
 
             if (miembro == null || miembro.Password != password)
@@ -33,7 +29,7 @@ namespace Votify.Services.Implementations
         }
         public async Task<Miembro> Register(string name, string email, string password, string role)
         {
-            var miembros = await _miembroRepository.GetAllAsync();
+            var miembros = await _unitOfWork.Miembros.GetAllAsync();
 
             if (miembros.Any(m => m.Email == email))
                 throw new Exception("El usuario ya existe");
@@ -59,7 +55,8 @@ namespace Votify.Services.Implementations
                     throw new Exception("Rol inválido");
             }
 
-            await _miembroRepository.AddAsync(nuevoUsuario);
+            await _unitOfWork.Miembros.AddAsync(nuevoUsuario);
+            await _unitOfWork.SaveChangesAsync();
 
             return nuevoUsuario;
         }

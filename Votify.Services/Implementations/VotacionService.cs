@@ -11,28 +11,28 @@ namespace Votify.Services.Implementations
 {
     public class VotacionService : IVotacionService
     {
-        private readonly IGenericRepository<Votacion> _votacionRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public VotacionService(IGenericRepository<Votacion> votacionRepository)
+        public VotacionService(IUnitOfWork unitOfWork)
         {
-            _votacionRepository = votacionRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task ActualizarFechasVotacionAsync(int votacionId, DateTime nuevaApertura, DateTime nuevoCierre)
         {
-            var votacion = await _votacionRepository.GetByIdAsync(votacionId);
+            var votacion = await _unitOfWork.Votaciones.GetByIdAsync(votacionId);
             if (votacion == null) throw new Exception("Votación no encontrada.");
 
             votacion.ConfigurarFechas(nuevaApertura, nuevoCierre);
-            await _votacionRepository.UpdateAsync(votacion);
+            await _unitOfWork.Votaciones.UpdateAsync(votacion);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<bool> CambiarEstadoVotacionManualAsync(int votacionId, string nuevoEstado)
         {
-            var votacion = await _votacionRepository.GetByIdAsync(votacionId);
+            var votacion = await _unitOfWork.Votaciones.GetByIdAsync(votacionId);
             if (votacion == null) return false;
 
-            // Transicionamos de estado delegando la responsabilidad a la Entidad
             switch (nuevoEstado)
             {
                 case "Abierta":
@@ -49,7 +49,8 @@ namespace Votify.Services.Implementations
                     break;
             }
 
-            await _votacionRepository.UpdateAsync(votacion);
+            await _unitOfWork.Votaciones.UpdateAsync(votacion);
+            await _unitOfWork.SaveChangesAsync();
             return true;
         }
     }

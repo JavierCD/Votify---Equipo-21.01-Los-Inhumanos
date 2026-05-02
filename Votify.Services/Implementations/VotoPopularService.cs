@@ -14,18 +14,16 @@ namespace Votify.Services.Implementations
 {
     public class VotoPopularService : IVotoPopularService
     {
-        private readonly IVotoPopularRepository _votoPopularRepository;
-        private readonly IGenericRepository<Votante> _votanteRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public VotoPopularService(IVotoPopularRepository votoPopularRepository, IGenericRepository<Votante> votanteRepository)
+        public VotoPopularService(IUnitOfWork unitOfWork)
         {
-            _votoPopularRepository = votoPopularRepository;
-            _votanteRepository = votanteRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesPopularesDisponiblesAsync()
         {
-            var votaciones = await _votoPopularRepository.ObtenerVotacionesPopularesDisponiblesAsync();
+            var votaciones = await _unitOfWork.VotoPopularRepository.ObtenerVotacionesPopularesDisponiblesAsync();
 
             return votaciones.Select(v => new VotacionPopularDisponibleResponse
             {
@@ -40,12 +38,12 @@ namespace Votify.Services.Implementations
 
         public async Task<VotacionPopularDisponibleResponse> ObtenerDetallePorIdAsync(int votacionId)
         {
-            var votacion = await _votoPopularRepository.ObtenerVotacionPopularPorIdAsync(votacionId);
+            var votacion = await _unitOfWork.VotoPopularRepository.ObtenerVotacionPopularPorIdAsync(votacionId);
 
             if (votacion == null)
                 throw new InvalidOperationException("La votación no existe o no está disponible.");
 
-            var proyectos = await _votoPopularRepository.ObtenerProyectosPorCategoriaAsync(votacion.CategoriaId);
+            var proyectos = await _unitOfWork.VotoPopularRepository.ObtenerProyectosPorCategoriaAsync(votacion.CategoriaId);
 
             return new VotacionPopularDisponibleResponse
             {
@@ -67,7 +65,7 @@ namespace Votify.Services.Implementations
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            var votacion = await _votoPopularRepository.ObtenerVotacionPopularPorIdAsync(request.VotacionId);
+            var votacion = await _unitOfWork.VotoPopularRepository.ObtenerVotacionPopularPorIdAsync(request.VotacionId);
 
             if (votacion == null)
                 throw new ArgumentException("La votación popular no existe.");
@@ -84,7 +82,7 @@ namespace Votify.Services.Implementations
             if (request.ProyectosSeleccionadosIds.Count > votacion.MaxSelection)
                 throw new ArgumentException($"Solo puedes seleccionar hasta {votacion.MaxSelection} proyecto(s).");
 
-            var proyectosValidos = await _votoPopularRepository.ObtenerProyectosPorCategoriaAsync(votacion.CategoriaId);
+            var proyectosValidos = await _unitOfWork.VotoPopularRepository.ObtenerProyectosPorCategoriaAsync(votacion.CategoriaId);
             var proyectosValidosIds = proyectosValidos.Select(p => p.Id).ToHashSet();
 
             if (request.ProyectosSeleccionadosIds.Any(id => !proyectosValidosIds.Contains(id)))
@@ -92,7 +90,7 @@ namespace Votify.Services.Implementations
 
             if (!string.IsNullOrWhiteSpace(request.Email) && votacion.RestriccionVotoUnico)
             {
-                bool yaVoto = await _votoPopularRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
+                bool yaVoto = await _unitOfWork.VotoPopularRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
                 if (yaVoto)
                     throw new InvalidOperationException("Este correo electrónico ya ha emitido su voto en esta votación.");
             }
@@ -103,7 +101,7 @@ namespace Votify.Services.Implementations
 
             if (!string.IsNullOrWhiteSpace(request.Email))
             {
-                var todosLosVotantes = await _votanteRepository.GetAllAsync();
+                var todosLosVotantes = await _unitOfWork.Votantes.GetAllAsync();
                 votanteFinal = todosLosVotantes.FirstOrDefault(v => v.Email == request.Email);
 
                 if (votanteFinal == null)
@@ -115,7 +113,7 @@ namespace Votify.Services.Implementations
                     };
 
 
-                    await _votanteRepository.AddAsync(votanteFinal);
+                    await _unitOfWork.Votantes.AddAsync(votanteFinal);
                 }
             }
 
@@ -162,12 +160,13 @@ namespace Votify.Services.Implementations
                 return voto;
             }).ToList();
 
-            await _votoPopularRepository.GuardarVotosAsync(votos);
+            await _unitOfWork.VotoPopularRepository.GuardarVotosAsync(votos);
+            await _unitOfWork.SaveChangesAsync();
         }
         public async Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesDisponiblesAsync(int votanteId)
         {
             
-            var votaciones = await _votoPopularRepository.ObtenerVotacionesPopularesDisponiblesAsync();
+            var votaciones = await _unitOfWork.VotoPopularRepository.ObtenerVotacionesPopularesDisponiblesAsync();
            
 
            

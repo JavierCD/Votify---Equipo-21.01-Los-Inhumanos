@@ -8,50 +8,48 @@ namespace Votify.Services.Implementations
 {
     public class ParticipanteService : IParticipanteService
     {
-        private readonly IParticipanteRepository _repository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ParticipanteService(IParticipanteRepository repository)
+        public ParticipanteService(IUnitOfWork unitOfWork)
         {
-            _repository = repository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Participante?> ObtenerPorIdAsync(int id)
         {
-            return await _repository.GetWithIncludesAsync(
+            return await _unitOfWork.ParticipanteRepository.GetWithIncludesAsync(
                 p => p.Id == id,
                 p => p.Proyectos);
         }
 
         public async Task<IEnumerable<Participante>> ObtenerTodosAsync()
         {
-            return await _repository.GetAllAsync();
+            return await _unitOfWork.Participantes.GetAllAsync();
         }
 
         public async Task ActualizarFichaAsync(Participante participante)
         {
-            var participanteExistente = await _repository.GetByIdAsync(participante.Id);
+            var participanteExistente = await _unitOfWork.ParticipanteRepository.GetByIdAsync(participante.Id);
             if (participanteExistente == null)
             {
                 throw new KeyNotFoundException($"No se encontró el participante con ID {participante.Id}");
             }
 
-            // 1. Actualizamos datos básicos
             participanteExistente.Name = participante.Name;
             participanteExistente.ActualizarFicha(participante.Descripcion);
 
-            // 2. Actualizamos los nuevos campos del Perfil Público
             participanteExistente.InstitucionEducativa = participante.InstitucionEducativa;
             participanteExistente.Intereses = participante.Intereses;
             participanteExistente.ColorFondo = participante.ColorFondo;
             participanteExistente.UrlFoto = participante.UrlFoto;
 
-            await _repository.UpdateAsync(participanteExistente);
+            await _unitOfWork.ParticipanteRepository.UpdateAsync(participanteExistente);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<Participante?> ObtenerDashboardAsync(int id)
         {
-            // Usamos la Mega-Consulta que preparamos en el repositorio específico
-            return await _repository.ObtenerConDetallesDashboardAsync(id);
+            return await _unitOfWork.ParticipanteRepository.ObtenerConDetallesDashboardAsync(id);
         }
     }
 }

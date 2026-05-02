@@ -2,40 +2,39 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Votify.Core.Interfaces;
 using Votify.Core.Models;
-using Votify.Persistence.Context;
 using Votify.Services.Interfaces;
 
 namespace Votify.Services.Implementations
 {
     public class NotificacionService : INotificacionService
     {
-        private readonly VotifyContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public NotificacionService(VotifyContext context)
+        public NotificacionService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<Notificacion>> ObtenerNotificacionesUsuarioAsync(int miembroId)
         {
-            return await _context.Set<Notificacion>()
-                .AsNoTracking()
+            var notificaciones = await _unitOfWork.Notificaciones.GetAllAsync();
+            return notificaciones
                 .Where(n => n.MiembroId == miembroId && !n.Leida)
                 .OrderByDescending(n => n.FechaCreacion)
-                .ToListAsync();
+                .ToList();
         }
 
         public async Task MarcarComoLeidaAsync(int notificacionId)
         {
-            // Buscamos la notificación
-            var notificacion = await _context.Set<Notificacion>().FindAsync(notificacionId);
+            var notificacion = await _unitOfWork.Notificaciones.GetByIdAsync(notificacionId);
 
             if (notificacion != null && !notificacion.Leida)
             {
-                // La marcamos como leída
                 notificacion.MarcarComoLeida();
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Notificaciones.UpdateAsync(notificacion);
+                await _unitOfWork.SaveChangesAsync();
             }
         }
     }

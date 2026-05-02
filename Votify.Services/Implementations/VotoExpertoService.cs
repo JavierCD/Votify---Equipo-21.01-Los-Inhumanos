@@ -13,11 +13,11 @@ namespace Votify.Services.Implementations
 {
     public class VotoExpertoService : IVotoExpertoServices
     {
-        private readonly IVotoExpertoRepository _repo;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public VotoExpertoService(IVotoExpertoRepository repo)
+        public VotoExpertoService(IUnitOfWork unitOfWork)
         {
-            _repo = repo;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<IEnumerable<Proyecto>> ObtenerProyectosPorCategoriaAsync(int categoriaId)
@@ -25,7 +25,7 @@ namespace Votify.Services.Implementations
             if (categoriaId <= 0)
                 throw new ArgumentException("CategoriaId no válido.");
 
-            return await _repo.ObtenerProyectosPorCategoriaAsync(categoriaId);
+            return await _unitOfWork.VotoExpertoRepository.ObtenerProyectosPorCategoriaAsync(categoriaId);
         }
 
         public async Task GuardarComentarioAsync(int juezId, int proyectoId, int votacionId, int categoriaId, string comentario)
@@ -33,25 +33,21 @@ namespace Votify.Services.Implementations
             if (string.IsNullOrWhiteSpace(comentario))
                 throw new ArgumentException("El comentario no puede estar vacío.");
 
-            // 1. Verificación de si ya comentó
-            bool yaComento = await _repo.YaComentoPorProyectoAsync(juezId, proyectoId, categoriaId);
+            bool yaComento = await _unitOfWork.VotoExpertoRepository.YaComentoPorProyectoAsync(juezId, proyectoId, categoriaId);
             if (yaComento)
                 throw new InvalidOperationException("Ya has dejado un comentario en este proyecto.");
 
-            // 2. REGLAS DE NEGOCIO INTERNAS (Lo que antes le pedíamos a Blazor)
-            double puntuacionBase = 0.0; // Es solo un comentario, no hay puntuación
-            bool esAnonimo = false;      // Por defecto un experto no es anónimo frente al sistema (o puedes consultar la BD si lo requieres)
+            double puntuacionBase = 0.0;
+            bool esAnonimo = false;
             string? hash = null;
 
-            // 3. Creación del voto usando TU Factory
             var creador = new VotoExpertoCreator();
             var voto = creador.CrearVoto(votacionId, proyectoId, puntuacionBase, esAnonimo, hash, comentario);
 
-            // 4. Asignación del Juez
             voto.AsignarEmisorId(juezId);
 
-            // 5. Guardar
-            await _repo.GuardarComentarioAsync(voto);
+            await _unitOfWork.VotoExpertoRepository.GuardarComentarioAsync(voto);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<Voto>> ObtenerComentariosPorCategoriaAsync(int categoriaId)
@@ -59,7 +55,7 @@ namespace Votify.Services.Implementations
             if (categoriaId <= 0)
                 throw new ArgumentException("CategoriaId no válido.");
 
-            return await _repo.ObtenerComentariosPorCategoriaAsync(categoriaId);
+            return await _unitOfWork.VotoExpertoRepository.ObtenerComentariosPorCategoriaAsync(categoriaId);
         }
         public async Task<List<EvaluacionJuezResponse>> ObtenerEvaluacionesParaParticipanteAsync(int proyectoId,int categoriaId)
         {
@@ -68,7 +64,7 @@ namespace Votify.Services.Implementations
             if (categoriaId <= 0)
                 throw new ArgumentException("CategoriaId no valido.");
 
-            var votos = await _repo.ObtenerEvaluacionesPorProyectoYCategoriaAsync(proyectoId, categoriaId);
+            var votos = await _unitOfWork.VotoExpertoRepository.ObtenerEvaluacionesPorProyectoYCategoriaAsync(proyectoId, categoriaId);
             return votos.Select(v => new EvaluacionJuezResponse
             {
                 NombreJuez = v.Juez?.Name ?? "Juez anonimo",
