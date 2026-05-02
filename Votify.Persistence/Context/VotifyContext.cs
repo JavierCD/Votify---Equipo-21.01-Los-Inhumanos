@@ -146,19 +146,12 @@ namespace Votify.Persistence.Context
                 entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
 
                 entity.HasOne(c => c.Evento)
-                      .WithMany(e => e.CategoriasEvento) // Enganchamos con la lista de Evento
+                      .WithMany(e => e.CategoriasEvento)
                       .HasForeignKey(c => c.EventoId)
                       .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(c => c.Votacion)
-                      .WithOne(v => v.Categoria)
-                      .HasForeignKey<Votacion>(v => v.CategoriaId)
-                      .IsRequired(false);
-
-                entity.HasMany(c => c.Premios)
-                      .WithOne(p => p.Categoria)
-                      .HasForeignKey(p => p.CategoriaId)
-                      .IsRequired(false);
+                // HEMOS ELIMINADO LAS RELACIONES CON VOTACIÓN Y PREMIO AQUÍ
+                // PORQUE YA ESTÁN CONFIGURADAS EN LOS PASOS 4 Y 7.
             });
 
             // 6. CONFIGURACIÓN DE CRITERIO
@@ -168,11 +161,10 @@ namespace Votify.Persistence.Context
                 entity.HasKey(c => c.Id);
                 entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
 
-                entity.HasOne(c => c.Multicriterio)
-                      .WithMany(m => ((Multicriterio)m).Criterios) // Enganchamos con Multicriterio
-                      .HasForeignKey(c => c.MulticriterioId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                // HEMOS ELIMINADO LA RELACIÓN CON MULTICRITERIO AQUÍ
+                // PORQUE YA ESTÁ CONFIGURADA PERFECTAMENTE EN EL PASO 4.1.
             });
+
 
             // 7. CONFIGURACIÓN DE PREMIO
             modelBuilder.Entity<Premio>(entity =>
@@ -180,6 +172,9 @@ namespace Votify.Persistence.Context
                 entity.ToTable("Premios");
                 entity.HasKey(p => p.Id);
                 entity.Property(p => p.Name).IsRequired().HasMaxLength(100);
+
+                // ---> NUEVO: Configuración de la regla de empates <---
+                entity.Property(p => p.PermiteEmpate).HasDefaultValue(false);
 
                 entity.HasOne(p => p.Categoria)
                       .WithMany(c => c.Premios)
