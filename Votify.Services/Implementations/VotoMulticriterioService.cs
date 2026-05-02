@@ -115,6 +115,7 @@ namespace Votify.Services.Implementations
                 await _unitOfWork.VotoMulticriterioRepository.GuardarVotosAsync(votosAInsertar);
             }
 
+            // 4. REGISTRAR VOTANTE PRIMERO
             var registroVotante = new Votante
             {
                 Email = request.Email

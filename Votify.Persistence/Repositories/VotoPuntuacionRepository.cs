@@ -43,7 +43,6 @@ namespace Votify.Persistence.Repositories
         public async Task GuardarVotosAsync(List<Voto> votos)
         {
             _context.Votos.AddRange(votos);
-            await _context.SaveChangesAsync();
         }
 
         public async Task<bool> YaVotoEnEstaVotacionAsync(int votanteId, int votacionId)

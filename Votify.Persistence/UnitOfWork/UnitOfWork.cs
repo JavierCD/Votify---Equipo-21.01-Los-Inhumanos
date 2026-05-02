@@ -127,7 +127,6 @@ namespace Votify.Persistence.UnitOfWork
         public void Dispose()
         {
             _transaction?.Dispose();
-            _context.Dispose();
         }
     }
 }

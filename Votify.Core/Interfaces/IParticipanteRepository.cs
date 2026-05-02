@@ -10,5 +10,6 @@ namespace Votify.Core.Interfaces
     public interface IParticipanteRepository : IGenericRepository<Participante>
     {
         Task<Participante?> ObtenerConDetallesDashboardAsync(int id);
+        Task<Participante?> ObtenerPorIdAsync(int id);
     }
 }

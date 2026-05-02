@@ -24,7 +24,6 @@ namespace Votify.Persistence.Repositories
         public async Task<Puntuacion> CrearAsync(Puntuacion puntuacion)
         {
             _context.Set<Puntuacion>().Add(puntuacion);
-            await _context.SaveChangesAsync();
             return puntuacion;
         }
 

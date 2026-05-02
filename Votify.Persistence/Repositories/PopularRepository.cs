@@ -23,7 +23,6 @@ namespace Votify.Persistence.Repositories
         public async Task<Popular> CrearAsync(Popular popular)
         {
             _context.Votaciones.Add(popular);
-            await _context.SaveChangesAsync();
 
             return popular;
         }
