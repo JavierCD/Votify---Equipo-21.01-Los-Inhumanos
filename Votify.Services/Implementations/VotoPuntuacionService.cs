@@ -88,14 +88,13 @@ namespace Votify.Services.Implementations
 
                 if (votanteFinal == null)
                 {
-
                     votanteFinal = new Votante
                     {
                         Email = request.Email,
                     };
 
-
                     await _unitOfWork.Votantes.AddAsync(votanteFinal);
+                    await _unitOfWork.SaveChangesAsync();
                 }
             }
 
@@ -121,7 +120,14 @@ namespace Votify.Services.Implementations
                     hash
                 );
 
-                
+                if (votanteFinal != null)
+                {
+                    voto.AsignarEmisorId(votanteFinal.Id);
+                }
+                else
+                {
+                    voto.AsignarEmisorId(request.VotanteId);
+                }
 
                 return voto;
             }).ToList();
