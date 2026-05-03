@@ -439,14 +439,16 @@
                                     AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                                     Data="@historialVotos" TItem="AuditoriaVotoResponse" LogicalFilterOperator="LogicalFilterOperator.Or">
                         <Columns>
-                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="FechaEmision" Title="Fecha (UTC)" FormatString="{0:dd/MM/yyyy HH:mm:ss}" Width="180px" />
+                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="FechaEmision" Title="Fecha (UTC)" FormatString="{0:dd/MM/yyyy HH:mm:ss}" Width="160px" />
 
-                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="ProyectoNombre" Title="Proyecto Votado" />
+                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="ProyectoNombre" Title="Proyecto Votado" Width="180px" />
 
-                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="TipoVotacion" Title="Tipo de Voto" Width="150px">
+                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="CategoriaNombre" Title="Categoría" Width="160px" />
+
+                            <RadzenDataGridColumn TItem="AuditoriaVotoResponse" Property="TipoVotacion" Title="Tipo de Votación" Width="140px">
                                 <Template Context="v">
-                                    <span class="badge @(v.TipoVotacion == "EXPERT" ? "bg-primary" : "bg-info text-dark")">
-                                        @(v.TipoVotacion == "EXPERT" ? "Jurado" : "Popular")
+                                    <span class="badge @(GetTipoBadgeStyle(v.TipoVotacion))">
+                                        @v.TipoVotacion
                                     </span>
                                 </Template>
                             </RadzenDataGridColumn>
@@ -880,6 +882,17 @@
             "Cerrada" or "CerradaManual" => BadgeStyle.Danger,
             "ResultadosPublicados" => BadgeStyle.Dark,
             _ => BadgeStyle.Light
+        };
+    }
+
+    private string GetTipoBadgeStyle(string tipo)
+    {
+        return tipo switch
+        {
+            "Popular" => "bg-info text-dark",
+            "Experto" => "bg-primary",
+            "Sponsor" => "bg-warning text-dark",
+            _ => "bg-secondary"
         };
     }
 }

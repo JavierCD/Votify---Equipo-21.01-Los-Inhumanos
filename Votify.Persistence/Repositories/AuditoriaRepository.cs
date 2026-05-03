@@ -23,9 +23,10 @@ namespace Votify.Persistence.Repositories
         {
             return await _context.Votos
                 .Include(v => v.Proyecto)
+                .Include(v => v.Votacion)
+                    .ThenInclude(vo => vo.Categoria)
                 .Include(v => ((VotoExperto)v).Juez)
                 .Include(v => ((VotoPublico)v).Votante)
-                // Navegamos hacia arriba para filtrar solo los votos de este evento
                 .Where(v => v.Votacion.Categoria.EventoId == eventoId)
                 .OrderByDescending(v => v.Fecha)
                 .AsNoTracking()
