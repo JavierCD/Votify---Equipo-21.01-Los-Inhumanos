@@ -54,38 +54,13 @@
 
         @if (string.IsNullOrWhiteSpace(successMessage))
         {
-            @* ── PASO 1: PANTALLA DE IDENTIFICACIÓN ── *@
-            @if (!identificado)
+            @* ── JUEZ LOGUEADO: voto directo sin pedir email ── *@
+            @if (esJuezLogueado)
             {
-                <div class="card border-0 shadow-sm rounded-4 p-4">
-                    <h5 class="fw-bold mb-3">Identificación</h5>
-                    <p class="text-muted small mb-4">
-                        Introduce tu email. Lo utilizaremos exclusivamente para enviarte los resultados finales y tu certificado de participación cuando el evento termine.
-                    </p>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">Correo Electrónico</label>
-                        <input type="email" class="form-control form-control-lg" @bind="emailVotante" placeholder="ejemplo@correo.com" />
-                    </div>
-
-                    <button type="button" class="btn btn-primary w-100 py-2 fw-bold" @onclick="ContinuarAVotar" disabled="@string.IsNullOrWhiteSpace(emailVotante)">
-                        Continuar a la Votación
-                    </button>
-
-                    @if (!string.IsNullOrEmpty(errorEmail))
-                    {
-                        <div class="alert alert-danger mt-3 small py-2">@errorEmail</div>
-                    }
-                </div>
-            }
-            else
-            {
-                @* ── PASO 2: FORMULARIO DE VOTACIÓN ── *@
                 <div class="card border-0 shadow-sm rounded-4 p-4">
 
                     <div class="alert alert-info py-2 small mb-4 d-flex justify-content-between align-items-center">
-                        <span>Votando para recibir resultados en: <strong>@emailVotante</strong></span>
-                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => identificado = false">Cambiar</button>
+                        <span>Votando como juez: <strong>@emailVotante</strong></span>
                     </div>
 
                     <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoAsync">
@@ -127,6 +102,82 @@
                     </EditForm>
                 </div>
             }
+            else
+            {
+                @* ── PASO 1: PANTALLA DE IDENTIFICACIÓN ── *@
+                @if (!identificado)
+                {
+                    <div class="card border-0 shadow-sm rounded-4 p-4">
+                        <h5 class="fw-bold mb-3">Identificación</h5>
+                        <p class="text-muted small mb-4">
+                            Introduce tu email. Lo utilizaremos exclusivamente para enviarte los resultados finales y tu certificado de participación cuando el evento termine.
+                        </p>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small text-uppercase text-muted">Correo Electrónico</label>
+                            <input type="email" class="form-control form-control-lg" @bind="emailVotante" placeholder="ejemplo@correo.com" />
+                        </div>
+
+                        <button type="button" class="btn btn-primary w-100 py-2 fw-bold" @onclick="ContinuarAVotar" disabled="@string.IsNullOrWhiteSpace(emailVotante)">
+                            Continuar a la Votación
+                        </button>
+
+                        @if (!string.IsNullOrEmpty(errorEmail))
+                        {
+                            <div class="alert alert-danger mt-3 small py-2">@errorEmail</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    @* ── PASO 2: FORMULARIO DE VOTACIÓN ── *@
+                    <div class="card border-0 shadow-sm rounded-4 p-4">
+
+                        <div class="alert alert-info py-2 small mb-4 d-flex justify-content-between align-items-center">
+                            <span>Votando para recibir resultados en: <strong>@emailVotante</strong></span>
+                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => identificado = false">Cambiar</button>
+                        </div>
+
+                        <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoAsync">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger small" />
+
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold small text-uppercase text-muted">Puntúa los proyectos</label>
+                                @foreach (var proyecto in votacion.Proyectos)
+                                {
+                                    <div class="card mb-2 border rounded-3 p-3 bg-light">
+                                        <div class="d-flex align-items-center justify-content-between gap-3">
+                                            <span class="fw-semibold">@proyecto.Name</span>
+                                            <input type="number"
+                                                   class="form-control fw-bold text-center"
+                                                   style="max-width: 100px;"
+                                                   min="0"
+                                                   max="@votacion.ValorMax"
+                                                   value="@ObtenerPuntuacion(proyecto.Id)"
+                                                   @onchange="e => ActualizarPuntuacion(proyecto.Id, e.Value?.ToString())" />
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <hr class="my-3" />
+
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" disabled="@enviando">
+                                @if (enviando)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Enviando...</span>
+                                }
+                                else
+                                {
+                                    <span>Enviar voto</span>
+                                }
+                            </button>
+                        </EditForm>
+                    </div>
+                }
+            }
         }
     }
 </div>
@@ -140,6 +191,8 @@
     private bool identificado = false;
     private string errorEmail = "";
 
+    private bool esJuezLogueado => Session.Usuario is Juez;
+
     // --- VARIABLES ORIGINALES ---
     private VotacionPuntuacionDetalleResponse? votacion;
     private FormVotoPuntuacionModel formModel = new();
@@ -152,6 +205,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (Session.Usuario is Juez juez && !string.IsNullOrWhiteSpace(juez.Email))
+        {
+            emailVotante = juez.Email;
+        }
+
         try
         {
             votacion = await VotoPuntuacionService.ObtenerDetallePorIdAsync(VotacionId);

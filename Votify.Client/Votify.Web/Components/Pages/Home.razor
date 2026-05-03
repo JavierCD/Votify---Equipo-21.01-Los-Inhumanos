@@ -296,11 +296,10 @@ else
 
     private async Task CargarDatosSegunRol()
     {
-        if (Session.Usuario is Organizador)
+        if (Session.Usuario is Organizador org)
         {
             NombreUsuario = Session.Usuario.Name; 
-            int miOrgaId = await EventoService.ObtenerOrganizadorMockIdAsync();
-            misEventos = await EventoService.ObtenerEventosPorOrganizadorAsync(miOrgaId);
+            misEventos = await EventoService.ObtenerEventosPorOrganizadorAsync(org.Id);
         }
         else if (Session.Usuario is Participante)
         {
