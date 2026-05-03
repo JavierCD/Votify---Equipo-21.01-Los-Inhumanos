@@ -19,6 +19,7 @@ namespace Votify.Core.Interfaces
         Task<IEnumerable<Criterio>> ObtenerCriteriosPorProyectoAsync(int proyectoId);
    
         Task<IEnumerable<VotoExperto>> ObtenerComentariosJuezPorProyectoAsync(int proyectoId);
+        Task<Dictionary<string, string>> ObtenerMapaJuecesAsync();
 
     }
 }

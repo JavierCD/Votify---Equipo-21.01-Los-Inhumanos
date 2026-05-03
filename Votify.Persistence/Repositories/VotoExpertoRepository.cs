@@ -52,12 +52,10 @@ namespace Votify.Persistence.Repositories
 
         public async Task<IEnumerable<DetalleVoto>> ObtenerEvaluacionesPorProyectoYCriterioAsync(int proyectoId, int criterioId)
         {
-            
             var emailsJueces = await _context.Miembros.OfType<Juez>()
                 .Select(j => j.Email)
                 .ToListAsync();
 
-            
             return await _context.Set<DetalleVoto>()
                 .Include(d => d.Voto)
                     .ThenInclude(v => (v as VotoPublico)!.Votante)
@@ -90,6 +88,11 @@ namespace Votify.Persistence.Repositories
                           && v.Comentario != "")
                 .OrderByDescending(v => v.Fecha)
                 .ToListAsync();
+        }
+        public async Task<Dictionary<string, string>> ObtenerMapaJuecesAsync()
+        {
+            return await _context.Miembros.OfType<Juez>()
+                .ToDictionaryAsync(j => j.Email.ToLower(), j => j.Name);
         }
     }
 }

@@ -74,33 +74,38 @@ namespace Votify.Services.Implementations
             if (criterioId <= 0)
                 throw new ArgumentException("CriterioId no válido.");
 
-           
             var detalles = await _unitOfWork.VotoExpertoRepository.ObtenerEvaluacionesPorProyectoYCriterioAsync(proyectoId, criterioId);
+            var comentariosJuez = await _unitOfWork.VotoExpertoRepository.ObtenerComentariosJuezPorProyectoAsync(proyectoId);
 
+           
+            var jueces = await _unitOfWork.VotoExpertoRepository.ObtenerMapaJuecesAsync();
 
-            var comentarios = await _unitOfWork.VotoExpertoRepository.ObtenerComentariosJuezPorProyectoAsync(proyectoId);
-
-            var comentariosPorHash = comentarios
-                .Where(c => !string.IsNullOrWhiteSpace(c.HashAnonimo))
-                .GroupBy(c => c.HashAnonimo!)
+            
+            var comentariosPorEmail = comentariosJuez
+                .Where(c => c.Juez != null)
+                .GroupBy(c => c.Juez!.Email.ToLower())
                 .ToDictionary(g => g.Key, g => g.First().Comentario);
 
             return detalles.Select(d =>
             {
-                string identificador = d.Voto?.ObtenerIdentificadorAuditoria() ?? "Anónimo";
+                var email = (d.Voto is VotoPublico vp) ? vp.Votante?.Email ?? "" : "";
 
                 string? comentario = null;
-                if (!string.IsNullOrWhiteSpace(d.Voto?.HashAnonimo))
+                string nombreJuez = email;
+
+                if (!string.IsNullOrEmpty(email))
                 {
-                    comentariosPorHash.TryGetValue(d.Voto.HashAnonimo, out comentario);
+                    comentariosPorEmail.TryGetValue(email.ToLower(), out comentario);
+                    jueces.TryGetValue(email.ToLower(), out var nombre);
+                    nombreJuez = nombre ?? email;
                 }
 
                 return new EvaluacionJuezResponse
                 {
-                    NombreJuez = identificador,
+                    NombreJuez = nombreJuez,
                     Puntuacion = d.Puntuacion,
                     Comentario = comentario,
-                    Fecha = d.Voto?.Fecha ?? DateTime.UtcNow
+                    Fecha = d.Voto.Fecha
                 };
             }).ToList();
         }
