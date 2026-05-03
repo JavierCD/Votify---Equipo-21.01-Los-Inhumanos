@@ -75,6 +75,25 @@ namespace Votify.Services.Implementations
             var yaVoto = await _unitOfWork.VotoMulticriterioRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
             if (yaVoto) throw new Exception("Este correo ya ha emitido una evaluación para esta categoría.");
 
+            Votante? votanteFinal = null;
+
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                var todosLosVotantes = await _unitOfWork.Votantes.GetAllAsync();
+                votanteFinal = todosLosVotantes.FirstOrDefault(v => v.Email == request.Email);
+
+                if (votanteFinal == null)
+                {
+                    votanteFinal = new Votante
+                    {
+                        Email = request.Email,
+                    };
+
+                    await _unitOfWork.Votantes.AddAsync(votanteFinal);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+
             VotoCreator creador = new VotoPublicoCreator();
             List<Voto> votosAInsertar = new List<Voto>();
 
@@ -90,6 +109,11 @@ namespace Votify.Services.Implementations
                     puntuacionBase: puntuacionBase,
                     anonimo: request.Anonimo
                 );
+
+                if (votanteFinal != null)
+                {
+                    papeleta.AsignarEmisorId(votanteFinal.Id);
+                }
 
                 foreach (var criterioEvaluado in proyectoEvaluado.Value)
                 {
@@ -115,13 +139,6 @@ namespace Votify.Services.Implementations
                 await _unitOfWork.VotoMulticriterioRepository.GuardarVotosAsync(votosAInsertar);
             }
 
-            // 4. REGISTRAR VOTANTE PRIMERO
-            var registroVotante = new Votante
-            {
-                Email = request.Email
-            };
-
-            await _unitOfWork.Votantes.AddAsync(registroVotante);
             await _unitOfWork.SaveChangesAsync();
         }
     }
