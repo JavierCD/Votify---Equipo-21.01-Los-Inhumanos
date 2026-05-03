@@ -27,7 +27,14 @@ namespace Votify.Services.Implementations
                 VotoId = v.Id,
                 FechaEmision = v.Fecha,
                 ProyectoNombre = v.Proyecto?.Name ?? "Proyecto Desconocido o Eliminado",
-                TipoVotacion = v.RolVotante(),
+                CategoriaNombre = v.Votacion?.Categoria?.Name ?? "Sin categoría",
+                TipoVotacion = v.RolVotante() switch
+                {
+                    "PUBLIC" => "Popular",
+                    "EXPERT" => "Experto",
+                    "SPONSOR" => "Sponsor",
+                    _ => v.RolVotante()
+                },
                 EsAnonimo = v.Anonimo,
                 IdentificadorVotante = v.ObtenerIdentificadorAuditoria()
             }).ToList();
