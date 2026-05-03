@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
+using Votify.Services.Interfaces;
 
 namespace Votify.Services.Implementations
 {
@@ -28,6 +29,11 @@ namespace Votify.Services.Implementations
 
             await _unitOfWork.Proyectos.AddAsync(proyecto);
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<Proyecto?> ObtenerPorIdAsync(int id)
+        {
+            return await _unitOfWork.Proyectos.GetByIdAsync(id);
         }
     }
 }

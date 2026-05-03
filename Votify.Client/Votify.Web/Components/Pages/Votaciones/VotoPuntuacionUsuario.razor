@@ -1,8 +1,11 @@
 ﻿@page "/voto-puntuacion-usuario/{VotacionId:int}"
 @rendermode InteractiveServer
+@using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
+@using Votify.Web.Services
 @inject IVotoPuntuacionService VotoPuntuacionService
+@inject UserSession Session
 @inject ILogger<VotoPuntuacionUsuario> Logger
 
 <div class="container py-4" style="max-width:680px">
@@ -209,9 +212,10 @@
             {
                 VotacionId = VotacionId,
                 VotanteId = 0,
+                JuezId = Session.Usuario is Juez juez ? juez.Id : null,
                 Anonimo = true,
                 PuntuacionesPorProyecto = puntuaciones,
-                Email = emailVotante // <-- ¡Variable inyectada aquí!
+                Email = emailVotante
             };
 
             await VotoPuntuacionService.EmitirVotoPuntuacionAsync(request);

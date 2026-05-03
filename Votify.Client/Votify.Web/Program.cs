@@ -3,7 +3,6 @@ using Radzen;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Persistence.Context;
-using Votify.Persistence.Repositories;
 using Votify.Persistence.UnitOfWork;
 using Votify.Services.Implementations;
 using Votify.Services.Interfaces;

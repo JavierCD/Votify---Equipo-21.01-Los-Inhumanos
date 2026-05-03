@@ -3,7 +3,6 @@ using System.Text;
 using Votify.Core.Factories;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
-using Votify.Persistence.Repositories;
 using Votify.Services.Interfaces;
 using Votify.Services.Models;
 
@@ -98,7 +97,11 @@ namespace Votify.Services.Implementations
                 }
             }
 
-            var creadorVoto = new VotoPublicoCreator();
+            bool esJuez = request.JuezId.HasValue && request.JuezId.Value > 0;
+
+            VotoCreator creadorVoto = esJuez
+                ? new VotoExpertoCreator()
+                : new VotoPublicoCreator();
 
             var votos = request.PuntuacionesPorProyecto.Select(kvp =>
             {
@@ -120,7 +123,11 @@ namespace Votify.Services.Implementations
                     hash
                 );
 
-                if (votanteFinal != null)
+                if (esJuez)
+                {
+                    voto.AsignarEmisorId(request.JuezId!.Value);
+                }
+                else if (votanteFinal != null)
                 {
                     voto.AsignarEmisorId(votanteFinal.Id);
                 }
