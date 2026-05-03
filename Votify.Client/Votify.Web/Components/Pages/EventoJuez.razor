@@ -3,105 +3,147 @@
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Core.Interfaces
+
 @inject IEventoService EventoService
 @inject IVotoExpertoServices VotoExpertoService
 @inject NavigationManager Nav
+@inject Votify.Web.Services.UserSession Session
 
-<h3>Proyectos y Participantes</h3>
+<div class="container py-4" style="max-width: 900px;">
+    @* --- CABECERA DEL EVENTO --- *@
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-primary mb-1">Panel de Evaluación</h2>
+            <p class="text-muted mb-0">Revisa los proyectos, toma notas cualitativas y accede a las votaciones.</p>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm shadow-sm" @onclick='() => Nav.NavigateTo("/")'>
+            ← Volver al Inicio
+        </button>
+    </div>
 
-@if (cargando)
-{
-    <p>Cargando...</p>
-}
-else if (!string.IsNullOrEmpty(error))
-{
-    <div class="alert alert-danger">@error</div>
-}
-else
-{
-    <h5 class="text-muted mb-4">@evento?.Name</h5>
-
-    @foreach (var categoria in categorias)
+    @if (cargando)
     {
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center"
-                 style="cursor:pointer;"
-                 @onclick="() => ToggleCategoria(categoria.Id)">
-                <span class="fw-bold">📂 @categoria.Name</span>
-                <span>@(categoriasAbiertas.Contains(categoria.Id) ? "▲" : "▼")</span>
-            </div>
-
-            @if (categoriasAbiertas.Contains(categoria.Id))
-            {
-                <div class="card-body">
-                    @foreach (var proyecto in proyectosPorCategoria.GetValueOrDefault(categoria.Id, new()))
-                    {
-                        <div class="card mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-title fw-bold">📁 @proyecto.Name</h6>
-
-                                @* --- MODIFICACIÓN: BOTÓN PARA VER FICHA --- *@
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <p class="text-muted small mb-0">👤 Participante: @proyecto.Participante?.Name</p>
-                                    @if (proyecto.Participante != null)
-                                    {
-                                        <button class="btn btn-outline-info btn-sm"
-                                                @onclick='() => Nav.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
-                                            <RadzenIcon Icon="account_circle" Style="font-size: 16px; vertical-align: middle;" /> Ver Ficha
-                                        </button>
-                                    }
-                                </div>
-                                @* ------------------------------------------ *@
-
-                                <textarea class="form-control mb-2"
-                                          rows="3"
-                                          placeholder="Escribe tu valoración cualitativa..."
-                                          @bind="comentarios[proyecto.Id]"></textarea>
-
-                                @if (guardados.Contains(proyecto.Id))
-                                {
-                                    <span class="badge bg-success">Guardado ✓</span>
-                                }
-                                else
-                                {
-                                    <button class="btn btn-primary btn-sm"
-                                            @onclick="() => GuardarComentario(proyecto.Id, categoria.Id)">
-                                        Guardar comentario
-                                    </button>
-                                }
-                                @if (erroresPorProyecto.ContainsKey(proyecto.Id))
-                                {
-                                    <div class="text-danger mt-1">@erroresPorProyecto[proyecto.Id]</div>
-                                }
-                            </div>
-                        </div>
-                    }
-
-                    <button class="btn btn-primary btn-sm"
-                            @onclick='() => Nav.NavigateTo($"/juez/puesta-en-comun/{categoria.Id}")'>
-                        👥 Ver puesta en común de @categoria.Name
-                    </button>
-                </div>
-            }
+        <div class="d-flex justify-content-center align-items-center py-5">
+            <div class="spinner-border text-primary me-3" role="status"></div>
+            <span class="text-muted fs-5">Cargando información del evento...</span>
         </div>
     }
+    else if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger shadow-sm rounded-3 d-flex align-items-center">
+            <span class="fs-4 me-3">⚠️</span>
+            <div>
+                <strong>Ocurrió un problema:</strong><br />
+                @error
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: #f8f9fa;">
+            <div class="card-body p-4 d-flex align-items-center gap-3">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <span class="fs-3">🏆</span>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0 text-dark">@evento?.Name</h4>
+                    <span class="text-muted small">
+                        Vigente hasta el @evento?.FechaFin.ToLocalTime().ToString("dd de MMMM, yyyy")
+                    </span>
+                </div>
+            </div>
+        </div>
 
-    <button class="btn btn-outline-secondary mt-3" @onclick='() => Nav.NavigateTo("/")'>← Volver</button>
-}
+        @* --- LISTADO DE CATEGORÍAS --- *@
+        @foreach (var categoria in categorias)
+        {
+            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+                @* CABECERA DE CATEGORÍA CON CALL TO ACTION *@
+                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold mb-1 text-primary">📂 @categoria.Name</h5>
+                        <span class="text-muted small">
+                            @(proyectosPorCategoria.GetValueOrDefault(categoria.Id, new()).Count) Proyectos asignados
+                        </span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm fw-semibold" @onclick='() => Nav.NavigateTo($"/juez/puesta-en-comun/{categoria.Id}")'>
+                            👥 Puesta en común
+                        </button>
+                        @RenderBotonVotacion(categoria)
+                    </div>
+                </div>
 
+                @* LISTADO DE PROYECTOS *@
+                <div class="card-body bg-light p-4">
+                    <div class="row g-4">
+                        @foreach (var proyecto in proyectosPorCategoria.GetValueOrDefault(categoria.Id, new()))
+                        {
+                            <div class="col-12">
+                                <div class="card border border-light shadow-sm rounded-3 h-100">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h6 class="fw-bold mb-1 text-dark">📁 @proyecto.Name</h6>
+                                                <span class="text-muted small">Por: @(proyecto.Participante?.Name ?? "Anónimo")</span>
+                                            </div>
+                                            @if (proyecto.Participante != null)
+                                            {
+                                                <button class="btn btn-outline-info btn-sm rounded-pill px-3" style="font-size: 0.75rem;"
+                                                        @onclick='() => Nav.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
+                                                    Ver Ficha
+                                                </button>
+                                            }
+                                        </div>
+
+                                        <div class="bg-light p-3 rounded-3 border">
+                                            <label class="form-label text-muted small fw-bold text-uppercase mb-2">Notas Privadas (Borrador)</label>
+                                            <div class="d-flex gap-2">
+                                                <textarea class="form-control form-control-sm border-0 shadow-none"
+                                                          style="resize: none;"
+                                                          rows="2"
+                                                          placeholder="Anotaciones cualitativas rápidas..."
+                                                          @bind="comentarios[proyecto.Id]"></textarea>
+
+                                                <button class="btn @(guardados.Contains(proyecto.Id) ? "btn-success" : "btn-primary") d-flex flex-column align-items-center justify-content-center px-3 transition-all"
+                                                        @onclick="() => GuardarComentario(proyecto.Id, categoria.Id)">
+                                                    @if (guardados.Contains(proyecto.Id))
+                                                    {
+                                                        <span class="fs-6">✅</span>
+                                                        <span style="font-size: 0.7rem;">Guardado</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="fs-6">💾</span>
+                                                        <span style="font-size: 0.7rem;">Guardar</span>
+                                                    }
+                                                </button>
+                                            </div>
+                                            @if (erroresPorProyecto.ContainsKey(proyecto.Id))
+                                            {
+                                                <div class="text-danger small mt-2 fw-semibold">@erroresPorProyecto[proyecto.Id]</div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
 
 @code {
     [Parameter] public int EventoId { get; set; }
 
-   
-    @inject Votify.Web.Services.UserSession Session
     private int JuezId => Session.Usuario?.Id ?? 0;
     private Evento? evento;
     private List<Categoria> categorias = new();
     private Dictionary<int, List<Proyecto>> proyectosPorCategoria = new();
     private Dictionary<int, string> comentarios = new();
     private HashSet<int> guardados = new();
-    private HashSet<int> categoriasAbiertas = new();
     private Dictionary<int, string> erroresPorProyecto = new();
     private bool cargando = true;
     private string error = string.Empty;
@@ -113,7 +155,7 @@ else
             evento = await EventoService.ObtenerEventoConDetallesAsync(EventoId);
             if (evento == null)
             {
-                error = "No se encontró el evento.";
+                error = "No se encontró el evento solicitado.";
                 return;
             }
 
@@ -129,20 +171,12 @@ else
         }
         catch (Exception ex)
         {
-            error = $"Error al cargar: {ex.Message}";
+            error = $"Error de conexión al cargar los datos: {ex.Message}";
         }
         finally
         {
             cargando = false;
         }
-    }
-
-    private void ToggleCategoria(int categoriaId)
-    {
-        if (categoriasAbiertas.Contains(categoriaId))
-            categoriasAbiertas.Remove(categoriaId);
-        else
-            categoriasAbiertas.Add(categoriaId);
     }
 
     private async Task GuardarComentario(int proyectoId, int categoriaId)
@@ -152,7 +186,6 @@ else
         {
             var votacionId = categorias.FirstOrDefault(c => c.Id == categoriaId)?.Votacion?.Id ?? 0;
 
-            // Llamada limpia y directa
             await VotoExpertoService.GuardarComentarioAsync(
                 JuezId,
                 proyectoId,
@@ -162,10 +195,51 @@ else
             );
 
             guardados.Add(proyectoId);
+            // Efecto visual: Quitamos el check a los 2.5s
+            _ = Task.Delay(2500).ContinueWith(t => { guardados.Remove(proyectoId); InvokeAsync(StateHasChanged); });
         }
         catch (Exception ex)
         {
-            erroresPorProyecto[proyectoId] = "Error al guardar el comentario. Asegúrate de que existe una votación creada para esta categoría.";
+            erroresPorProyecto[proyectoId] = ex.Message;
         }
     }
+
+    private RenderFragment RenderBotonVotacion(Categoria categoria) => __builder =>
+    {
+        if (categoria.Votacion != null)
+        {
+            string url = "";
+            string texto = "";
+            string clase = "btn-success";
+
+            if (categoria.Votacion is Multicriterio)
+            {
+                url = $"/juez/voto-multicriterio/{categoria.Votacion.Id}";
+                texto = "Evaluar Matriz";
+            }
+            else if (categoria.Votacion is Puntuacion)
+            {
+                url = $"/juez/voto-puntuacion/{categoria.Votacion.Id}";
+                texto = "Asignar Puntos";
+                clase = "btn-warning text-dark";
+            }
+            else if (categoria.Votacion is Popular)
+            {
+                url = $"/juez/voto-popular/{categoria.Votacion.Id}";
+                texto = "Votar Proyectos";
+                clase = "btn-info text-white";
+            }
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                <button class="btn @clase btn-sm fw-bold shadow-sm px-3" @onclick="() => Nav.NavigateTo(url)">
+                    @texto ➔
+                </button>
+            }
+        }
+        else
+        {
+            <span class="badge bg-secondary py-2 px-3 fw-normal">Votación no configurada</span>
+        }
+    };
 }

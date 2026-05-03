@@ -122,50 +122,77 @@ namespace Votify.Services.Implementations
                 ? new VotoExpertoCreator()
                 : new VotoPublicoCreator();
 
-            // Suponiendo que tienes una puntuación base que el usuario acaba de emitir (ej. 10 puntos)
-            double puntuacionBaseEmitida = 10.0; // ¡Cámbialo por la variable de puntuación real de tu request!
+            // Suponiendo que tienes una puntuación base que el usuario acaba de emitir
+            double puntuacionBaseEmitida = 10.0; // ¡Cámbialo por la variable real si es necesario!
 
-            var votos = request.ProyectosSeleccionadosIds.Select(proyectoId =>
+            List<Voto> votosAInsertar = new List<Voto>();
+
+            // 1. Iteramos por cada proyecto que el usuario/juez ha seleccionado
+            foreach (var proyectoId in request.ProyectosSeleccionadosIds)
             {
-                string? hash = null;
-                if (request.Anonimo)
-                {
-                    string identificadorSecreto = esJuez
-                        ? request.JuezId!.Value.ToString()
-                        : (!string.IsNullOrWhiteSpace(request.Email) ? request.Email : request.VotanteId.ToString());
-
-                    hash = Convert.ToHexString(
-                        SHA256.HashData(
-                            Encoding.UTF8.GetBytes($"{request.VotacionId}-{identificadorSecreto}-VotifySecretSalt2026")
-                        )
-                    ).Substring(0, 16);
-                }
-
-                var voto = creadorVoto.CrearVoto(
-                    votacion.Id,
-                    proyectoId,
-                    puntuacionBaseEmitida,
-                    request.Anonimo,
-                    hash
+                // 2. UPSERT: Buscamos si ya existe el "cascarón" (el comentario previo)
+                Voto? papeleta = votacion.Votos?.FirstOrDefault(v =>
+                    v.ProyectoId == proyectoId &&
+                    (
+                        (esJuez && v is VotoExperto ve && ve.JuezId == request.JuezId!.Value) ||
+                        (!esJuez && v is VotoPublico vp && vp.VotanteId == (votanteFinal != null ? votanteFinal.Id : request.VotanteId))
+                    )
                 );
 
-                if (esJuez)
+                if (papeleta != null)
                 {
-                    voto.AsignarEmisorId(request.JuezId!.Value);
-                }
-                else if (votanteFinal != null)
-                {
-                    voto.AsignarEmisorId(votanteFinal.Id);
+                    // 3A. UPDATE: El voto o comentario ya existe. Le inyectamos la puntuación.
+                    papeleta.PuntuacionBase = puntuacionBaseEmitida;
                 }
                 else
                 {
-                    voto.AsignarEmisorId(request.VotanteId);
+                    // 3B. INSERT: No hay nada previo. Creamos el voto de cero.
+                    string? hash = null;
+                    if (request.Anonimo)
+                    {
+                        string identificadorSecreto = esJuez
+                            ? request.JuezId!.Value.ToString()
+                            : (!string.IsNullOrWhiteSpace(request.Email) ? request.Email : request.VotanteId.ToString());
+
+                        hash = Convert.ToHexString(
+                            SHA256.HashData(
+                                Encoding.UTF8.GetBytes($"{request.VotacionId}-{identificadorSecreto}-VotifySecretSalt2026")
+                            )
+                        ).Substring(0, 16);
+                    }
+
+                    papeleta = creadorVoto.CrearVoto(
+                        votacion.Id,
+                        proyectoId,
+                        puntuacionBaseEmitida,
+                        request.Anonimo,
+                        hash
+                    );
+
+                    if (esJuez)
+                    {
+                        papeleta.AsignarEmisorId(request.JuezId!.Value);
+                    }
+                    else if (votanteFinal != null)
+                    {
+                        papeleta.AsignarEmisorId(votanteFinal.Id);
+                    }
+                    else
+                    {
+                        papeleta.AsignarEmisorId(request.VotanteId);
+                    }
+
+                    votosAInsertar.Add(papeleta);
                 }
+            }
 
-                return voto;
-            }).ToList();
+            // 4. Solo insertamos en base de datos los que sean totalmente nuevos
+            if (votosAInsertar.Any())
+            {
+                await _unitOfWork.VotoPopularRepository.GuardarVotosAsync(votosAInsertar);
+            }
 
-            await _unitOfWork.VotoPopularRepository.GuardarVotosAsync(votos);
+            // Guardamos todo (tanto los Updates trackeados como los nuevos Inserts)
             await _unitOfWork.SaveChangesAsync();
         }
         public async Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesDisponiblesAsync(int votanteId)
