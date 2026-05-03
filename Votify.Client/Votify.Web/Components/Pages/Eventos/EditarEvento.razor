@@ -107,7 +107,7 @@
         {
             <div class="row">
                 <div class="col-12">
-                    @foreach (var categoria in evento.CategoriasEvento)
+                    @foreach (var categoria in evento.CategoriasEvento.ToList())
                     {
                         <div class="card mb-4 shadow-sm border-start border-primary border-4">
                             <div class="card-header bg-light">
@@ -294,7 +294,7 @@
             <div class="card shadow-sm p-4">
                 <h4 class="mb-4">Participantes y Proyectos</h4>
 
-                @foreach (var categoria in evento.CategoriasEvento)
+                @foreach (var categoria in evento.CategoriasEvento.ToList())
                 {
                     <div class="mb-5">
                         <h5 class="text-primary border-bottom pb-2 mb-3">
@@ -319,7 +319,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var proyecto in categoria.Proyectos)
+                                    @foreach (var proyecto in categoria.Proyectos.ToList())
                                     {
                                         <tr>
                                             <td class="fw-bold">@proyecto.Name</td>
@@ -383,7 +383,7 @@
                         <ul class="list-group">
                             @if (evento.Jurado != null && evento.Jurado.Any())
                             {
-                                @foreach (var asignado in evento.Jurado)
+                                @foreach (var asignado in evento.Jurado.ToList())
                                 {
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span><RadzenIcon Icon="account_circle" class="me-2 text-secondary" /> @asignado.Name</span>

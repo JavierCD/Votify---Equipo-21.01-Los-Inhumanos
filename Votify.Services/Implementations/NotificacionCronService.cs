@@ -44,11 +44,19 @@ namespace Votify.Services.Implementations
 
                 foreach (var juez in juecesAvisables)
                 {
+                    var url = votacion switch
+                    {
+                        Popular => $"/voto-popular-usuario/{votacion.Id}",
+                        Puntuacion => $"/voto-puntuacion-usuario/{votacion.Id}",
+                        Multicriterio => $"/voto-multicriterio-usuario/{votacion.Id}",
+                        _ => $"/juez/evento/{evento.Id}"
+                    };
+
                     var notificacion = new Notificacion(
                         miembroId: juez.Id,
                         titulo: "¡Votación Abierta!",
                         mensaje: $"La evaluación para la categoría '{votacion.Categoria!.Name}' del evento '{evento.Name}' ha comenzado. ¡Ya puedes emitir tus votos!",
-                        urlAccion: $"/voto-popular-usuario/{votacion.Id}"
+                        urlAccion: url
                     );
 
                     await _unitOfWork.Notificaciones.AddAsync(notificacion);
