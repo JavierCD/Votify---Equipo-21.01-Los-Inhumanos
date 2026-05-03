@@ -26,7 +26,9 @@ namespace Votify.Persistence.Repositories
                 .OfType<Multicriterio>()
                 .Include(v => v.Categoria)
                     .ThenInclude(c => c.Proyectos) // Traemos los proyectos de la categoría
-                .Include(v => v.Criterios)         // Traemos el baremo
+                .Include(v => v.Criterios)// Traemos el baremo
+                .Include(v => v.Votos)
+                    .ThenInclude(v => v.Detalles)
                 .FirstOrDefaultAsync(v => v.Id == votacionId);
         }
 
