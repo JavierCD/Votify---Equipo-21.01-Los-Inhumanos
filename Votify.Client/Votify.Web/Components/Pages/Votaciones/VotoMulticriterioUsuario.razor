@@ -1,10 +1,13 @@
 ﻿@page "/voto-multicriterio-usuario/{VotacionId:int}"
 @rendermode InteractiveServer
+@using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
+@using Votify.Web.Services
 
 @* CAMBIO AQUÍ: Usamos IVotoMulticriterioService *@
 @inject IVotoMulticriterioService MulticriterioService
+@inject UserSession Session
 @inject ILogger<VotoMulticriterioUsuario> Logger
 
 <div class="container py-4" style="max-width:720px">
@@ -234,6 +237,8 @@
             var request = new EmitirVotoMulticriterioRequest
             {
                 VotacionId = VotacionId,
+                VotanteId = 0,
+                JuezId = Session.Usuario is Juez juez ? juez.Id : null,
                 Email = emailVotante,
                 Puntuaciones = puntuaciones
             };

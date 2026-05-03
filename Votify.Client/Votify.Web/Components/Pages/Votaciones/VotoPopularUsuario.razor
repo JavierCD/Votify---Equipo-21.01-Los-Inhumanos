@@ -329,6 +329,7 @@
             {
                 VotacionId = votacionSeleccionada.VotacionId,
                 VotanteId = 0,
+                JuezId = Session.Usuario is Juez juez ? juez.Id : null,
                 Anonimo = true,
                 ProyectosSeleccionadosIds = proyectosSeleccionados.ToList(),
                 Email = emailVotante

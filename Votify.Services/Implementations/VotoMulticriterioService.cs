@@ -1,6 +1,5 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
 using Votify.Core.Factories;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
@@ -96,7 +95,11 @@ namespace Votify.Services.Implementations
                 }
             }
 
-            VotoCreator creador = new VotoPublicoCreator();
+            bool esJuez = request.JuezId.HasValue && request.JuezId.Value > 0;
+
+            VotoCreator creador = esJuez
+                ? new VotoExpertoCreator()
+                : new VotoPublicoCreator();
             List<Voto> votosAInsertar = new List<Voto>();
 
             foreach (var proyectoEvaluado in request.Puntuaciones)
@@ -108,7 +111,9 @@ namespace Votify.Services.Implementations
                 string? hash = null;
                 if (request.Anonimo)
                 {
-                    string identificadorSecreto = !string.IsNullOrWhiteSpace(request.Email) ? request.Email : request.VotanteId.ToString();
+                    string identificadorSecreto = esJuez
+                        ? request.JuezId!.Value.ToString()
+                        : (!string.IsNullOrWhiteSpace(request.Email) ? request.Email : request.VotanteId.ToString());
 
                     hash = Convert.ToHexString(
                         SHA256.HashData(
@@ -125,7 +130,11 @@ namespace Votify.Services.Implementations
                     hashAnonimo: hash
                 );
 
-                if (votanteFinal != null)
+                if (esJuez)
+                {
+                    papeleta.AsignarEmisorId(request.JuezId!.Value);
+                }
+                else if (votanteFinal != null)
                 {
                     papeleta.AsignarEmisorId(votanteFinal.Id);
                 }

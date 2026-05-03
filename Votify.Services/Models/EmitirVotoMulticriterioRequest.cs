@@ -10,6 +10,7 @@ namespace Votify.Services.Models
     {
         public int VotacionId { get; set; }
         public int VotanteId { get; set; }
+        public int? JuezId { get; set; }
         public bool Anonimo { get; set; } = false;
         public string Email { get; set; } = string.Empty;
 

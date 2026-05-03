@@ -116,7 +116,11 @@ namespace Votify.Services.Implementations
                 }
             }
 
-            var creadorVoto = new VotoPublicoCreator();
+            bool esJuez = request.JuezId.HasValue && request.JuezId.Value > 0;
+
+            VotoCreator creadorVoto = esJuez
+                ? new VotoExpertoCreator()
+                : new VotoPublicoCreator();
 
             // Suponiendo que tienes una puntuación base que el usuario acaba de emitir (ej. 10 puntos)
             double puntuacionBaseEmitida = 10.0; // ¡Cámbialo por la variable de puntuación real de tu request!
@@ -126,8 +130,9 @@ namespace Votify.Services.Implementations
                 string? hash = null;
                 if (request.Anonimo)
                 {
-                    // Usamos el Email si lo hay, o el ID del votante, combinado con el ID de la votación y un "Salt" secreto.
-                    string identificadorSecreto = !string.IsNullOrWhiteSpace(request.Email) ? request.Email : request.VotanteId.ToString();
+                    string identificadorSecreto = esJuez
+                        ? request.JuezId!.Value.ToString()
+                        : (!string.IsNullOrWhiteSpace(request.Email) ? request.Email : request.VotanteId.ToString());
 
                     hash = Convert.ToHexString(
                         SHA256.HashData(
@@ -144,17 +149,18 @@ namespace Votify.Services.Implementations
                     hash
                 );
 
-                if (votanteFinal != null)
+                if (esJuez)
+                {
+                    voto.AsignarEmisorId(request.JuezId!.Value);
+                }
+                else if (votanteFinal != null)
                 {
                     voto.AsignarEmisorId(votanteFinal.Id);
                 }
                 else
                 {
-                    // Por si acaso votan sin correo, dejamos el que venía por defecto
                     voto.AsignarEmisorId(request.VotanteId);
                 }
-
-
 
                 return voto;
             }).ToList();

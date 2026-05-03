@@ -7,7 +7,7 @@
 @using Votify.Services.Models
 
 @inject IVotoExpertoServices VotoExpertoService
-@inject IGenericRepository<Proyecto> ProyectoRepo
+@inject IProyectoService ProyectoService
 @inject NavigationManager NavManager
 
 <PageTitle>Evaluación de mi proyecto - Votify</PageTitle>
@@ -135,7 +135,7 @@
         {
             cargando = true;
 
-            proyecto = await ProyectoRepo.GetByIdAsync(ProyectoId);
+            proyecto = await ProyectoService.ObtenerPorIdAsync(ProyectoId);
 
             if (proyecto != null)
             {
