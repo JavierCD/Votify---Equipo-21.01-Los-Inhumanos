@@ -38,8 +38,17 @@ namespace Votify.Services.Implementations
                 throw new InvalidOperationException("Ya has dejado un comentario en este proyecto.");
 
             double puntuacionBase = 0.0;
-            bool esAnonimo = false;
+            bool esAnonimo = true;
             string? hash = null;
+
+            if (esAnonimo)
+            {
+                hash = Convert.ToHexString(
+                    SHA256.HashData(
+                        Encoding.UTF8.GetBytes($"{votacionId}-{juezId}-VotifySecretSalt2026")
+                    )
+                ).Substring(0, 16);
+            }
 
             var creador = new VotoExpertoCreator();
             var voto = creador.CrearVoto(votacionId, proyectoId, puntuacionBase, esAnonimo, hash, comentario);
@@ -71,29 +80,27 @@ namespace Votify.Services.Implementations
 
             var comentarios = await _unitOfWork.VotoExpertoRepository.ObtenerComentariosJuezPorProyectoAsync(proyectoId);
 
-           
-            var comentariosPorEmail = comentarios
-                .Where(c => c.Juez != null)
-                .GroupBy(c => c.Juez!.Email.ToLower())
+            var comentariosPorHash = comentarios
+                .Where(c => !string.IsNullOrWhiteSpace(c.HashAnonimo))
+                .GroupBy(c => c.HashAnonimo!)
                 .ToDictionary(g => g.Key, g => g.First().Comentario);
 
             return detalles.Select(d =>
             {
-                var email = (d.Voto is VotoPublico vp) ? vp.Votante?.Email ?? "" : "";
+                string identificador = d.Voto?.ObtenerIdentificadorAuditoria() ?? "Anónimo";
 
-               
                 string? comentario = null;
-                if (!string.IsNullOrEmpty(email))
+                if (!string.IsNullOrWhiteSpace(d.Voto?.HashAnonimo))
                 {
-                    comentariosPorEmail.TryGetValue(email.ToLower(), out comentario);
+                    comentariosPorHash.TryGetValue(d.Voto.HashAnonimo, out comentario);
                 }
 
                 return new EvaluacionJuezResponse
                 {
-                    NombreJuez = email,
+                    NombreJuez = identificador,
                     Puntuacion = d.Puntuacion,
                     Comentario = comentario,
-                    Fecha = d.Voto.Fecha
+                    Fecha = d.Voto?.Fecha ?? DateTime.UtcNow
                 };
             }).ToList();
         }
@@ -116,7 +123,7 @@ namespace Votify.Services.Implementations
             var votos = await _unitOfWork.VotoExpertoRepository.ObtenerComentariosJuezPorProyectoAsync(proyectoId);
             return votos.Select(v => new EvaluacionJuezResponse
             {
-                NombreJuez = v.Juez?.Name ?? "Juez anónimo",
+                NombreJuez = v.ObtenerIdentificadorAuditoria(),
                 Puntuacion = v.PuntuacionBase,
                 Comentario = v.Comentario,
                 Fecha = v.Fecha

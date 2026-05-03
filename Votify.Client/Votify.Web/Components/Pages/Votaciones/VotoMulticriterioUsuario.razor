@@ -308,7 +308,8 @@
                 VotanteId = 0,
                 JuezId = Session.Usuario is Juez juez ? juez.Id : null,
                 Email = emailVotante,
-                Puntuaciones = puntuaciones
+                Puntuaciones = puntuaciones,
+                Anonimo = true
             };
 
             // CAMBIO AQUÍ: Llamamos al método con el nombre correcto
