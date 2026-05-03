@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Security.Cryptography;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Votify.Core.Factories;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
@@ -103,11 +105,24 @@ namespace Votify.Services.Implementations
 
                 double puntuacionBase = 0;
 
+                string? hash = null;
+                if (request.Anonimo)
+                {
+                    string identificadorSecreto = !string.IsNullOrWhiteSpace(request.Email) ? request.Email : request.VotanteId.ToString();
+
+                    hash = Convert.ToHexString(
+                        SHA256.HashData(
+                            Encoding.UTF8.GetBytes($"{request.VotacionId}-{identificadorSecreto}-VotifySecretSalt2026")
+                        )
+                    ).Substring(0, 16);
+                }
+
                 Voto papeleta = creador.CrearVoto(
                     votacionId: request.VotacionId,
                     proyectoId: proyectoId,
                     puntuacionBase: puntuacionBase,
-                    anonimo: request.Anonimo
+                    anonimo: request.Anonimo,
+                    hashAnonimo: hash
                 );
 
                 if (votanteFinal != null)
