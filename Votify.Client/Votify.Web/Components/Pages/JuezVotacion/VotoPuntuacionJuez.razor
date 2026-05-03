@@ -1,0 +1,186 @@
+﻿@page "/juez/voto-puntuacion/{VotacionId:int}"
+@rendermode InteractiveServer
+@using Votify.Core.Models
+@using Votify.Services.Interfaces
+@using Votify.Services.Models
+@using Votify.Web.Services
+
+@inject IVotoPuntuacionService VotoPuntuacionService
+@inject UserSession Session
+@inject NavigationManager Nav
+@inject ILogger<VotoPuntuacionJuez> Logger
+
+<div class="container py-4" style="max-width:680px">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Votación por Puntuación (Jurado)</h2>
+        <p class="text-muted small mb-0">Asigna una puntuación a cada proyecto según el criterio general.</p>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="d-flex align-items-center gap-2 text-muted">
+            <span class="spinner-border spinner-border-sm"></span>
+            <span>Cargando proyectos...</span>
+        </div>
+    }
+    else if (votacion is null)
+    {
+        <div class="alert alert-danger rounded-3">@errorMessage</div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1 text-primary">@votacion.CategoriaNombre</h4>
+                    <span class="badge bg-primary-subtle text-primary">Máx. @votacion.ValorMax puntos por proyecto</span>
+                </div>
+                <div class="text-end">
+                    <span class="text-muted small d-block">Juez ID: @Session.Usuario?.Id</span>
+                    <span class="fw-bold">@Session.Usuario?.Name</span>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger rounded-3">@errorMessage</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success rounded-3">@successMessage</div>
+                <button class="btn btn-primary mt-3" @onclick="VolverAlDashboard">Volver al Dashboard</button>
+            }
+            else
+            {
+                <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoJuezAsync">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-4">
+                        @foreach (var proyecto in votacion.Proyectos)
+                        {
+                            <div class="card mb-2 border rounded-3 p-3 bg-white">
+                                <div class="d-flex align-items-center justify-content-between gap-3">
+                                    <span class="fw-semibold">📁 @proyecto.Name</span>
+                                    <input type="number"
+                                           class="form-control fw-bold text-center"
+                                           style="max-width: 100px;"
+                                           min="0"
+                                           max="@votacion.ValorMax"
+                                           value="@ObtenerPuntuacion(proyecto.Id)"
+                                           @onchange="e => ActualizarPuntuacion(proyecto.Id, e.Value?.ToString())" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex gap-3">
+                        <button type="button" class="btn btn-outline-secondary py-2 fw-bold w-25" @onclick="VolverAlDashboard">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary py-2 fw-bold w-75" disabled="@enviando">
+                            @if (enviando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Registrando puntuación...</span>
+                            }
+                            else
+                            {
+                                <span>Confirmar Votación</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int VotacionId { get; set; }
+
+    private VotacionPuntuacionDetalleResponse? votacion;
+    private object formModel = new();
+    private Dictionary<int, int> puntuaciones = new();
+
+    private bool cargando = true;
+    private bool enviando = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Session.Usuario is not Juez)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        try
+        {
+            votacion = await VotoPuntuacionService.ObtenerDetallePorIdAsync(VotacionId);
+            if (votacion != null)
+            {
+                foreach (var p in votacion.Proyectos)
+                {
+                    puntuaciones[p.Id] = 0;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "No se pudo cargar la votación.";
+            Logger.LogError(ex, "Error cargando votación por puntuación para juez.");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private int ObtenerPuntuacion(int proyectoId) => puntuaciones.TryGetValue(proyectoId, out var val) ? val : 0;
+
+    private void ActualizarPuntuacion(int proyectoId, string? valor)
+    {
+        if (int.TryParse(valor, out var num))
+        {
+            if (votacion != null && num > votacion.ValorMax) num = votacion.ValorMax;
+            if (num < 0) num = 0;
+            puntuaciones[proyectoId] = num;
+        }
+    }
+
+    private async Task EmitirVotoJuezAsync()
+    {
+        errorMessage = null;
+        enviando = true;
+
+        try
+        {
+            var request = new EmitirVotoPuntuacionRequest
+            {
+                VotacionId = VotacionId,
+                JuezId = Session.Usuario!.Id,
+                VotanteId = 0,
+                Email = string.Empty,
+                PuntuacionesPorProyecto = puntuaciones,
+                Anonimo = false
+            };
+
+            await VotoPuntuacionService.EmitirVotoPuntuacionAsync(request);
+            successMessage = "¡Votación por puntuación registrada correctamente!";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogError(ex, "Error emitiendo voto por puntuación de experto.");
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+
+    private void VolverAlDashboard() => Nav.NavigateTo($"/juez/dashboard"); // Ajusta la ruta a tu dashboard
+}

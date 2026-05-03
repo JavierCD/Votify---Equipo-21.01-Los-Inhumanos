@@ -1,0 +1,202 @@
+﻿@page "/juez/voto-popular/{VotacionId:int}"
+@rendermode InteractiveServer
+@using Votify.Core.Models
+@using Votify.Services.Interfaces
+@using Votify.Services.Models
+@using Votify.Web.Services
+
+@inject IPopularService PopularService
+@inject IVotoPopularService VotoPopularService
+@inject UserSession Session
+@inject NavigationManager Nav
+@inject ILogger<VotoPopularJuez> Logger
+
+<div class="container py-4" style="max-width:680px">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Voto Popular (Jurado)</h2>
+        <p class="text-muted small mb-0">Selecciona tus proyectos favoritos de esta categoría.</p>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="d-flex align-items-center gap-2 text-muted">
+            <span class="spinner-border spinner-border-sm"></span>
+            <span>Cargando proyectos...</span>
+        </div>
+    }
+    else if (votacionSeleccionada is null)
+    {
+        <div class="alert alert-danger rounded-3">@errorMessage</div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1 text-primary">@votacionSeleccionada.CategoriaNombre</h4>
+                    <span class="badge bg-primary-subtle text-primary">Máx. @votacionSeleccionada.MaxSelection selección(es)</span>
+                </div>
+                <div class="text-end">
+                    <span class="fs-4 fw-bold text-primary">@proyectosSeleccionados.Count</span>
+                    <span class="text-muted small"> / @votacionSeleccionada.MaxSelection</span>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger rounded-3">@errorMessage</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success rounded-3">@successMessage</div>
+                <button class="btn btn-primary mt-3" @onclick="VolverAlDashboard">Volver al Dashboard</button>
+            }
+            else
+            {
+                <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoJuezAsync">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-4">
+                        @foreach (var proyecto in votacionSeleccionada.Proyectos)
+                        {
+                            var pid = proyecto.Id;
+                            var seleccionado = proyectosSeleccionados.Contains(pid);
+
+                            <div class="card mb-2 border rounded-3 p-3 @(seleccionado ? "border-primary bg-primary bg-opacity-10" : "bg-white")"
+                                 style="cursor:pointer"
+                                 @onclick="() => AlternarProyecto(pid, !seleccionado)">
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="checkbox"
+                                           class="form-check-input mt-0"
+                                           checked="@seleccionado"
+                                           @onchange="(e => AlternarProyecto(pid, e.Value is bool m && m))"
+                                           @onclick:stopPropagation="true" />
+                                    <label class="form-check-label fw-semibold mb-0" style="cursor:pointer">
+                                        📁 @proyecto.Name
+                                    </label>
+                                    @if (seleccionado)
+                                    {
+                                        <span class="badge bg-primary ms-auto">Seleccionado</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex gap-3">
+                        <button type="button" class="btn btn-outline-secondary py-2 fw-bold w-25" @onclick="VolverAlDashboard">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary py-2 fw-bold w-75" disabled="@enviando">
+                            @if (enviando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Registrando voto...</span>
+                            }
+                            else
+                            {
+                                <span>Confirmar Voto</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int VotacionId { get; set; }
+
+    private VotacionPopularDisponibleResponse? votacionSeleccionada;
+    private object formModel = new();
+    private List<int> proyectosSeleccionados = new();
+
+    private bool cargando = true;
+    private bool enviando = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Session.Usuario is not Juez)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        try
+        {
+            // Usamos votanteId = 0 ya que es un juez
+            votacionSeleccionada = await PopularService.ObtenerProyectosParaVotarAsync(VotacionId, 0);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "No se pudo cargar la votación.";
+            Logger.LogError(ex, "Error cargando votación popular para juez.");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void AlternarProyecto(int proyectoId, bool seleccionado)
+    {
+        if (votacionSeleccionada is null) return;
+        errorMessage = null;
+
+        if (seleccionado)
+        {
+            if (proyectosSeleccionados.Contains(proyectoId)) return;
+
+            if (proyectosSeleccionados.Count >= votacionSeleccionada.MaxSelection)
+            {
+                errorMessage = $"Solo puedes seleccionar hasta {votacionSeleccionada.MaxSelection} proyecto(s).";
+                return;
+            }
+            proyectosSeleccionados.Add(proyectoId);
+        }
+        else
+        {
+            proyectosSeleccionados.Remove(proyectoId);
+        }
+    }
+
+    private async Task EmitirVotoJuezAsync()
+    {
+        if (votacionSeleccionada is null) return;
+
+        errorMessage = null;
+        enviando = true;
+
+        try
+        {
+            var request = new EmitirVotoPopularRequest
+            {
+                VotacionId = votacionSeleccionada.VotacionId,
+                JuezId = Session.Usuario!.Id,
+                VotanteId = 0,
+                Email = string.Empty,
+                ProyectosSeleccionadosIds = proyectosSeleccionados.ToList(),
+                Anonimo = false
+            };
+
+            await VotoPopularService.EmitirVotoPopularAsync(request);
+            successMessage = "¡Voto popular registrado correctamente!";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogError(ex, "Error emitiendo voto popular de experto.");
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+
+    private void VolverAlDashboard() => Nav.NavigateTo($"/juez/dashboard");
+}

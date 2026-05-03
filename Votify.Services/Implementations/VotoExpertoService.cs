@@ -38,7 +38,7 @@ namespace Votify.Services.Implementations
                 throw new InvalidOperationException("Ya has dejado un comentario en este proyecto.");
 
             double puntuacionBase = 0.0;
-            bool esAnonimo = true;
+            bool esAnonimo = false;
             string? hash = null;
 
             if (esAnonimo)
