@@ -89,6 +89,15 @@ namespace Votify.Persistence.Repositories
                 .OrderByDescending(v => v.Fecha)
                 .ToListAsync();
         }
+
+        public async Task<VotoExperto?> ObtenerVotoExpertoAsync(int juezId, int proyectoId, int votacionId)
+        {
+            return await _context.Votos
+                .OfType<VotoExperto>()
+                .FirstOrDefaultAsync(v => v.JuezId == juezId &&
+                                          v.ProyectoId == proyectoId &&
+                                          v.VotacionId == votacionId);
+        }
         public async Task<Dictionary<string, string>> ObtenerMapaJuecesAsync()
         {
             return await _context.Miembros.OfType<Juez>()

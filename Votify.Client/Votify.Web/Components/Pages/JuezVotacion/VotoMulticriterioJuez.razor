@@ -1,0 +1,227 @@
+﻿@page "/juez/voto-multicriterio/{VotacionId:int}"
+@rendermode InteractiveServer
+@using Votify.Core.Models
+@using Votify.Services.Interfaces
+@using Votify.Services.Models
+@using Votify.Web.Services
+
+@inject IVotoMulticriterioService MulticriterioService
+@inject UserSession Session
+@inject NavigationManager Nav
+@inject ILogger<VotoMulticriterioJuez> Logger
+
+<div class="container py-4" style="max-width:720px">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Evaluación Técnica (Jurado)</h2>
+        <p class="text-muted small mb-0">Evalúa cada proyecto basándote en los criterios del baremo oficial.</p>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="d-flex align-items-center gap-2 text-muted">
+            <span class="spinner-border spinner-border-sm"></span>
+            <span>Cargando matriz de evaluación...</span>
+        </div>
+    }
+    else if (votacion is null)
+    {
+        <div class="alert alert-danger rounded-3">@errorMessage</div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1 text-primary">@votacion.CategoriaNombre</h4>
+                    <span class="badge bg-primary-subtle text-primary">@votacion.Criterios.Count Criterios de evaluación</span>
+                </div>
+                <div class="text-end">
+                    <span class="text-muted small d-block">Juez ID: @Session.Usuario?.Id</span>
+                    <span class="fw-bold">@Session.Usuario?.Name</span>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger rounded-3">@errorMessage</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success rounded-3">@successMessage</div>
+            }
+
+            @if (string.IsNullOrWhiteSpace(successMessage))
+            {
+                <EditForm Model="@formModel" OnValidSubmit="@EmitirVotoJuezAsync">
+                    <DataAnnotationsValidator />
+
+                    @foreach (var proyecto in votacion.Proyectos)
+                    {
+                        <div class="card mb-4 border-1 shadow-sm rounded-4">
+                            <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+                                <h5 class="fw-bold mb-0">📁 @proyecto.Name</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    @foreach (var criterio in votacion.Criterios)
+                                    {
+                                        <div class="col-12 col-md-6">
+                                            <div class="p-3 rounded-3" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="fw-semibold small" style="line-height: 1.2;">@criterio.Nombre</span>
+                                                    <input type="number"
+                                                           class="form-control form-control-sm fw-bold text-center"
+                                                           style="width: 80px;"
+                                                           min="0" max="10"
+                                                           value="@ObtenerPuntuacion(proyecto.Id, criterio.Id)"
+                                                           @onchange="e => ActualizarPuntuacion(proyecto.Id, criterio.Id, e.Value?.ToString())" />
+                                                </div>
+                                                <small class="text-muted d-block" style="font-size: 0.75rem;">Peso: @criterio.Peso pts</small>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex gap-3">
+                        <button type="button" class="btn btn-outline-secondary py-2 fw-bold w-25" @onclick="VolverAlDashboard">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary py-2 fw-bold w-75" disabled="@enviando">
+                            @if (enviando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Registrando evaluación...</span>
+                            }
+                            else
+                            {
+                                <span>Confirmar Evaluación Técnica</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            }
+            else
+            {
+                <button class="btn btn-primary mt-3" @onclick="VolverAlDashboard">Volver al Dashboard</button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int VotacionId { get; set; }
+
+    private VotacionMulticriterioDetalleResponse? votacion;
+    private object formModel = new();
+    private Dictionary<int, Dictionary<int, int>> puntuaciones = new();
+
+    private bool cargando = true;
+    private bool enviando = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Seguridad: Verificar que realmente sea un juez
+        if (Session.Usuario is not Juez)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        try
+        {
+            votacion = await MulticriterioService.ObtenerDetallePorIdAsync(VotacionId);
+
+            if (votacion?.Proyectos != null && votacion.Criterios != null)
+            {
+                foreach (var p in votacion.Proyectos)
+                {
+                    puntuaciones[p.Id] = new Dictionary<int, int>();
+                    foreach (var c in votacion.Criterios)
+                    {
+                        puntuaciones[p.Id][c.Id] = 0;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "No se pudo cargar la matriz de evaluación.";
+            Logger.LogError(ex, "Error cargando la matriz multicriterio para el juez.");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private int ObtenerPuntuacion(int proyectoId, int criterioId)
+    {
+        if (puntuaciones.ContainsKey(proyectoId) && puntuaciones[proyectoId].ContainsKey(criterioId))
+            return puntuaciones[proyectoId][criterioId];
+
+        return 0;
+    }
+
+    private void ActualizarPuntuacion(int proyectoId, int criterioId, string? valor)
+    {
+        if (int.TryParse(valor, out var num))
+        {
+            if (num > 10) num = 10;
+            if (num < 0) num = 0;
+
+            if (puntuaciones.ContainsKey(proyectoId))
+            {
+                puntuaciones[proyectoId][criterioId] = num;
+            }
+        }
+    }
+
+    private async Task EmitirVotoJuezAsync()
+    {
+        errorMessage = null;
+        enviando = true;
+
+        try
+        {
+            var juezId = Session.Usuario!.Id; // Ya sabemos que es juez por la validación inicial
+
+            var request = new EmitirVotoMulticriterioRequest
+            {
+                VotacionId = VotacionId,
+                JuezId = juezId, // Directamente asignamos el ID del juez
+                VotanteId = 0,
+                Email = string.Empty, // El juez no necesita confirmación por email para esto
+                Puntuaciones = puntuaciones,
+                Anonimo = false // El voto del experto suele ser nominal para auditoría interna
+            };
+
+            await MulticriterioService.EmitirVotoMulticriterioAsync(request);
+
+            successMessage = "¡Evaluación registrada correctamente en el sistema!";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Logger.LogError(ex, "Error emitiendo evaluación de experto.");
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+
+    private void VolverAlDashboard()
+    {
+        // Asumiendo que guardamos el EventoId en el estado o lo pasamos por ruta,
+        // aquí volveríamos al EventoJuez.razor
+        Nav.NavigateTo($"/juez/dashboard");
+    }
+}
