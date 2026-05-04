@@ -2,11 +2,11 @@
 
 namespace Votify.Web.Services
 {
-    public class NoctificacionBackgroundService : BackgroundService
+    public class NotificacionBackgroundService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
 
-        public NoctificacionBackgroundService(IServiceProvider serviceProvider)
+        public NotificacionBackgroundService(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
         }
@@ -26,11 +26,13 @@ namespace Votify.Web.Services
                     try
                     {
                         await cronService.ProcesarAperturasDeVotacionAsync();
+                        await cronService.ProcesarRecordatoriosCierreAsync();
+                        await cronService.ProcesarCierresDeVotacionAsync();
                     }
                     catch (Exception ex)
                     {
                         // Aquí en el futuro puedes meter un ILogger para registrar errores
-                        Console.WriteLine($"Error en el Vigilante: {ex.Message}");
+                        Console.WriteLine($"Error en el Timer de Notificación: {ex.Message}");
                     }
                 }
 

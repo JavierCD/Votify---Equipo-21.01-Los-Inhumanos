@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Votify.Persistence.Context;
@@ -11,9 +12,11 @@ using Votify.Persistence.Context;
 namespace Votify.Persistence.Migrations
 {
     [DbContext(typeof(VotifyContext))]
-    partial class VotifyContextModelSnapshot : ModelSnapshot
+    [Migration("20260504011841_FlagsNotificacionCierre")]
+    partial class FlagsNotificacionCierre
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -357,9 +360,6 @@ namespace Votify.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("NombresEquipo")
-                        .HasColumnType("text");
-
                     b.Property<int>("ParticipanteId")
                         .HasColumnType("integer");
 
@@ -367,9 +367,6 @@ namespace Votify.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(21)
                         .HasColumnType("character varying(21)");
-
-                    b.Property<string>("UrlMaterialesExternos")
-                        .HasColumnType("text");
 
                     b.Property<bool>("Visible")
                         .HasColumnType("boolean");
