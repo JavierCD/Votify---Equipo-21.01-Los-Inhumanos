@@ -88,32 +88,25 @@ namespace Votify.Services.Implementations
             var detalles = await _unitOfWork.VotoExpertoRepository.ObtenerEvaluacionesPorProyectoYCriterioAsync(proyectoId, criterioId);
             var comentariosJuez = await _unitOfWork.VotoExpertoRepository.ObtenerComentariosJuezPorProyectoAsync(proyectoId);
 
-           
-            var jueces = await _unitOfWork.VotoExpertoRepository.ObtenerMapaJuecesAsync();
-
             
-            var comentariosPorEmail = comentariosJuez
-                .Where(c => c.Juez != null)
-                .GroupBy(c => c.Juez!.Email.ToLower())
+            var comentariosPorJuezId = comentariosJuez
+                .Where(c => c.JuezId.HasValue)
+                .GroupBy(c => c.JuezId!.Value)
                 .ToDictionary(g => g.Key, g => g.First().Comentario);
 
             return detalles.Select(d =>
             {
-                var email = (d.Voto is VotoPublico vp) ? vp.Votante?.Email ?? "" : "";
-
+                var ve = d.Voto as VotoExperto;
                 string? comentario = null;
-                string nombreJuez = email;
 
-                if (!string.IsNullOrEmpty(email))
+                if (ve?.JuezId.HasValue == true)
                 {
-                    comentariosPorEmail.TryGetValue(email.ToLower(), out comentario);
-                    jueces.TryGetValue(email.ToLower(), out var nombre);
-                    nombreJuez = nombre ?? email;
+                    comentariosPorJuezId.TryGetValue(ve.JuezId!.Value, out comentario);
                 }
 
                 return new EvaluacionJuezResponse
                 {
-                    NombreJuez = nombreJuez,
+                    NombreJuez = ve?.Juez?.Name ?? "Juez anónimo",
                     Puntuacion = d.Puntuacion,
                     Comentario = comentario,
                     Fecha = d.Voto.Fecha
