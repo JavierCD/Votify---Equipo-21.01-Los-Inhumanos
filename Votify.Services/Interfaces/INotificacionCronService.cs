@@ -10,5 +10,7 @@ namespace Votify.Services.Interfaces
     public interface INotificacionCronService
     {
         Task ProcesarAperturasDeVotacionAsync();
+        Task ProcesarRecordatoriosCierreAsync();
+        Task ProcesarCierresDeVotacionAsync();
     }
 }
