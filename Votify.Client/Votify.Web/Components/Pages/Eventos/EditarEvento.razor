@@ -124,7 +124,7 @@
                                     {
                                         <p class="text-muted small">Aún no hay votación configurada.</p>
                                         <button class="btn btn-sm btn-outline-primary w-100"
-                                                @onclick='() => NavigationManager.NavigateTo($"/voto-popular/{categoria.Id}")'>
+                                                @onclick='() => NavigationManager.NavigateTo($"/voto-popular/{evento.Id}/{categoria.Id}")'>
                                             Configurar Votación
                                         </button>
                                     }

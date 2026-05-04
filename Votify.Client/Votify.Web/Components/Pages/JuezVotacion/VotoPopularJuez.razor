@@ -10,6 +10,7 @@
 @inject UserSession Session
 @inject NavigationManager Nav
 @inject ILogger<VotoPopularJuez> Logger
+@inject IJSRuntime JSRuntime
 
 <div class="container py-4" style="max-width:680px">
     <div class="mb-4">
@@ -198,5 +199,9 @@
         }
     }
 
-    private void VolverAlDashboard() => Nav.NavigateTo($"/juez/dashboard");
+    private async Task VolverAlDashboard()
+    {
+        
+        await JSRuntime.InvokeVoidAsync("history.back");
+    }
 }
