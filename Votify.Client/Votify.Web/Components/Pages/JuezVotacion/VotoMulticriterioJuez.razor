@@ -4,6 +4,7 @@
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
 @using Votify.Web.Services
+@inject IJSRuntime JSRuntime
 
 @inject IVotoMulticriterioService MulticriterioService
 @inject UserSession Session
@@ -218,10 +219,8 @@
         }
     }
 
-    private void VolverAlDashboard()
+    private async Task VolverAlDashboard()
     {
-        // Asumiendo que guardamos el EventoId en el estado o lo pasamos por ruta,
-        // aquí volveríamos al EventoJuez.razor
-        Nav.NavigateTo($"/juez/dashboard");
+        await JSRuntime.InvokeVoidAsync("history.back");
     }
 }
