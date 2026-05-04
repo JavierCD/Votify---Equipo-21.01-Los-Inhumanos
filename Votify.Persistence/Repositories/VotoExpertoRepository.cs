@@ -52,18 +52,12 @@ namespace Votify.Persistence.Repositories
 
         public async Task<IEnumerable<DetalleVoto>> ObtenerEvaluacionesPorProyectoYCriterioAsync(int proyectoId, int criterioId)
         {
-            var emailsJueces = await _context.Miembros.OfType<Juez>()
-                .Select(j => j.Email)
-                .ToListAsync();
-
             return await _context.Set<DetalleVoto>()
                 .Include(d => d.Voto)
-                    .ThenInclude(v => (v as VotoPublico)!.Votante)
+                    .ThenInclude(v => (v as VotoExperto)!.Juez)
                 .Where(d => d.ProyectoId == proyectoId
                           && d.CriterioId == criterioId
-                          && d.Voto is VotoPublico
-                          && ((VotoPublico)d.Voto).Votante != null
-                          && emailsJueces.Contains(((VotoPublico)d.Voto).Votante!.Email))
+                          && d.Voto is VotoExperto)
                 .OrderByDescending(d => d.Voto.Fecha)
                 .ToListAsync();
         }
