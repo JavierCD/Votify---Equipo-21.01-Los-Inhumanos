@@ -46,7 +46,7 @@ namespace Votify.Services.Implementations
             {
                 // 3. INSERT: No existe nada aún. Creamos el voto de cero en modo "cascarón".
                 double puntuacionBase = 0.0;
-                bool esAnonimo = true;
+                bool esAnonimo = false;
                 string? hash = null;
 
                 if (esAnonimo)
