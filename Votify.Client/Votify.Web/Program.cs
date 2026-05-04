@@ -66,9 +66,10 @@ builder.Services.AddScoped<IEmailTemplateBuilder, EmailTemplateBuilder>();
 builder.Services.AddScoped<IVotacionService, VotacionService>();
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 builder.Services.AddScoped<INotificacionCronService, NotificacionCronService>();
-builder.Services.AddHostedService<NoctificacionBackgroundService>();
+builder.Services.AddHostedService<NotificacionBackgroundService>();
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddSingleton<INotificacionSingletone, NotificacionSingletone>();
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
 
 builder.Services.AddSingleton<UserSession>();

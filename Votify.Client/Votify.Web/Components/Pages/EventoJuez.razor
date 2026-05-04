@@ -1,5 +1,7 @@
 ﻿@page "/juez/evento/{EventoId:int}"
 @rendermode InteractiveServer
+@implements IDisposable
+
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Core.Interfaces
@@ -8,6 +10,7 @@
 @inject IVotoExpertoServices VotoExpertoService
 @inject NavigationManager Nav
 @inject Votify.Web.Services.UserSession Session
+@inject INotificacionSingletone RealTimeNotifier
 
 <div class="container py-4" style="max-width: 900px;">
     @* --- CABECERA DEL EVENTO --- *@
@@ -150,6 +153,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        RealTimeNotifier.OnVotacionCerrada += HandleVotacionCerrada;
         try
         {
             evento = await EventoService.ObtenerEventoConDetallesAsync(EventoId);
@@ -177,6 +181,27 @@
         {
             cargando = false;
         }
+    }
+
+    private void HandleVotacionCerrada(int votacionId)
+    {
+        // Buscamos si la votación que acaba de cerrar está en la pantalla actual
+        var categoria = categorias.FirstOrDefault(c => c.Votacion?.Id == votacionId);
+
+        if (categoria?.Votacion != null)
+        {
+            // Cambiamos el estado en memoria para que el HTML reaccione
+            categoria.Votacion.EstaCerrada = true;
+            categoria.Votacion.Estado = "Cerrada";
+
+            // Forzamos el repintado de la UI inmediatamente
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        RealTimeNotifier.OnVotacionCerrada -= HandleVotacionCerrada;
     }
 
     private async Task GuardarComentario(int proyectoId, int categoriaId)
@@ -208,33 +233,43 @@
     {
         if (categoria.Votacion != null)
         {
-            string url = "";
-            string texto = "";
-            string clase = "btn-success";
-
-            if (categoria.Votacion is Multicriterio)
+            // AÑADIMOS LA RESTRICCIÓN VISUAL
+            if (categoria.Votacion.EstaCerrada || categoria.Votacion.Estado == "Cerrada")
             {
-                url = $"/juez/voto-multicriterio/{categoria.Votacion.Id}";
-                texto = "Evaluar Matriz";
-            }
-            else if (categoria.Votacion is Puntuacion)
-            {
-                url = $"/juez/voto-puntuacion/{categoria.Votacion.Id}";
-                texto = "Asignar Puntos";
-                clase = "btn-warning text-dark";
-            }
-            else if (categoria.Votacion is Popular)
-            {
-                url = $"/juez/voto-popular/{categoria.Votacion.Id}";
-                texto = "Votar Proyectos";
-                clase = "btn-info text-white";
-            }
-
-            if (!string.IsNullOrEmpty(url))
-            {
-                <button class="btn @clase btn-sm fw-bold shadow-sm px-3" @onclick="() => Nav.NavigateTo(url)">
-                    @texto ➔
+                <button class="btn btn-secondary btn-sm fw-bold shadow-sm px-3" disabled>
+                    🔒 Votación Cerrada
                 </button>
+            }
+            else
+            {
+                string url = "";
+                string texto = "";
+                string clase = "btn-success";
+
+                if (categoria.Votacion is Multicriterio)
+                {
+                    url = $"/juez/voto-multicriterio/{categoria.Votacion.Id}";
+                    texto = "Evaluar Matriz";
+                }
+                else if (categoria.Votacion is Puntuacion)
+                {
+                    url = $"/juez/voto-puntuacion/{categoria.Votacion.Id}";
+                    texto = "Asignar Puntos";
+                    clase = "btn-warning text-dark";
+                }
+                else if (categoria.Votacion is Popular)
+                {
+                    url = $"/juez/voto-popular/{categoria.Votacion.Id}";
+                    texto = "Votar Proyectos";
+                    clase = "btn-info text-white";
+                }
+
+                if (!string.IsNullOrEmpty(url))
+                {
+                    <button class="btn @clase btn-sm fw-bold shadow-sm px-3" @onclick="() => Nav.NavigateTo(url)">
+                        @texto ➔
+                    </button>
+                }
             }
         }
         else
