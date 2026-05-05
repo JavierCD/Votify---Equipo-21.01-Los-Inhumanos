@@ -46,12 +46,14 @@ namespace Votify.Services.Implementations
                 VotacionId = votacion.Id,
                 CategoriaNombre = votacion.Categoria?.Name ?? "Categoría Sin Nombre",
                 Estado = votacion.Estado,
+                PermiteAutoVoto = votacion.PermiteAutoVoto,
                 Proyectos = votacion.Categoria?.Proyectos?
                     .Where(p => p.Visible)
                     .Select(p => new VotacionMulticriterioDetalleResponse.ProyectoDto
                     {
                         Id = p.Id,
-                        Name = p.Name
+                        Name = p.Name,
+                        ParticipanteId = p.ParticipanteId
                     }).ToList() ?? new(),
                 Criterios = votacion.Criterios?
                     .Select(c => new VotacionMulticriterioDetalleResponse.CriterioBaremoDto
@@ -73,8 +75,11 @@ namespace Votify.Services.Implementations
             if (!votacion.PuedeVotar(DateTime.UtcNow))
                 throw new InvalidOperationException("La votación no está abierta en este momento.");
 
-            var yaVoto = await _unitOfWork.VotoMulticriterioRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
-            if (yaVoto) throw new Exception("Este correo ya ha emitido una evaluación para esta categoría.");
+            if (!string.IsNullOrWhiteSpace(request.Email) && votacion.RestriccionVotoUnico)
+            {
+                var yaVoto = await _unitOfWork.VotoMulticriterioRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
+                if (yaVoto) throw new Exception("Este correo ya ha emitido una evaluación para esta categoría.");
+            }
 
             Votante? votanteFinal = null;
 
