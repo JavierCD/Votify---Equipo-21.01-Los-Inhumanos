@@ -33,10 +33,12 @@ namespace Votify.Services.Implementations
                 CategoriaNombre = votacion.Categoria?.Name ?? "Sin categoría",
                 Estado = votacion.Estado,
                 ValorMax = votacion.ValorMax,
+                PermiteAutoVoto = votacion.PermiteAutoVoto,
                 Proyectos = proyectos.Select(p => new ProyectoVotacionPopularResponse
                 {
                     Id = p.Id,
-                    Name = p.Name
+                    Name = p.Name,
+                    ParticipanteId = p.ParticipanteId
                 }).ToList()
             };
         }

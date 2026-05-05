@@ -13,6 +13,8 @@ namespace Votify.Services.Models
         public string CategoriaNombre { get; set; } = string.Empty;
         public string Estado { get; set; } = string.Empty;
         public int ValorMax { get; set; }
+        public int ParticipanteId { get; set; }
+        public bool PermiteAutoVoto { get; set; }
         public List<ProyectoVotacionPopularResponse> Proyectos { get; set; } = new();
     }
 }
