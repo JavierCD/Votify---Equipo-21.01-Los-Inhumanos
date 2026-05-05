@@ -78,12 +78,42 @@ else
                     <RadzenRow Gap="2rem">
                         @* MÉTRICAS Y COMENTARIOS *@
                         <RadzenColumn Size="12" SizeLG="4">
-                            <div class="bg-light p-3 rounded rz-mb-3 text-center border">
-                                <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mb-1">Total Puntos / Votos</RadzenText>
-                                <RadzenText TextStyle="TextStyle.H2" class="fw-bold rz-color-info rz-m-0">
-                                    @(proyecto.Votos?.Sum(v => v.PuntuacionBase) ?? 0)
-                                </RadzenText>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                        @foreach (var categoria in proyecto.Categorias ?? new List<Categoria>())
+                        {
+                            var votacion = categoria.Votacion;
+                            if (votacion == null) continue;
+
+                            var esMulticriterio = votacion is Multicriterio;
+                            var votosProyecto = proyecto.Votos?
+                                .Where(v => v.VotacionId == votacion.Id)
+                                .ToList() ?? new List<Voto>();
+
+                            string metricaLabel;
+                            string metricaValor;
+
+                            if (esMulticriterio)
+                            {
+                                var mc = votacion as Multicriterio;
+                                var puntuacionPonderada = CalcularPuntuacionMulticriterio(votosProyecto, mc);
+                                metricaLabel = "Puntuación Ponderada (0-10)";
+                                metricaValor = puntuacionPonderada.ToString("F2");
+                            }
+                            else
+                            {
+                                var total = votosProyecto.Sum(v => v.PuntuacionBase);
+                                var conteo = votosProyecto.Count;
+                                metricaLabel = votacion is Puntuacion ? "Puntuación Total" : "Votos Recibidos";
+                                metricaValor = votacion is Popular ? conteo.ToString() : total.ToString("F1");
+                            }
+
+                            <div class="bg-light p-3 rounded rz-mb-2 text-center border">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mb-1">@metricaLabel</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H2" class="fw-bold rz-color-info rz-m-0">@metricaValor</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" class="text-muted">@categoria.Name</RadzenText>
                             </div>
+                        }
+                    </RadzenStack>
 
                             <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                                 <RadzenButton Text="Editar Participación" Icon="edit_note" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" class="w-100" Click="@(() => NavManager.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}"))" />
@@ -136,7 +166,6 @@ else
                     </RadzenText>
 
                     @{
-                        // LINQ potente y seguro para buscar si alguna votación de este proyecto ya ha publicado resultados
                         var categoriasCerradas = proyecto.Categorias?
                         .Where(c => c.Votacion?.ResultadosPublicados == true)
                         .ToList() ?? new List<Categoria>();
@@ -153,13 +182,47 @@ else
                         <RadzenRow Gap="1.5rem">
                             @foreach (var categoria in categoriasCerradas)
                             {
-                                var ranking = categoria.Votacion!.Votos
-                                .GroupBy(v => v.Proyecto)
-                                .Select(g => new { Proyecto = g.Key, Votos = g.Count() })
-                                .OrderByDescending(x => x.Votos)
-                                .ToList();
+                                var esMulticriterio = categoria.Votacion is Multicriterio;
+                                var mc = categoria.Votacion as Multicriterio;
 
-                                var miPosicion = ranking.FindIndex(r => r.Proyecto?.Id == proyecto.Id) + 1;
+                                List<dynamic> ranking;
+                                if (esMulticriterio)
+                                {
+                                    ranking = categoria.Proyectos
+                                        .Select(p => new
+                                        {
+                                            Proyecto = p,
+                                            Puntuacion = CalcularPuntuacionMulticriterio(
+                                                p.Votos?.Where(v => v.VotacionId == categoria.Votacion.Id).ToList() ?? new List<Voto>(),
+                                                mc)
+                                        })
+                                        .OrderByDescending(x => x.Puntuacion)
+                                        .Cast<dynamic>()
+                                        .ToList();
+                                }
+                                else
+                                {
+                                    ranking = categoria.Votacion!.Votos
+                                        .GroupBy(v => v.Proyecto)
+                                        .Select(g => new
+                                        {
+                                            Proyecto = g.Key,
+                                            Votos = categoria.Votacion is Popular ? g.Count() : (object)g.Sum(v => v.PuntuacionBase)
+                                        })
+                                        .OrderByDescending(x => x.Votos)
+                                        .Cast<dynamic>()
+                                        .ToList();
+                                }
+
+                                int miPosicion;
+                                if (esMulticriterio)
+                                {
+                                    miPosicion = ranking.FindIndex(r => ((dynamic)r).Proyecto?.Id == proyecto.Id) + 1;
+                                }
+                                else
+                                {
+                                    miPosicion = ranking.FindIndex(r => ((dynamic)r).Proyecto?.Id == proyecto.Id) + 1;
+                                }
 
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <div class="p-3 bg-light rounded border">
@@ -167,14 +230,27 @@ else
                                         <ul class="list-group list-group-flush mb-3 shadow-sm rounded">
                                             @for (int i = 0; i < Math.Min(3, ranking.Count); i++)
                                             {
-                                                var pos = ranking[i];
+                                                var pos = (dynamic)ranking[i];
                                                 bool esMio = pos.Proyecto?.Id == proyecto.Id;
+                                                string badgeTexto;
+                                                if (esMulticriterio)
+                                                {
+                                                    badgeTexto = $"{((double)pos.Puntuacion):F2} pts";
+                                                }
+                                                else if (categoria.Votacion is Popular)
+                                                {
+                                                    badgeTexto = $"{(int)pos.Votos} votos";
+                                                }
+                                                else
+                                                {
+                                                    badgeTexto = $"{((double)pos.Votos):F1} pts";
+                                                }
 
                                                 <li class="list-group-item d-flex justify-content-between align-items-center @(esMio ? "bg-warning bg-opacity-25 fw-bold" : "")">
                                                     <span>
                                                         <strong class="me-2">@(i + 1)º</strong> @(pos.Proyecto?.Name ?? "Anónimo")
                                                     </span>
-                                                    <span class="badge bg-primary rounded-pill">@pos.Votos pts</span>
+                                                    <span class="badge bg-primary rounded-pill">@badgeTexto</span>
                                                 </li>
                                             }
                                         </ul>
@@ -234,13 +310,9 @@ else
     async Task AbrirCertificado(Proyecto proyecto, Categoria categoria, int posicion)
     {
         var nombreEquipo = proyecto.Name;
-
-        // 👇 como no tienes integrantes reales
         var integrantes = new List<string> { participante!.Name };
-
         var integrantesString = string.Join(";", integrantes);
-
-       var evento = categoria.Name;
+        var evento = categoria.Name;
 
         await JS.InvokeVoidAsync(
             "open",
@@ -251,6 +323,43 @@ else
             $"&evento={Uri.EscapeDataString(evento)}",
             "_blank"
         );
+    }
+
+    private double CalcularPuntuacionMulticriterio(List<Voto> votos, Multicriterio? votacion)
+    {
+        if (votacion == null || votacion.Criterios == null || !votacion.Criterios.Any())
+            return 0;
+
+        double sumaPonderada = 0;
+        int votosValidos = 0;
+
+        foreach (var voto in votos)
+        {
+            if (!voto.Detalles.Any()) continue;
+
+            double puntajeVoto = 0;
+            double pesoTotalUsado = 0;
+
+            foreach (var detalle in voto.Detalles)
+            {
+                var criterio = votacion.Criterios.FirstOrDefault(c => c.Id == detalle.CriterioId);
+                if (criterio != null && criterio.Peso > 0)
+                {
+                    puntajeVoto += detalle.Puntuacion * (criterio.Peso / 100.0);
+                    pesoTotalUsado += criterio.Peso;
+                }
+            }
+
+            if (pesoTotalUsado > 0 && pesoTotalUsado < 100)
+            {
+                puntajeVoto = puntajeVoto * (100.0 / pesoTotalUsado);
+            }
+
+            sumaPonderada += puntajeVoto;
+            votosValidos++;
+        }
+
+        return votosValidos > 0 ? sumaPonderada / votosValidos : 0;
     }
 }
 
