@@ -13,6 +13,7 @@ using Votify.Web.Services;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 // ==========================================
 // 1. CONFIGURACIÓN DE SERVICIOS (CONTENEDOR)
@@ -70,10 +71,29 @@ builder.Services.AddHostedService<NoctificacionBackgroundService>();
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
+builder.Services.AddScoped<ICertificadoService, CertificadoService>();
 
 builder.Services.AddSingleton<UserSession>();
 
 var app = builder.Build();
+app.MapGet("/certificado", (
+    string nombreEquipo,
+    string integrantes,
+    string posicion,
+    string evento,
+    ICertificadoService certificadoService) =>
+{
+    var listaIntegrantes = integrantes.Split(';').ToList();
+
+    var pdf = certificadoService.GenerarCertificado(
+        nombreEquipo,
+        listaIntegrantes,
+        posicion,
+        evento
+    );
+
+    return Results.File(pdf, "application/pdf");
+});
 
 if (app.Environment.IsDevelopment())
 {

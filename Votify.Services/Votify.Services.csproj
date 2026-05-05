@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Votify.Core\Votify.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="QuestPDF" Version="2026.2.4" />
+  </ItemGroup>
+
 </Project>
