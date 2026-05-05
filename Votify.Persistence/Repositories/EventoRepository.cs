@@ -22,6 +22,7 @@ namespace Votify.Persistence.Repositories
                 .Include(e => e.Organizador)
                 .Include(e => e.CategoriasEvento)
                     .ThenInclude(c => c.Premios)
+                .Include(e => e.Jurado)
                 .Include(e => e.CategoriasEvento)
                     .ThenInclude(c => c.Votacion)
                         .ThenInclude(v => v.Votos)

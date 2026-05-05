@@ -33,29 +33,40 @@ namespace Votify.Services.Implementations
             if (string.IsNullOrWhiteSpace(comentario))
                 throw new ArgumentException("El comentario no puede estar vacío.");
 
-            bool yaComento = await _unitOfWork.VotoExpertoRepository.YaComentoPorProyectoAsync(juezId, proyectoId, categoriaId);
-            if (yaComento)
-                throw new InvalidOperationException("Ya has dejado un comentario en este proyecto.");
+            // 1. Buscamos si ya existe el registro (porque el juez pudo haber votado primero)
+            var votoExistente = await _unitOfWork.VotoExpertoRepository.ObtenerVotoExpertoAsync(juezId, proyectoId, votacionId);
 
-            double puntuacionBase = 0.0;
-            bool esAnonimo = true;
-            string? hash = null;
-
-            if (esAnonimo)
+            if (votoExistente != null)
             {
-                hash = Convert.ToHexString(
-                    SHA256.HashData(
-                        Encoding.UTF8.GetBytes($"{votacionId}-{juezId}-VotifySecretSalt2026")
-                    )
-                ).Substring(0, 16);
+                // 2. UPDATE: Ya existe. Solo le inyectamos/actualizamos el comentario.
+                votoExistente.Comentario = comentario;
+                // Al estar trackeado por Entity Framework, el SaveChangesAsync de abajo hará un UPDATE automático.
+            }
+            else
+            {
+                // 3. INSERT: No existe nada aún. Creamos el voto de cero en modo "cascarón".
+                double puntuacionBase = 0.0;
+                bool esAnonimo = false;
+                string? hash = null;
+
+                if (esAnonimo)
+                {
+                    hash = Convert.ToHexString(
+                        SHA256.HashData(
+                            Encoding.UTF8.GetBytes($"{votacionId}-{juezId}-VotifySecretSalt2026")
+                        )
+                    ).Substring(0, 16);
+                }
+
+                var creador = new VotoExpertoCreator();
+                var nuevoVoto = creador.CrearVoto(votacionId, proyectoId, puntuacionBase, esAnonimo, hash, comentario);
+
+                nuevoVoto.AsignarEmisorId(juezId);
+
+                // Guardamos el nuevo cascarón (Asegúrate de que este método en tu repo hace un .Add())
+                await _unitOfWork.VotoExpertoRepository.GuardarComentarioAsync(nuevoVoto);
             }
 
-            var creador = new VotoExpertoCreator();
-            var voto = creador.CrearVoto(votacionId, proyectoId, puntuacionBase, esAnonimo, hash, comentario);
-
-            voto.AsignarEmisorId(juezId);
-
-            await _unitOfWork.VotoExpertoRepository.GuardarComentarioAsync(voto);
             await _unitOfWork.SaveChangesAsync();
         }
 
@@ -77,32 +88,25 @@ namespace Votify.Services.Implementations
             var detalles = await _unitOfWork.VotoExpertoRepository.ObtenerEvaluacionesPorProyectoYCriterioAsync(proyectoId, criterioId);
             var comentariosJuez = await _unitOfWork.VotoExpertoRepository.ObtenerComentariosJuezPorProyectoAsync(proyectoId);
 
-           
-            var jueces = await _unitOfWork.VotoExpertoRepository.ObtenerMapaJuecesAsync();
-
             
-            var comentariosPorEmail = comentariosJuez
-                .Where(c => c.Juez != null)
-                .GroupBy(c => c.Juez!.Email.ToLower())
+            var comentariosPorJuezId = comentariosJuez
+                .Where(c => c.JuezId.HasValue)
+                .GroupBy(c => c.JuezId!.Value)
                 .ToDictionary(g => g.Key, g => g.First().Comentario);
 
             return detalles.Select(d =>
             {
-                var email = (d.Voto is VotoPublico vp) ? vp.Votante?.Email ?? "" : "";
-
+                var ve = d.Voto as VotoExperto;
                 string? comentario = null;
-                string nombreJuez = email;
 
-                if (!string.IsNullOrEmpty(email))
+                if (ve?.JuezId.HasValue == true)
                 {
-                    comentariosPorEmail.TryGetValue(email.ToLower(), out comentario);
-                    jueces.TryGetValue(email.ToLower(), out var nombre);
-                    nombreJuez = nombre ?? email;
+                    comentariosPorJuezId.TryGetValue(ve.JuezId!.Value, out comentario);
                 }
 
                 return new EvaluacionJuezResponse
                 {
-                    NombreJuez = nombreJuez,
+                    NombreJuez = ve?.Juez?.Name ?? "Juez anónimo",
                     Puntuacion = d.Puntuacion,
                     Comentario = comentario,
                     Fecha = d.Voto.Fecha

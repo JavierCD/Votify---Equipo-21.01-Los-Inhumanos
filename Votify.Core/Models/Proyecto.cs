@@ -24,6 +24,10 @@ namespace Votify.Core.Models
         public int ParticipanteId { get; set; }
         public Participante? Participante { get; set; }
 
+        // Editar Proyecto: Campos adicionales que se pueden mostrar en el formulario de edición
+        public string? NombresEquipo { get; set; }
+        public string? UrlMaterialesExternos { get; set; }
+
         // Propiedad de navegación MUCHOS A MUCHOS
         // Un proyecto puede estar nominado a varias categorías, y una categoría tiene varios proyectos
         public List<Categoria> Categorias { get; set; } = new List<Categoria>();
