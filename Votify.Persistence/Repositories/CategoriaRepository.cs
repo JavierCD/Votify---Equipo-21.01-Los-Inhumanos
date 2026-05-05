@@ -20,13 +20,17 @@ namespace Votify.Persistence.Repositories
 
         public async Task<Categoria?> ObtenerCategoriaConVotacionYVotosAsync(int categoriaId)
         {
-            // Aquí es donde SÍ es legal usar EF Core, IQueryable e Includes
             return await _context.Categorias
                 .Include(c => c.Votacion)
                     .ThenInclude(v => v.Votos)
                         .ThenInclude(v => v.Proyecto)
                 .Include(c => c.Votacion)
                     .ThenInclude(v => v.Votos)
+                        .ThenInclude(v => v.Detalles)
+                .Include(c => c.Votacion)
+                    .ThenInclude(v => ((Multicriterio)v).Criterios)
+                .Include(c => c.Premios)
+                .Include(c => c.Proyectos)
                 .FirstOrDefaultAsync(c => c.Id == categoriaId);
         }
 

@@ -13,6 +13,7 @@ namespace Votify.Services.Models
         public string ProyectoNombre { get; set; } = string.Empty;
         public string CategoriaNombre { get; set; } = string.Empty;
         public string TipoVotacion { get; set; } = string.Empty;
+        public string TipoVotante { get; set; } = string.Empty;
         public string IdentificadorVotante { get; set; } = string.Empty;
         public bool EsAnonimo { get; set; }
     }
