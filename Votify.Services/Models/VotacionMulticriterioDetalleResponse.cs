@@ -13,11 +13,14 @@ namespace Votify.Services.Models
         public string Estado { get; set; } = string.Empty;
         public List<ProyectoDto> Proyectos { get; set; } = new();
         public List<CriterioBaremoDto> Criterios { get; set; } = new();
+        public bool PermiteAutoVoto { get; set; }
+        public int ParticipanteId { get; set; }
 
         public class ProyectoDto
         {
             public int Id { get; set; }
             public string Name { get; set; } = string.Empty;
+            public int ParticipanteId { get; set; }
         }
 
         public class CriterioBaremoDto

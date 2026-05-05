@@ -25,6 +25,8 @@ namespace Votify.Services.Implementations
                 FechaApertura = request.FechaApertura,
                 FechaCierre = request.FechaCierre,
                 Estado = request.Estado,
+                PermiteAutoVoto = request.PermiteAutoVoto,              
+                RestriccionVotoUnico = request.RestriccionVotoUnico,
                 Criterios = request.Criterios.Select(c => new Criterio
                 {
                     Name = c.Nombre,

@@ -236,6 +236,14 @@
         {
             votacion = await MulticriterioService.ObtenerDetallePorIdAsync(VotacionId);
 
+            // Filtrar proyectos propios si no se permite autovoto
+            if (Session.Usuario is Participante participanteLogueado)
+            {
+                votacion.Proyectos = votacion.Proyectos
+                    .Where(p => votacion.PermiteAutoVoto || p.ParticipanteId != participanteLogueado.Id)
+                    .ToList();
+            }
+
             if (votacion != null && votacion.Proyectos != null && votacion.Criterios != null)
             {
                 foreach (var p in votacion.Proyectos)
