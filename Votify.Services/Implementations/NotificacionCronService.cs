@@ -42,9 +42,12 @@ namespace Votify.Services.Implementations
                 var evento = votacion.Categoria?.Evento;
                 if (evento == null || evento.Jurado == null) continue;
 
-                var juecesAvisables = evento.Jurado.Where(j => j.QuiereRecibirNotificaciones).ToList();
+                var juecesSinVotar = evento.Jurado;
+                   // .Where(j => j.QuiereRecibirNotificaciones &&
+                  //   !_context.Votos.Any(v => v.VotacionId == votacion.Id && v.VotanteId == j.Id))
+                  //  .ToList();
 
-                foreach (var juez in juecesAvisables)
+                foreach (var juez in juecesSinVotar)
                 {
                     var url = $"/juez/evento/{evento.Id}";
 
@@ -57,7 +60,7 @@ namespace Votify.Services.Implementations
 
                     await _unitOfWork.Notificaciones.AddAsync(notificacion);
                 }
-
+               
                 votacion.NotificacionAperturaEnviada = true;
                 votacion.Estado = "Abierta";
                 await _unitOfWork.Votaciones.UpdateAsync(votacion);
