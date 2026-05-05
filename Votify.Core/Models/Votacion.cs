@@ -26,6 +26,10 @@ namespace Votify.Core.Models
         public bool RestriccionVotoUnico { get; set; } = false;
         public bool PermiteAutoVoto { get; set; } =false;
 
+        //Notis
+        public bool NotificacionRecordatorioEnviada { get; set; } = false;
+        public bool NotificacionCierreEnviada { get; set; } = false;
+
         public void CerrarVotacion()
         {
             if (EstaCerrada) throw new InvalidOperationException("La votación ya está cerrada");

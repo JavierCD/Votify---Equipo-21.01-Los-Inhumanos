@@ -1,4 +1,4 @@
-﻿@page "/voto-popular/{CategoriaId:int}"
+﻿@page "/voto-popular/{EventoId:int}/{CategoriaId:int}"
 @rendermode InteractiveServer
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
@@ -9,15 +9,21 @@
 @inject NavigationManager NavigationManager
 @inject ILogger<VotoPopular> Logger
 @inject IMulticriterioService MulticriterioService
+@inject IJSRuntime JSRuntime
 
 <div class="container py-4" style="max-width:620px">
 
     <div class="mb-4">
-        <h2 class="fw-bold mb-1">
-            Nueva votación
-            <span class="badge bg-primary ms-2" style="font-size:0.7rem;vertical-align:middle">Admin</span>
-        </h2>
-        <p class="text-muted small mb-0">Configura los parámetros de la votación pública para una categoría.</p>
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h2 class="fw-bold mb-1">
+                    Nueva votación
+                    <span class="badge bg-primary ms-2" style="font-size:0.7rem;vertical-align:middle">Admin</span>
+                </h2>
+                <p class="text-muted small mb-0">Configura los parámetros de la votación pública para una categoría.</p>
+            </div>
+            <RadzenButton Text="Volver" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="VolverAtras" />
+        </div>
 
         <div class="mt-4">
             <label class="form-label fw-semibold small text-uppercase text-muted">Tipo de votación</label>
@@ -410,6 +416,9 @@
     [Parameter]
     public int CategoriaId { get; set; }
 
+    [Parameter]
+    public int EventoId { get; set; }
+
     private string tipoVotacion = "Popular";
     private bool isLoading = false;
     private string? successMessage;
@@ -476,8 +485,8 @@
             successMessage = $"Votación popular creada correctamente con ID {response.Id}.";
             LimpiarFormularioPopular();
             await Task.Delay(1500);
-            NavigationManager.NavigateTo($"/eventos/editar/{CategoriaId}");
-        }
+            NavigationManager.NavigateTo($"/eventos/editar/{EventoId}");
+        } // <--- FALTABA ESTA LLAVE
         catch (ArgumentException ex)
         {
             errorMessage = ex.Message;
@@ -543,8 +552,8 @@
                 ValorMax = 10
             };
             await Task.Delay(1500);
-            NavigationManager.NavigateTo($"/eventos/editar/{CategoriaId}");
-        }
+            NavigationManager.NavigateTo($"/eventos/editar/{EventoId}");
+        } // <--- FALTABA ESTA LLAVE
         catch (Exception ex)
         {
             errorMessage = $"Error inesperado: {ex.Message}";
@@ -612,9 +621,9 @@
                 PermiteAutoVoto = false;
                 PermiteVotoMultiple = false;
                 await Task.Delay(1500);
-                NavigationManager.NavigateTo($"/eventos/editar/{CategoriaId}");
+                NavigationManager.NavigateTo($"/eventos/editar/{EventoId}");
             }
-        }
+        } // <--- FALTABA ESTA LLAVE (te habías comido la del try entero, solo tenías la del if)
         catch (Exception ex)
         {
             errorMessage = $"Error al guardar: {ex.Message}";
@@ -623,6 +632,11 @@
         {
             isLoading = false;
         }
+    }
+
+    private async Task VolverAtras()
+    {
+        await JSRuntime.InvokeVoidAsync("history.back");
     }
 
     // --- RENDER FRAGMENTS ---

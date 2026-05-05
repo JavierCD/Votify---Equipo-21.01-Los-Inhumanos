@@ -103,43 +103,74 @@ namespace Votify.Services.Implementations
                 ? new VotoExpertoCreator()
                 : new VotoPublicoCreator();
 
-            var votos = request.PuntuacionesPorProyecto.Select(kvp =>
-            {
-                string? hash = null;
-                if (request.Anonimo)
-                {
-                    hash = Convert.ToHexString(
-                        SHA256.HashData(
-                            Encoding.UTF8.GetBytes($"{request.VotacionId}-{kvp.Key}-{DateTime.UtcNow.Ticks}")
-                        )
-                    ).Substring(0, 16);
-                }
+            List<Voto> votosAInsertar = new List<Voto>();
 
-                var voto = creadorVoto.CrearVoto(
-                    request.VotacionId,
-                    kvp.Key,
-                    kvp.Value,
-                    request.Anonimo,
-                    hash
+            // 1. Iteramos por cada puntuación que el juez/usuario ha enviado
+            foreach (var kvp in request.PuntuacionesPorProyecto)
+            {
+                int proyectoId = kvp.Key;
+                double puntuacion = kvp.Value;
+
+                // 2. UPSERT: Buscamos si ya existe el cascarón (el comentario previo)
+                Voto? papeleta = votacion.Votos?.FirstOrDefault(v =>
+                    v.ProyectoId == proyectoId &&
+                    (
+                        (esJuez && v is VotoExperto ve && ve.JuezId == request.JuezId!.Value) ||
+                        (!esJuez && v is VotoPublico vp && vp.VotanteId == (votanteFinal != null ? votanteFinal.Id : request.VotanteId))
+                    )
                 );
 
-                if (esJuez)
+                if (papeleta != null)
                 {
-                    voto.AsignarEmisorId(request.JuezId!.Value);
-                }
-                else if (votanteFinal != null)
-                {
-                    voto.AsignarEmisorId(votanteFinal.Id);
+                    // 3A. UPDATE: El voto o comentario ya existe. Solo le inyectamos la puntuación.
+                    papeleta.PuntuacionBase = puntuacion;
+                    // Entity Framework detectará el cambio y hará un UPDATE al hacer SaveChangesAsync
                 }
                 else
                 {
-                    voto.AsignarEmisorId(request.VotanteId);
+                    // 3B. INSERT: No hay nada previo. Creamos el voto de cero.
+                    string? hash = null;
+                    if (request.Anonimo)
+                    {
+                        hash = Convert.ToHexString(
+                            SHA256.HashData(
+                                Encoding.UTF8.GetBytes($"{request.VotacionId}-{proyectoId}-{DateTime.UtcNow.Ticks}")
+                            )
+                        ).Substring(0, 16);
+                    }
+
+                    papeleta = creadorVoto.CrearVoto(
+                        request.VotacionId,
+                        proyectoId,
+                        puntuacion,
+                        request.Anonimo,
+                        hash
+                    );
+
+                    if (esJuez)
+                    {
+                        papeleta.AsignarEmisorId(request.JuezId!.Value);
+                    }
+                    else if (votanteFinal != null)
+                    {
+                        papeleta.AsignarEmisorId(votanteFinal.Id);
+                    }
+                    else
+                    {
+                        papeleta.AsignarEmisorId(request.VotanteId);
+                    }
+
+                    votosAInsertar.Add(papeleta);
                 }
+            }
 
-                return voto;
-            }).ToList();
+            // 4. Solo insertamos los que sean totalmente nuevos
+            if (votosAInsertar.Any())
+            {
+                await _unitOfWork.VotoPuntuacionRepository.GuardarVotosAsync(votosAInsertar);
+            }
 
-            await _unitOfWork.VotoPuntuacionRepository.GuardarVotosAsync(votos);
+            // Guardamos todos los cambios (Updates e Inserts)
             await _unitOfWork.SaveChangesAsync();
         }
     }

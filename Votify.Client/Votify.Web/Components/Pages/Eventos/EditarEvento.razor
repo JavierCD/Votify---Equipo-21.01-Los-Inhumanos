@@ -124,7 +124,7 @@
                                     {
                                         <p class="text-muted small">Aún no hay votación configurada.</p>
                                         <button class="btn btn-sm btn-outline-primary w-100"
-                                                @onclick='() => NavigationManager.NavigateTo($"/voto-popular/{categoria.Id}")'>
+                                                @onclick='() => NavigationManager.NavigateTo($"/voto-popular/{evento.Id}/{categoria.Id}")'>
                                             Configurar Votación
                                         </button>
                                     }
@@ -339,6 +339,10 @@
                                                         <RadzenIcon Icon="visibility" Style="font-size: 16px;" /> Ver Ficha
                                                     </button>
                                                 }
+                                                <button class="btn btn-sm btn-outline-primary me-1 mb-1" title="Editar ficha del proyecto"
+                                                        @onclick='() => NavigationManager.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}")'>
+                                                    <RadzenIcon Icon="description" Style="font-size: 16px;" /> Proyecto
+                                                </button>
                                                 <button class="btn btn-sm btn-outline-danger">Descalificar</button>
                                             </td>
                                         </tr>

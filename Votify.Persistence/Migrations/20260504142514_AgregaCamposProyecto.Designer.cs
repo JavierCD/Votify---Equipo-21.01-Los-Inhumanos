@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Votify.Persistence.Context;
@@ -11,9 +12,11 @@ using Votify.Persistence.Context;
 namespace Votify.Persistence.Migrations
 {
     [DbContext(typeof(VotifyContext))]
-    partial class VotifyContextModelSnapshot : ModelSnapshot
+    [Migration("20260504142514_AgregaCamposProyecto")]
+    partial class AgregaCamposProyecto
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -419,12 +422,6 @@ namespace Votify.Persistence.Migrations
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("NotificacionAperturaEnviada")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("NotificacionCierreEnviada")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("NotificacionRecordatorioEnviada")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("PermiteAutoVoto")

@@ -1,0 +1,386 @@
+﻿@page "/participante/editar-proyecto/{ProyectoId:int}"
+@rendermode InteractiveServer
+
+@using Votify.Services.Interfaces
+@using Votify.Services.DTOs
+@using Votify.Web.Services
+
+@inject IProyectoService ProyectoService
+@inject NavigationManager NavManager
+@inject NotificationService NotificationService
+@inject UserSession Session
+
+<PageTitle>Ficha del Proyecto - Votify</PageTitle>
+
+@if (cargando)
+{
+    <div class="container py-5 text-center">
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        <p class="text-muted mt-3">Cargando proyecto...</p>
+    </div>
+}
+else if (dto != null)
+{
+    var correoParticipante = Session.Usuario?.Email ?? "No disponible";
+
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+            <div>
+                <h2 class="fw-bold text-dark mb-0">Gestión del Proyecto</h2>
+                <p class="text-muted mb-0">Consulta o actualiza la información de tu participación.</p>
+            </div>
+            <RadzenButton Text="Volver" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Click="Volver" />
+        </div>
+
+        <RadzenRow Gap="2rem">
+            @* --- COLUMNA IZQUIERDA: CONTEXTO E INFORMACIÓN (Siempre visible) --- *@
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenCard class="rz-shadow-3 rounded-4 border-0" Style="border-top: 5px solid var(--rz-info);">
+                    <h5 class="fw-bold mb-4 text-uppercase" style="letter-spacing: 1px; font-size: 0.9rem;">Detalles de Inscripción</h5>
+
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" class="text-muted text-uppercase fw-bold mb-1 d-block">Evento</RadzenText>
+                            <div class="d-flex align-items-center gap-2">
+                                <RadzenIcon Icon="event" Style="color: var(--rz-primary);" />
+                                <span class="fw-semibold">@dto.NombreEvento</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" class="text-muted text-uppercase fw-bold mb-1 d-block">Categoría Oficial</RadzenText>
+                            <div class="d-flex align-items-center gap-2">
+                                <RadzenIcon Icon="category" Style="color: var(--rz-secondary);" />
+                                <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@dto.NombreCategoria" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" class="text-muted text-uppercase fw-bold mb-1 d-block">Especialidad</RadzenText>
+                            <div class="d-flex align-items-center gap-2">
+                                <RadzenIcon Icon="star" Style="color: gold;" />
+                                <span>@dto.Especialidad</span>
+                            </div>
+                        </div>
+
+                        <hr class="my-1" />
+
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" class="text-muted text-uppercase fw-bold mb-2 d-block">Contactos</RadzenText>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Tu correo de registro:</small>
+                                <div class="d-flex align-items-center gap-2 bg-light p-2 rounded border">
+                                    <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                                    <span style="font-size: 0.85rem;" class="fw-semibold">@correoParticipante</span>
+                                </div>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Soporte / Administrador:</small>
+                                <div class="d-flex align-items-center gap-2 bg-light p-2 rounded border">
+                                    <RadzenIcon Icon="support_agent" Style="font-size: 1rem;" />
+                                    <span style="font-size: 0.85rem;" class="fw-semibold">@dto.CorreoAdmin</span>
+                                </div>
+                            </div>
+                        </div>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            @* --- COLUMNA DERECHA: FICHA DEL PROYECTO (Lectura / Edición) --- *@
+            <RadzenColumn Size="12" SizeMD="8">
+
+                @if (modoEdicion)
+                {
+                    @* ------------------- MODO EDICIÓN ------------------- *@
+                    <RadzenCard class="rz-shadow-3 rounded-4 border-0 p-4 p-md-5" Style="border-top: 4px solid var(--rz-success);">
+
+                        <div class="mb-4">
+                            <h4 class="fw-bold d-flex align-items-center gap-2 text-success">
+                                <RadzenIcon Icon="edit_document" /> Editando Proyecto
+                            </h4>
+                        </div>
+
+                        <RadzenTemplateForm TItem="ProyectoEdicionDto" Data="@dto" Submit="GuardarCambios">
+                            <div class="mb-4">
+                                <RadzenLabel Text="Título del Proyecto *" class="fw-bold mb-2" />
+                                <RadzenTextBox @bind-Value="dto.Nombre" class="w-100 rz-border-radius-2" Name="Nombre" />
+                                <RadzenRequiredValidator Component="Nombre" Text="El título es obligatorio" Style="position: absolute; font-size: 0.8rem;" />
+                            </div>
+
+                            <div class="mb-4 mt-4">
+                                <RadzenLabel Text="Descripción del Proyecto" class="fw-bold mb-2" />
+                                <RadzenTextArea @bind-Value="dto.Descripcion" class="w-100 rz-border-radius-2" Rows="5" />
+                            </div>
+
+                            <div class="mb-4">
+                                <RadzenLabel Text="Integrantes del Equipo" class="fw-bold mb-2" />
+                                <RadzenTextBox @bind-Value="dto.NombresEquipo" Placeholder="Ana, Carlos, Luis..." class="w-100 rz-border-radius-2" />
+                                <small class="text-muted"><RadzenIcon Icon="info" Style="font-size: 14px;" /> Separa los nombres por comas.</small>
+                            </div>
+
+                            <div class="mb-4">
+                                <RadzenLabel Text="Enlaces a Materiales" class="fw-bold mb-2" />
+                                <RadzenTextArea @bind-Value="dto.UrlMateriales" Placeholder="URL de Drive, GitHub, YouTube... separados por espacio o coma." class="w-100 rz-border-radius-2" Rows="3" />
+                                <small class="text-muted"><RadzenIcon Icon="public" Style="font-size: 14px;" /> Asegúrate de que sean enlaces públicos.</small>
+                            </div>
+
+                            <div class="d-flex justify-content-end align-items-center pt-4 border-top mt-4 gap-3">
+                                <RadzenButton Text="Cancelar" ButtonStyle="ButtonStyle.Light" Click="CancelarEdicion" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar Cambios" Icon="save" ButtonStyle="ButtonStyle.Success" IsBusy="guardando" class="px-4" />
+                            </div>
+                        </RadzenTemplateForm>
+                    </RadzenCard>
+                }
+                else
+                {
+                    @* ------------------- MODO LECTURA ------------------- *@
+                    <RadzenCard class="rz-shadow-3 rounded-4 border-0 p-4 p-md-5">
+
+                        @* Cabecera con botón de editar si tiene permisos *@
+                        <div class="d-flex justify-content-between align-items-start mb-4 border-bottom pb-3">
+                            <div>
+                                <h3 class="fw-bold text-dark mb-1">@dto.Nombre</h3>
+                            </div>
+                            @if (puedeEditar)
+                            {
+                                <RadzenButton Text="Editar" Icon="edit" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="() => modoEdicion = true" />
+                            }
+                        </div>
+
+                        @* Descripción *@
+                        <div class="mb-5">
+                            <h6 class="fw-bold text-secondary mb-2">Descripción</h6>
+                            @if (string.IsNullOrWhiteSpace(dto.Descripcion))
+                            {
+                                <p class="text-muted fst-italic">No se ha proporcionado una descripción detallada.</p>
+                            }
+                            else
+                            {
+                                <p style="white-space: pre-wrap; line-height: 1.6;">@dto.Descripcion</p>
+                            }
+                        </div>
+
+                        <RadzenRow Gap="2rem">
+                            @* Chips del Equipo *@
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <h6 class="fw-bold text-secondary mb-3"><RadzenIcon Icon="groups" class="me-1" /> Equipo del Proyecto</h6>
+                                @{
+                                    var integrantes = ProcesarIntegrantes(dto.NombresEquipo);
+                                }
+
+                                @if (!integrantes.Any())
+                                {
+                                    <span class="text-muted small">No se especificaron integrantes extra.</span>
+                                }
+                                else
+                                {
+                                    <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                                        @foreach (var persona in integrantes)
+                                        {
+                                            <div class="badge bg-light text-dark border p-2 px-3 rounded-pill d-flex align-items-center">
+                                                <RadzenIcon Icon="person" Style="font-size: 16px;" class="me-1 text-primary" /> @persona
+                                            </div>
+                                        }
+                                    </RadzenStack>
+                                }
+                            </RadzenColumn>
+
+                            @* Enlaces Inteligentes *@
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <h6 class="fw-bold text-secondary mb-3"><RadzenIcon Icon="link" class="me-1" /> Materiales Adjuntos</h6>
+                                @{
+                                    var enlaces = ProcesarEnlaces(dto.UrlMateriales);
+                                }
+
+                                @if (!enlaces.Any())
+                                {
+                                    <span class="text-muted small">No hay materiales adjuntos disponibles.</span>
+                                }
+                                else
+                                {
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.8rem">
+                                        @foreach (var enlace in enlaces)
+                                        {
+                                            <a href="@enlace.Url" target="_blank" class="text-decoration-none">
+                                                <div class="d-flex align-items-center p-2 rounded border bg-light link-hover-effect">
+                                                    <RadzenIcon Icon="@enlace.Icono" class="me-2" Style="@($"color: {enlace.Color}; font-size: 24px;")" />
+                                                    <span class="fw-bold text-dark flex-grow-1" style="font-size: 0.9rem;">@enlace.Texto</span>
+                                                    <RadzenIcon Icon="open_in_new" Style="font-size: 16px; color: #aaa;" />
+                                                </div>
+                                            </a>
+                                        }
+                                    </RadzenStack>
+                                }
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                    </RadzenCard>
+                }
+            </RadzenColumn>
+        </RadzenRow>
+    </div>
+
+    <style>
+        .link-hover-effect {
+            transition: all 0.2s ease-in-out;
+        }
+
+            .link-hover-effect:hover {
+                background-color: #e9ecef !important;
+                transform: translateX(5px);
+                border-color: var(--rz-primary) !important;
+            }
+    </style>
+}
+
+@code {
+    [Parameter]
+    public int ProyectoId { get; set; }
+
+    private bool cargando = true;
+    private bool guardando = false;
+
+    // Controles de UI
+    private bool modoEdicion = false;
+    private bool puedeEditar = false;
+
+    private ProyectoEdicionDto? dto;
+    // Guardamos una copia para restaurar si cancela
+    private string backupJson = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        cargando = true;
+        try
+        {
+            var usuarioActual = Session.Usuario;
+            if (usuarioActual == null)
+            {
+                NavManager.NavigateTo("/login");
+                return;
+            }
+
+            dto = await ProyectoService.ObtenerProyectoParaEdicionAsync(ProyectoId);
+
+            if (dto == null)
+            {
+                NavManager.NavigateTo("/404");
+                return;
+            }
+
+            // Validamos seguridad usando el DTO
+            string rolUsuario = usuarioActual.GetType().Name;
+            puedeEditar = (rolUsuario == "Administrador" || dto.ParticipanteId == usuarioActual.Id);
+
+            // Guardamos un backup por si le da a "Cancelar"
+            backupJson = System.Text.Json.JsonSerializer.Serialize(dto);
+        }
+        catch (Exception)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = "No se pudo cargar la información." });
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void CancelarEdicion()
+    {
+        // Restauramos los datos originales
+        if (!string.IsNullOrEmpty(backupJson))
+        {
+            dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoEdicionDto>(backupJson);
+        }
+        modoEdicion = false;
+    }
+
+    private async Task GuardarCambios(ProyectoEdicionDto modelo)
+    {
+        guardando = true;
+        try
+        {
+            string rolUsuario = Session.Usuario?.GetType().Name ?? "Participante";
+            int usuarioId = Session.Usuario?.Id ?? 0;
+
+            bool exito = await ProyectoService.ActualizarProyectoAsync(
+                dto!.Id,
+                usuarioId,
+                rolUsuario,
+                dto.Nombre,
+                dto.Descripcion,
+                dto.NombresEquipo,
+                dto.UrlMateriales
+            );
+
+            if (exito)
+            {
+                NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "¡Actualizado!", Detail = "Los datos se han guardado correctamente.", Duration = 4000 });
+                // Actualizamos el backup con lo nuevo
+                backupJson = System.Text.Json.JsonSerializer.Serialize(dto);
+                modoEdicion = false;
+            }
+        }
+        catch (Exception)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = "Ocurrió un problema al guardar.", Duration = 5000 });
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void Volver()
+    {
+        // Si el usuario es admin, sería mejor hacer un JSRuntime history.back o llevarlo a /eventos,
+        // pero por defecto lo mandamos al dashboard del participante dueño del proyecto.
+        NavManager.NavigateTo($"/dashboard-participante/{dto?.ParticipanteId}");
+    }
+
+    // --- MAGIA FRONTEND: PARSEADORES DE TEXTO A UI ---
+
+    private List<string> ProcesarIntegrantes(string? rawText)
+    {
+        if (string.IsNullOrWhiteSpace(rawText)) return new List<string>();
+        return rawText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                      .Select(x => x.Trim())
+                      .Where(x => !string.IsNullOrEmpty(x))
+                      .ToList();
+    }
+
+    private List<(string Url, string Icono, string Texto, string Color)> ProcesarEnlaces(string? rawUrls)
+    {
+        var lista = new List<(string, string, string, string)>();
+        if (string.IsNullOrWhiteSpace(rawUrls)) return lista;
+
+        // Separamos por espacios o saltos de línea
+        var urls = rawUrls.Replace(",", " ").Split(new[] { ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var url in urls)
+        {
+            if (!url.StartsWith("http")) continue;
+
+            string linkStr = url.ToLower();
+
+            if (linkStr.Contains("youtube.com") || linkStr.Contains("youtu.be"))
+                lista.Add((url, "smart_display", "Ver Vídeo", "#FF0000"));
+            else if (linkStr.Contains("github.com"))
+                lista.Add((url, "code", "Repositorio", "#24292e"));
+            else if (linkStr.Contains("drive.google.com"))
+                lista.Add((url, "folder_shared", "Archivos Drive", "#1FA463"));
+            else if (linkStr.Contains("figma.com"))
+                lista.Add((url, "draw", "Diseño Figma", "#F24E1E"));
+            else if (linkStr.Contains("linkedin.com"))
+                lista.Add((url, "business_center", "LinkedIn", "#0A66C2"));
+            else
+                lista.Add((url, "language", "Enlace Web", "#479cc8"));
+        }
+        return lista;
+    }
+}

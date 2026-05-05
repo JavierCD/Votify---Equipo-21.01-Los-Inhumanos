@@ -25,6 +25,7 @@ namespace Votify.Persistence.Repositories
             return await _context.Set<Votacion>()
                 .OfType<Puntuacion>()
                 .Include(v => v.Categoria)
+                .Include(v => v.Votos)
                 .FirstOrDefaultAsync(v => v.Id == votacionId);
         }
 
