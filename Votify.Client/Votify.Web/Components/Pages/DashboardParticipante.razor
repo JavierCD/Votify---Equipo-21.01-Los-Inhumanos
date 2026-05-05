@@ -4,9 +4,12 @@
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
 @using Votify.Services.Interfaces
+@using Votify.Web.Services
 
 @inject IParticipanteService ParticipanteService
 @inject NavigationManager NavManager
+@inject IJSRuntime JS
+@inject UserSession UserSession
 
 <PageTitle>Mi Panel - Votify</PageTitle>
 
@@ -178,7 +181,11 @@ else
                                         </ul>
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span>Tu posición: <strong class="fs-5 ms-1">@(miPosicion > 0 ? miPosicion + "º" : "-")</strong></span>
-                                            <RadzenButton Text="Certificado" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Icon="download" />
+                                           <RadzenButton Text="Certificado"
+              Size="ButtonSize.Small"
+              ButtonStyle="ButtonStyle.Secondary"
+              Icon="download"
+              Click="@(() => AbrirCertificado(proyecto, categoria, miPosicion))" />
                                         </div>
                                     </div>
                                 </RadzenColumn>
@@ -195,7 +202,7 @@ else
     [Parameter]
     public int Id { get; set; }
 
-    
+
     private Participante? participante;
     private bool cargando = true;
 
@@ -220,4 +227,34 @@ else
             cargando = false;
         }
     }
+
+@inject IJSRuntime JS
+
+    @code {
+        @code {
+    async Task AbrirCertificado(Proyecto proyecto, Categoria categoria, int posicion)
+    {
+        var nombreEquipo = proyecto.Name;
+
+        // 👇 como no tienes integrantes reales
+        var integrantes = new List<string> { participante!.Name };
+
+        var integrantesString = string.Join(";", integrantes);
+
+       var evento = categoria.Name;
+
+        await JS.InvokeVoidAsync(
+            "open",
+            $"/certificado?" +
+            $"nombreEquipo={Uri.EscapeDataString(nombreEquipo)}" +
+            $"&integrantes={Uri.EscapeDataString(integrantesString)}" +
+            $"&posicion={posicion}" +
+            $"&evento={Uri.EscapeDataString(evento)}",
+            "_blank"
+        );
+    }
+}
+
+}
+
 }

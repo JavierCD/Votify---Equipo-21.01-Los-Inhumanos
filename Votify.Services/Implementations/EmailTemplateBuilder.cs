@@ -14,7 +14,7 @@ namespace Votify.Services.Implementations
         {
             var htmlBuilder = new StringBuilder();
 
-            htmlBuilder.Append($@"
+            htmlBuilder.Append($@"---
             <div style='font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;'>
                 <h2 style='color: #2c3e50; text-align: center;'>Resultados Oficiales</h2>
                 <p>Hola, aquí tienes la clasificación final de la categoría <strong>'{nombreCategoria}'</strong> en la que participaste:</p>
