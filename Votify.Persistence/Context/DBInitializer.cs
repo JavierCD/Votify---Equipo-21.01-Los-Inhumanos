@@ -460,6 +460,11 @@ namespace Votify.Persistence.Context
 
             context.Proyectos.AddRange(techCat1.Concat(techCat2));
             context.SaveChanges();
+
+
+           
         }
+
+
     }
 }
