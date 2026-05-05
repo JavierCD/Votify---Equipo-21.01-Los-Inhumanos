@@ -14,6 +14,7 @@ namespace Votify.Services.Models
         public string Estado { get; set; } = string.Empty;
         public int MaxSelection { get; set; }
         public bool PermiteAutoVoto { get; set; }
+        public int ParticipanteId { get; set; }
         public List<ProyectoVotacionPopularResponse> Proyectos { get; set; } = new();
     }
 }
