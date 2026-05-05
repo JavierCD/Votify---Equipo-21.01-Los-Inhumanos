@@ -296,6 +296,13 @@
         try
         {
             votacionSeleccionada = await PopularService.ObtenerProyectosParaVotarAsync(VotacionId, votanteId);
+            // Filtrar proyectos propios si no se permite autovoto
+            if (votacionSeleccionada != null && Session.Usuario is Participante participanteLogueado)
+            {
+                votacionSeleccionada.Proyectos = votacionSeleccionada.Proyectos
+                    .Where(p => votacionSeleccionada.PermiteAutoVoto || p.ParticipanteId != participanteLogueado.Id)
+                    .ToList();
+            }
         }
         catch (Exception ex)
         {

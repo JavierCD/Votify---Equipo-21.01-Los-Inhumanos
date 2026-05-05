@@ -55,7 +55,8 @@ namespace Votify.Services.Implementations
                 Proyectos = proyectos.Select(p => new ProyectoVotacionPopularResponse
                 {
                     Id = p.Id,
-                    Name = p.Name
+                    Name = p.Name,
+                    ParticipanteId = p.ParticipanteId
                 }).ToList()
             };
         }
