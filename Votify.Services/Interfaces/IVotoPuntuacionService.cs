@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Votify.Services.Models;
+using Votify.Services.Models.Requests;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Interfaces
 {

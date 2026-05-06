@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Votify.Services.Models
+namespace Votify.Services.Models.Responses
 {
     public class AuditoriaVotoResponse
     {

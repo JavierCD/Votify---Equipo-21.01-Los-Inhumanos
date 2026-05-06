@@ -1,10 +1,11 @@
 ﻿@page "/evaluacion-proyecto/{ProyectoId:int}"
 @rendermode InteractiveServer
 
-@using Votify.Core.Models
 @using Votify.Core.Interfaces
+@using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
+@using Votify.Services.Models.Responses
 
 @inject IVotoExpertoServices VotoExpertoService
 @inject IProyectoService ProyectoService

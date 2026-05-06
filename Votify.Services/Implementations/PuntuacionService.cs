@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Interfaces;
-using Votify.Services.Models;
+using Votify.Services.Models.Requests;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Implementations
 {

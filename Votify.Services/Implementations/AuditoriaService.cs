@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Services.Interfaces;
-using Votify.Services.Models;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Implementations
 {
