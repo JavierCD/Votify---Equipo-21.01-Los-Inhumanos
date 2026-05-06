@@ -27,6 +27,7 @@ namespace Votify.Services.Implementations
                 Estado = request.Estado,
                 PermiteAutoVoto = request.PermiteAutoVoto,              
                 RestriccionVotoUnico = request.RestriccionVotoUnico,
+                EnviarNotificacionApertura = request.EnviarNotificacionApertura,
                 Criterios = request.Criterios.Select(c => new Criterio
                 {
                     Name = c.Nombre,

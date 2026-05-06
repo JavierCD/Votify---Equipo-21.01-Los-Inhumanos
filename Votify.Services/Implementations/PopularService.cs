@@ -43,6 +43,7 @@ namespace Votify.Services.Implementations
                 MaxSelection = request.MaxSelection,
                 PermiteAutoVoto = request.PermiteAutoVoto,
                 RestriccionVotoUnico = request.RestriccionVotoUnico,
+                EnviarNotificacionApertura = request.EnviarNotificacionApertura
             };
 
             var creada = await _unitOfWork.PopularRepository.CrearAsync(popular);

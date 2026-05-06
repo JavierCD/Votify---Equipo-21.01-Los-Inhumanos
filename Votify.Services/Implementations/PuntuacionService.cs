@@ -48,6 +48,7 @@ namespace Votify.Services.Implementations
                 ValorMax = request.ValorMax,
                 PermiteAutoVoto=request.PermiteAutoVoto,
                 RestriccionVotoUnico=request.RestriccionVotoUnico,
+                EnviarNotificacionApertura=request.EnviarNotificacionApertura
             };
 
             var resultado = await _unitOfWork.PuntuacionRepository.CrearAsync(puntuacion);

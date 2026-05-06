@@ -3,6 +3,7 @@
 @implements IDisposable
 
 @using Votify.Core.Models
+@using Votify.Services.Implementations.Observers
 @using Votify.Services.Interfaces
 @using Votify.Core.Interfaces
 
@@ -10,7 +11,7 @@
 @inject IVotoExpertoServices VotoExpertoService
 @inject NavigationManager Nav
 @inject Votify.Web.Services.UserSession Session
-@inject INotificacionSingletone RealTimeNotifier
+@inject RealTimeUINotificationObserver RealTimeNotifier
 
 <div class="container py-4" style="max-width: 900px;">
     @* --- CABECERA DEL EVENTO --- *@
