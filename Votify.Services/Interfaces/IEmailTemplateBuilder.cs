@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Votify.Services.Models.DTOs;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Interfaces
 {
     public interface IEmailTemplateBuilder
     {
-        string GenerarTablaResultadosHtml(string nombreCategoria, List<PosicionRankingDto> ranking);
+        string GenerarTablaResultadosHtml(string nombreCategoria, List<PosicionRankingResponse> ranking);
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Votify.Services.Models.DTOs;
+using Votify.Services.Models.Requests;
 
 namespace Votify.Services.Models.Requests
 {
@@ -14,7 +14,7 @@ namespace Votify.Services.Models.Requests
         public DateTime FechaCierre { get; set; }
         public string Estado { get; set; } = "Abierta";
         public bool EnviarNotificacionApertura { get; set; }
-        public List<CriterioDto> Criterios { get; set; } = new();
+        public List<CriterioRequest> Criterios { get; set; } = new();
         public bool PermiteAutoVoto { get; set; } = false;
         public bool RestriccionVotoUnico { get; set; } = false;
     }
