@@ -1,4 +1,5 @@
-﻿using Votify.Services.Interfaces;
+﻿using Votify.Services.Implementations;
+using Votify.Services.Interfaces;
 
 namespace Votify.Web.Services
 {
@@ -21,13 +22,11 @@ namespace Votify.Web.Services
                 // Tenemos que crear un "Scope" artificial para pedir el servicio:
                 using (var scope = _serviceProvider.CreateScope())
                 {
-                    var cronService = scope.ServiceProvider.GetRequiredService<INotificacionCronService>();
+                    var cronDetector = scope.ServiceProvider.GetRequiredService<VotacionStateCronDetector>();
 
                     try
                     {
-                        await cronService.ProcesarAperturasDeVotacionAsync();
-                        await cronService.ProcesarRecordatoriosCierreAsync();
-                        await cronService.ProcesarCierresDeVotacionAsync();
+                        await cronDetector.DetectAndNotifyAsync();
                     }
                     catch (Exception ex)
                     {

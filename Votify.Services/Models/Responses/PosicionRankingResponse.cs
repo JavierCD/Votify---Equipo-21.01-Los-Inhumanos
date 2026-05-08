@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Votify.Services.Models.DTOs
+namespace Votify.Services.Models.Responses
 {
-    public class PosicionRankingDto
+    public class PosicionRankingResponse
     {
         public int Posicion { get; set; }
         public string NombreProyecto { get; set; } = string.Empty;

@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Votify.Services.Models.Requests;
 
-namespace Votify.Services.Models
+namespace Votify.Services.Models.Requests
 {
-    public class CrearVotacionPuntuacionRequest
+    public class CrearVotacionMulticriterioRequest
     {
         public int CategoriaId { get; set; }
         public DateTime FechaApertura { get; set; }
         public DateTime FechaCierre { get; set; }
-        public string Estado { get; set; } = string.Empty;
-        public int ValorMax { get; set; }
-        public bool EnviarNotificacionApertura { get; set; } = true;
+        public string Estado { get; set; } = "Abierta";
+        public bool EnviarNotificacionApertura { get; set; }
+        public List<CriterioRequest> Criterios { get; set; } = new();
         public bool PermiteAutoVoto { get; set; } = false;
         public bool RestriccionVotoUnico { get; set; } = false;
     }

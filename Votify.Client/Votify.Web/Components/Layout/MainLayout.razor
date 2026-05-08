@@ -132,7 +132,7 @@
             await RevisarNotificacionesNuevas();
 
             timerConsulta = new Timer(10000); // 10 segundos para pruebas (luego ponlo a 30000)
-            timerConsulta.Elapsed += async (s, e) => await InvokeAsync(RevisarNotificacionesNuevas);
+            timerConsulta.Elapsed += async (s, e) => await RevisarNotificacionesNuevas();
             timerConsulta.AutoReset = true;
             timerConsulta.Enabled = true;
         }
@@ -163,7 +163,7 @@
 
         misNotificaciones = nuevas;
         notificacionesSinLeer = nuevas.Count;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private void LanzarPopupNotificacion(Notificacion n)
@@ -204,11 +204,10 @@
         Navigation.NavigateTo(n.UrlAccion);
     }
 
-    void Logout()
+    async Task Logout()
     {
-        Session.Usuario = null;
+        await InvokeAsync(() => Session.Usuario = null);
         Navigation.NavigateTo("/", forceLoad: true);
-
     }
 
     public void Dispose()

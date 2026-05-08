@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Votify.Services.Models
+namespace Votify.Services.Models.Requests
 {
     public class CrearEventoRequest
     {
@@ -24,6 +24,6 @@ namespace Votify.Services.Models
         public DateTime FechaFin { get; set; } = DateTime.Today.AddDays(7);
 
         // Aquí guardaremos las categorías dinámicas
-        public List<CategoriaViewModel> Categorias { get; set; } = new List<CategoriaViewModel>();
+        public List<CategoriaViewRequest> Categorias { get; set; } = new List<CategoriaViewRequest>();
     }
 }

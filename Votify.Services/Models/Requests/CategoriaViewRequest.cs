@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Votify.Services.Models
+namespace Votify.Services.Models.Requests
 {
-    public class CategoriaViewModel
+    public class CategoriaViewRequest
     {
         [Required(ErrorMessage = "El nombre es obligatorio")]
         public string Nombre { get; set; } = string.Empty;

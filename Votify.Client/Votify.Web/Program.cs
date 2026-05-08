@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Radzen;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Persistence.Context;
 using Votify.Persistence.UnitOfWork;
 using Votify.Services.Implementations;
+using Votify.Services.Implementations.Observers;
 using Votify.Services.Interfaces;
 using Votify.UI;
 using Votify.Web.Components;
@@ -66,15 +68,24 @@ builder.Services.AddScoped<IResultadosService, ResultadosService>();
 builder.Services.AddScoped<IEmailTemplateBuilder, EmailTemplateBuilder>();
 builder.Services.AddScoped<IVotacionService, VotacionService>();
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
-builder.Services.AddScoped<INotificacionCronService, NotificacionCronService>();
+
 builder.Services.AddHostedService<NotificacionBackgroundService>();
-builder.Services.AddScoped<INotificacionService, NotificacionService>();
+
 builder.Services.AddScoped<NotificationService>();
-builder.Services.AddSingleton<INotificacionSingletone, NotificacionSingletone>();
+
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
 builder.Services.AddScoped<ICertificadoService, CertificadoService>();
+builder.Services.AddScoped<INotificacionService, NotificacionService>();
 
-builder.Services.AddSingleton<UserSession>();
+// Observer Pattern - Votacion State Notifications
+builder.Services.AddSingleton<IVotacionStateSubject, VotacionStateSubject>();
+builder.Services.AddScoped<IVotacionStateObserver, AperturaNotificationObserver>();
+builder.Services.AddScoped<IVotacionStateObserver, CierreNotificationObserver>();
+builder.Services.AddScoped<IVotacionStateObserver, RecordatorioObserver>();
+builder.Services.AddSingleton<IVotacionStateObserver, RealTimeUINotificationObserver>();
+builder.Services.AddScoped<VotacionStateCronDetector>();
+
+
 
 var app = builder.Build();
 app.MapGet("/certificado", (

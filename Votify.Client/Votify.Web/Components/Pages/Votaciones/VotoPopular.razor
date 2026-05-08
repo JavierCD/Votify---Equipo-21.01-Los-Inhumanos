@@ -2,7 +2,8 @@
 @rendermode InteractiveServer
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
-@using Votify.Services.Models.DTOs
+@using Votify.Services.Models.Responses
+@using Votify.Services.Models.Requests
 
 @inject IPuntuacionService PuntuacionService
 @inject IPopularService PopularService
@@ -306,19 +307,19 @@
                             </button>
                         </div>
 
-                        <RadzenDataGrid @ref="gridCriterios" Data="@requestMulticriterio.Criterios" TItem="CriterioDto" KeyProperty="Id" EditMode="DataGridEditMode.Single" EmptyText="No hay criterios configurados.">
+                        <RadzenDataGrid @ref="gridCriterios" Data="@requestMulticriterio.Criterios" TItem="CriterioRequest" KeyProperty="IdTemporalUI" EditMode="DataGridEditMode.Single" EmptyText="No hay criterios configurados.">
                             <Columns>
-                                <RadzenDataGridColumn TItem="CriterioDto" Property="Nombre" Title="Nombre">
+                                <RadzenDataGridColumn TItem="CriterioRequest" Property="Nombre" Title="Nombre">
                                     <EditTemplate Context="criterio">
                                         <RadzenTextBox @bind-Value="criterio.Nombre" Style="width:100%" />
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="CriterioDto" Property="Peso" Title="Peso" Width="100px">
+                                <RadzenDataGridColumn TItem="CriterioRequest" Property="Peso" Title="Peso" Width="100px">
                                     <EditTemplate Context="criterio">
                                         <RadzenNumeric @bind-Value="criterio.Peso" Style="width:100%" />
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="CriterioDto" Context="criterio" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
+                                <RadzenDataGridColumn TItem="CriterioRequest" Context="criterio" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
                                     <Template Context="criterio">
                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
                                                       Click="@(args => gridCriterios.EditRow(criterio))" @onclick:stopPropagation="true" />
@@ -435,7 +436,7 @@
 
     // --- MULTICRITERIO STATE ---
     private bool mostrandoConfiguracionMulticriterio = false;
-    private RadzenDataGrid<CriterioDto> gridCriterios;
+    private RadzenDataGrid<CriterioRequest> gridCriterios;
 
     protected override void OnInitialized()
     {
@@ -565,9 +566,9 @@
     }
 
     // --- MÉTODOS MULTICRITERIO ---
-    private void AplicarPlantillaMulticriterio(List<CriterioDto> criteriosSeleccionados)
+    private void AplicarPlantillaMulticriterio(List<CriterioRequest> criteriosSeleccionados)
     {
-        requestMulticriterio.Criterios = criteriosSeleccionados.Select(c => new CriterioDto { Nombre = c.Nombre, Peso = c.Peso }).ToList();
+        requestMulticriterio.Criterios = criteriosSeleccionados.Select(c => new CriterioRequest { Nombre = c.Nombre, Peso = c.Peso }).ToList();
         mostrandoConfiguracionMulticriterio = true;
         successMessage = null;
         errorMessage = null;
@@ -575,13 +576,13 @@
 
     private async Task AñadirFilaCriterio()
     {
-        var nuevo = new CriterioDto { Nombre = "Nuevo Criterio", Peso = 10 };
+        var nuevo = new CriterioRequest { Nombre = "Nuevo Criterio", Peso = 10 };
         requestMulticriterio.Criterios.Add(nuevo);
         await gridCriterios.Reload();
         await gridCriterios.EditRow(nuevo);
     }
 
-    private async Task EliminarCriterio(CriterioDto criterio)
+    private async Task EliminarCriterio(CriterioRequest criterio)
     {
         requestMulticriterio.Criterios.Remove(criterio);
         await gridCriterios.Reload();

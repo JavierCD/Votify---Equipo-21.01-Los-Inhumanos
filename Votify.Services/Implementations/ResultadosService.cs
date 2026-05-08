@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Interfaces;
-using Votify.Services.Models.DTOs;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Implementations
 {
@@ -40,7 +40,7 @@ namespace Votify.Services.Implementations
 
 
 
-            List<PosicionRankingDto> ranking = CalcularRankingConEmpates(categoria);
+            List<PosicionRankingResponse> ranking = CalcularRankingConEmpates(categoria);
 
             for (int i = 0; i < ranking.Count; i++)
             {
@@ -71,12 +71,12 @@ namespace Votify.Services.Implementations
         /// <summary>
         /// Motor de cálculo de posiciones evaluando la regla "PermiteEmpate"
         /// </summary>
-        private List<PosicionRankingDto> CalcularRankingConEmpates(Categoria categoria)
+        private List<PosicionRankingResponse> CalcularRankingConEmpates(Categoria categoria)
         {
             var premios = categoria.Premios.OrderBy(p => p.Posicion).ToList();
             var votacion = categoria.Votacion;
 
-            List<PosicionRankingDto> proyectosPuntuados;
+            List<PosicionRankingResponse> proyectosPuntuados;
 
             if (votacion is Multicriterio mc)
             {
@@ -87,7 +87,7 @@ namespace Votify.Services.Implementations
                             .Where(v => v.ProyectoId == p.Id)
                             .ToList();
                         double puntaje = CalcularPuntuacionMulticriterio(votosProyecto, mc);
-                        return new PosicionRankingDto
+                        return new PosicionRankingResponse
                         {
                             NombreProyecto = p.Name,
                             PuntosTotales = puntaje,
@@ -103,7 +103,7 @@ namespace Votify.Services.Implementations
                 proyectosPuntuados = votacion.Votos
                     .Where(v => v.Proyecto != null)
                     .GroupBy(v => v.Proyecto)
-                    .Select(g => new PosicionRankingDto
+                    .Select(g => new PosicionRankingResponse
                     {
                         NombreProyecto = g.Key!.Name,
                         PuntosTotales = g.Count(),
@@ -118,7 +118,7 @@ namespace Votify.Services.Implementations
                 proyectosPuntuados = votacion.Votos
                     .Where(v => v.Proyecto != null)
                     .GroupBy(v => v.Proyecto)
-                    .Select(g => new PosicionRankingDto
+                    .Select(g => new PosicionRankingResponse
                     {
                         NombreProyecto = g.Key!.Name,
                         PuntosTotales = g.Sum(v => v.PuntuacionBase),

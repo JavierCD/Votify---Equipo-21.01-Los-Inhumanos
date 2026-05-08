@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Votify.Services.DTOs
+namespace Votify.Services.Models.Responses
 {
-    public class ProyectoEdicionDto
+    public class EditarProyectoResponse
     {
-        // Datos para lógica y actualización
         public int Id { get; set; }
-        public int ParticipanteId { get; set; }
-
-        // Datos editables por el usuario
+        // Datos actuales para pre-rellenar el formulario
         public string Nombre { get; set; } = string.Empty;
         public string? Descripcion { get; set; }
         public string? NombresEquipo { get; set; }

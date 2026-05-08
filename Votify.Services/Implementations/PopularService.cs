@@ -1,7 +1,8 @@
 ﻿using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Interfaces;
-using Votify.Services.Models;
+using Votify.Services.Models.Requests;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Implementations
 {
@@ -43,6 +44,7 @@ namespace Votify.Services.Implementations
                 MaxSelection = request.MaxSelection,
                 PermiteAutoVoto = request.PermiteAutoVoto,
                 RestriccionVotoUnico = request.RestriccionVotoUnico,
+                EnviarNotificacionApertura = request.EnviarNotificacionApertura
             };
 
             var creada = await _unitOfWork.PopularRepository.CrearAsync(popular);
