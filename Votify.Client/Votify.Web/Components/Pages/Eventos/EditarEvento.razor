@@ -85,7 +85,7 @@
 
                 <div class="mb-3">
                     <label class="form-label fw-bold">Nombre del Evento</label>
-                    <input type="text" class="form-control" @bind="evento.Name" />
+                    <input type="text" class="form-control" @bind="requestModel.Name" />
                 </div>
                 <div class="row mb-3">
                     <div class="col">
@@ -99,7 +99,7 @@
                 </div>
                 <div class="mb-4">
                     <label class="form-label fw-bold">Descripción / Reglas</label>
-                    <textarea class="form-control" rows="4" @bind="evento.Description"></textarea>
+                    <textarea class="form-control" rows="4" @bind="requestModel.Description"></textarea>
                 </div>
                 <button class="btn btn-primary" @onclick="GuardarDatosGenerales">Guardar Cambios</button>
             </div>
@@ -824,6 +824,10 @@
         try
         {
             if (evento == null) return;
+
+            requestModel.FechaInicio = fechaInicioTemp;
+            requestModel.FechaFin = fechaFinTemp;
+
             await EventoService.ActualizarAsync(requestModel);
             mensajeExito = "Los datos generales del evento se han actualizado correctamente.";
         }
