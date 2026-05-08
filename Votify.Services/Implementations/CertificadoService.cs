@@ -20,14 +20,18 @@ namespace Votify.Services.Implementations
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(30);
-
-                    page.Background("#E8D093"); // fondo dorado suave
+                    page.Background("#F8F4E8"); // fondo dorado suave
 
                     page.Content().Column(col =>
                     {
                         // TÍTULO
-                        col.Item().AlignCenter().Text($"CERTIFICADO DE {posicion} PREMIO")
-                            .FontSize(28).Bold();
+                        col.Item().AlignCenter().Text(text =>
+                        {
+                            text.Span($"CERTIFICADO DE {posicion} PREMIO")
+                                .FontSize(30)
+                                .Bold()
+                                .FontColor("#1E3A5F");
+                        });
 
                         col.Item().LineHorizontal(1);
 
