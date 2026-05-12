@@ -1,7 +1,8 @@
 ﻿@* Votify.Web/Components/Pages/Votaciones/SelectorPlantillasBaremo.razor *@
 @using Votify.Services.Models
 @using Votify.Services.Interfaces
-@using Votify.Services.Models.DTOs
+@using Votify.Services.Models.Requests
+@using Votify.Services.Models.Responses
 @inject IPlantillaBaremoService PlantillaService
 
 <div class="row g-3">
@@ -27,7 +28,8 @@
                         </ul>
                     </div>
 
-                    <button class="btn btn-outline-primary w-100 mt-auto" @onclick="@(() => OnPlantillaSeleccionada.InvokeAsync(plantilla.Criterios))">
+                    @* CORRECCIÓN: Llamamos a un método intermedio para hacer la traducción *@
+                    <button class="btn btn-outline-primary w-100 mt-auto" @onclick="@(() => SeleccionarPlantilla(plantilla))">
                         Elegir plantilla
                     </button>
                 </RadzenCard>
@@ -35,7 +37,7 @@
         }
 
         <div class="col-md-6">
-            <RadzenCard class="h-100 d-flex flex-column align-items-center justify-content-center shadow-sm" style="border: 2px dashed #dee2e6; background-color: #ffffff; cursor:pointer;" @onclick="@(() => OnPlantillaSeleccionada.InvokeAsync(new List<CriterioDto>()))">
+            <RadzenCard class="h-100 d-flex flex-column align-items-center justify-content-center shadow-sm" style="border: 2px dashed #dee2e6; background-color: #ffffff; cursor:pointer;" @onclick="@(() => OnPlantillaSeleccionada.InvokeAsync(new List<CriterioRequest>()))">
                 <div class="text-center">
                     <span style="font-size: 2rem;">📝</span>
                     <h6 class="fw-bold mt-2">Crear desde cero</h6>
@@ -55,14 +57,30 @@
 </div>
 
 @code {
+    // El padre quiere Requests para poder editarlos y enviarlos
     [Parameter]
-    public EventCallback<List<CriterioDto>> OnPlantillaSeleccionada { get; set; }
+    public EventCallback<List<CriterioRequest>> OnPlantillaSeleccionada { get; set; }
 
-    private IEnumerable<PlantillaBaremoDto>? plantillas;
+    // CORRECCIÓN 1: La variable que guarda los datos del servicio debe ser Response
+    private IEnumerable<PlantillaBaremoResponse>? plantillas;
 
     protected override async Task OnInitializedAsync()
     {
-        // Obtenemos los datos del servicio de forma asíncrona
+        // Esto ya no dará error de conversión
         plantillas = await PlantillaService.ObtenerPlantillasPredefinidasAsync();
+    }
+
+    // CORRECCIÓN 2: El método mágico que convierte Responses (lectura) en Requests (escritura)
+    private async Task SeleccionarPlantilla(PlantillaBaremoResponse plantilla)
+    {
+        // Transformamos cada CriterioResponse en un CriterioRequest
+        var listaRequests = plantilla.Criterios.Select(c => new CriterioRequest
+        {
+            Nombre = c.Nombre,
+            Peso = c.Peso
+        }).ToList();
+
+        // Le mandamos los Requests al componente padre
+        await OnPlantillaSeleccionada.InvokeAsync(listaRequests);
     }
 }

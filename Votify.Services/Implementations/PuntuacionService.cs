@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Interfaces;
-using Votify.Services.Models;
+using Votify.Services.Models.Requests;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Implementations
 {
@@ -48,6 +49,7 @@ namespace Votify.Services.Implementations
                 ValorMax = request.ValorMax,
                 PermiteAutoVoto=request.PermiteAutoVoto,
                 RestriccionVotoUnico=request.RestriccionVotoUnico,
+                EnviarNotificacionApertura=request.EnviarNotificacionApertura
             };
 
             var resultado = await _unitOfWork.PuntuacionRepository.CrearAsync(puntuacion);

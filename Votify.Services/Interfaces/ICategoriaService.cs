@@ -1,5 +1,5 @@
 ﻿using Votify.Core.Models;
-using Votify.Services.Models;
+using Votify.Services.Models.Requests;
 
 namespace Votify.Core.Interfaces
 {

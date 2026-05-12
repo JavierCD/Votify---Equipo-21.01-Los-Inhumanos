@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 # Secretos locales
 Votify.API/appsettings.Development.json
+
+*.zip

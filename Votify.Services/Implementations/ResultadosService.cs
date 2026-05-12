@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Interfaces;
-using Votify.Services.Models.DTOs;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Implementations
 {
@@ -40,7 +40,7 @@ namespace Votify.Services.Implementations
 
 
 
-            List<PosicionRankingDto> ranking = CalcularRankingConEmpates(categoria);
+            List<PosicionRankingResponse> ranking = CalcularRankingConEmpates(categoria);
 
             for (int i = 0; i < ranking.Count; i++)
             {
@@ -71,67 +71,129 @@ namespace Votify.Services.Implementations
         /// <summary>
         /// Motor de cálculo de posiciones evaluando la regla "PermiteEmpate"
         /// </summary>
-        private List<PosicionRankingDto> CalcularRankingConEmpates(Categoria categoria)
+        private List<PosicionRankingResponse> CalcularRankingConEmpates(Categoria categoria)
         {
             var premios = categoria.Premios.OrderBy(p => p.Posicion).ToList();
+            var votacion = categoria.Votacion;
 
-            // 1. Agrupar y sumar puntos. 
-            // En caso de empate no permitido, desempataremos por quién se inscribió antes (FechaRegistro)
-            var proyectosPuntuados = categoria.Votacion.Votos
-                .Where(v => v.Proyecto != null)
-                .GroupBy(v => v.Proyecto)
-                .Select(g => new PosicionRankingDto
-                {
-                    NombreProyecto = g.Key!.Name,
-                    PuntosTotales = g.Sum(v => v.PuntuacionBase),
-                    FechaInscripcion = g.Key.FechaRegistro // Usado como criterio de desempate técnico
-                })
-                // Ordenamos por puntos (Descendente) y luego por FechaInscripcion (Ascendente) para casos de empate forzoso
-                .OrderByDescending(x => x.PuntosTotales)
-                .ThenBy(x => x.FechaInscripcion)
-                .ToList();
+            List<PosicionRankingResponse> proyectosPuntuados;
 
-            // 2. Lógica de Asignación de Posiciones
+            if (votacion is Multicriterio mc)
+            {
+                proyectosPuntuados = categoria.Proyectos
+                    .Select(p =>
+                    {
+                        var votosProyecto = votacion.Votos
+                            .Where(v => v.ProyectoId == p.Id)
+                            .ToList();
+                        double puntaje = CalcularPuntuacionMulticriterio(votosProyecto, mc);
+                        return new PosicionRankingResponse
+                        {
+                            NombreProyecto = p.Name,
+                            PuntosTotales = puntaje,
+                            FechaInscripcion = p.FechaRegistro
+                        };
+                    })
+                    .OrderByDescending(x => x.PuntosTotales)
+                    .ThenBy(x => x.FechaInscripcion)
+                    .ToList();
+            }
+            else if (votacion is Popular)
+            {
+                proyectosPuntuados = votacion.Votos
+                    .Where(v => v.Proyecto != null)
+                    .GroupBy(v => v.Proyecto)
+                    .Select(g => new PosicionRankingResponse
+                    {
+                        NombreProyecto = g.Key!.Name,
+                        PuntosTotales = g.Count(),
+                        FechaInscripcion = g.Key.FechaRegistro
+                    })
+                    .OrderByDescending(x => x.PuntosTotales)
+                    .ThenBy(x => x.FechaInscripcion)
+                    .ToList();
+            }
+            else
+            {
+                proyectosPuntuados = votacion.Votos
+                    .Where(v => v.Proyecto != null)
+                    .GroupBy(v => v.Proyecto)
+                    .Select(g => new PosicionRankingResponse
+                    {
+                        NombreProyecto = g.Key!.Name,
+                        PuntosTotales = g.Sum(v => v.PuntuacionBase),
+                        FechaInscripcion = g.Key.FechaRegistro
+                    })
+                    .OrderByDescending(x => x.PuntosTotales)
+                    .ThenBy(x => x.FechaInscripcion)
+                    .ToList();
+            }
+
             int posicionActual = 1;
-            int contadorSaltos = 1; // Para llevar la cuenta real de proyectos evaluados
+            int contadorSaltos = 1;
             double puntosAnterior = double.MaxValue;
 
             foreach (var proyecto in proyectosPuntuados)
             {
                 if (proyecto.PuntosTotales < puntosAnterior)
                 {
-                    // Si tiene menos puntos, baja a la posición del contador real
                     posicionActual = contadorSaltos;
                 }
                 else if (proyecto.PuntosTotales == puntosAnterior)
                 {
-                    // ¡HAY UN EMPATE MATEMÁTICO!
-                    // Buscamos si el premio de la 'posicionActual' admite empate
                     var premioActual = premios.FirstOrDefault(p => p.Posicion == posicionActual);
-
                     if (premioActual != null && !premioActual.PermiteEmpate)
                     {
-                        // REGLA DE NEGOCIO: No se permite empate. 
-                        // Forzamos al proyecto a bajar a la siguiente posición.
-                        // (Como ordenamos por FechaInscripcion, el que se inscribió tarde pierde el empate).
                         posicionActual = contadorSaltos;
                     }
-                    // Si permite empate, 'posicionActual' no cambia y comparten el mismo puesto.
                 }
 
-                // Asignamos la posición calculada
                 proyecto.Posicion = posicionActual;
-
-                // 3. Asignar el nombre del premio ganado (si existe para esa posición)
                 var premioGanado = premios.FirstOrDefault(p => p.Posicion == posicionActual);
                 proyecto.PremioGanado = premioGanado != null ? premioGanado.Name : "Sin premio";
 
-                // Actualizamos variables para la siguiente iteración
                 puntosAnterior = proyecto.PuntosTotales;
                 contadorSaltos++;
             }
 
             return proyectosPuntuados;
+        }
+
+        private double CalcularPuntuacionMulticriterio(List<Voto> votos, Multicriterio votacion)
+        {
+            if (votacion.Criterios == null || !votacion.Criterios.Any())
+                return 0;
+
+            double sumaPonderada = 0;
+            int votosValidos = 0;
+
+            foreach (var voto in votos)
+            {
+                if (!voto.Detalles.Any()) continue;
+
+                double puntajeVoto = 0;
+                double pesoTotalUsado = 0;
+
+                foreach (var detalle in voto.Detalles)
+                {
+                    var criterio = votacion.Criterios.FirstOrDefault(c => c.Id == detalle.CriterioId);
+                    if (criterio != null && criterio.Peso > 0)
+                    {
+                        puntajeVoto += detalle.Puntuacion * (criterio.Peso / 100.0);
+                        pesoTotalUsado += criterio.Peso;
+                    }
+                }
+
+                if (pesoTotalUsado > 0 && pesoTotalUsado < 100)
+                {
+                    puntajeVoto = puntajeVoto * (100.0 / pesoTotalUsado);
+                }
+
+                sumaPonderada += puntajeVoto;
+                votosValidos++;
+            }
+
+            return votosValidos > 0 ? sumaPonderada / votosValidos : 0;
         }
     }
 }

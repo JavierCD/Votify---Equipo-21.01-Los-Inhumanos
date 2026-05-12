@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Interfaces;
-using Votify.Services.DTOs;
+using Votify.Services.Models.Requests;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Implementations
 {
@@ -22,7 +22,6 @@ namespace Votify.Services.Implementations
         public async Task CrearProyectoConCategoriaAsync(Proyecto proyecto, int categoriaId)
         {
             var categoria = await _unitOfWork.Categorias.GetByIdAsync(categoriaId);
-
             if (categoria != null)
             {
                 proyecto.AgregarCategoria(categoria);
@@ -37,39 +36,38 @@ namespace Votify.Services.Implementations
             return await _unitOfWork.Proyectos.GetByIdAsync(id);
         }
 
-        public async Task<bool> ActualizarProyectoAsync(int proyectoId, int usuarioPeticionId, string rolUsuario, string nombre, string? descripcion, string? nombresEquipo, string? urlMateriales)
+        // REFACTORIZADO: Ahora recibe el objeto Request
+        public async Task<bool> ActualizarProyectoAsync(EditarProyectoRequest request, int usuarioPeticionId, string rolUsuario)
         {
-            var proyecto = await _unitOfWork.Proyectos.GetByIdAsync(proyectoId);
+            var proyecto = await _unitOfWork.Proyectos.GetByIdAsync(request.Id);
 
             if (proyecto == null)
                 throw new KeyNotFoundException("El proyecto solicitado no existe.");
 
-            // REGLA DE NEGOCIO: Solo el Admin o el Creador (Participante) pueden editar
+            // REGLA DE NEGOCIO: Solo el Organizador o el Creador pueden editar
             if (rolUsuario != "Organizador" && proyecto.ParticipanteId != usuarioPeticionId)
             {
-                throw new UnauthorizedAccessException("No tienes permisos para editar la información de este proyecto.");
+                throw new UnauthorizedAccessException("No tienes permisos para editar este proyecto.");
             }
 
-            // Validaciones básicas
-            if (string.IsNullOrWhiteSpace(nombre))
+            if (string.IsNullOrWhiteSpace(request.Nombre))
                 throw new ArgumentException("El nombre del proyecto es obligatorio.");
 
-            // Actualizamos solo los campos permitidos
-            proyecto.Name = nombre;
-            proyecto.Description = descripcion;
-            proyecto.NombresEquipo = nombresEquipo;
-            proyecto.UrlMaterialesExternos = urlMateriales;
+            // Actualizamos solo los campos permitidos del Request
+            proyecto.Name = request.Nombre;
+            proyecto.Description = request.Descripcion;
+            proyecto.NombresEquipo = request.NombresEquipo;
+            proyecto.UrlMaterialesExternos = request.UrlMateriales;
 
-            // Guardamos en Base de Datos
             await _unitOfWork.Proyectos.UpdateAsync(proyecto);
             await _unitOfWork.SaveChangesAsync();
 
             return true;
         }
 
-        public async Task<ProyectoEdicionDto?> ObtenerProyectoParaEdicionAsync(int proyectoId)
+        // REFACTORIZADO: Ahora devuelve un Response de solo lectura
+        public async Task<EditarProyectoResponse?> ObtenerProyectoParaEdicionAsync(int proyectoId)
         {
-            // 1. Buscamos el proyecto incluyendo la categoría
             var proyecto = await _unitOfWork.Proyectos.GetWithIncludesAsync(
                 p => p.Id == proyectoId,
                 p => p.Categorias
@@ -77,40 +75,36 @@ namespace Votify.Services.Implementations
 
             if (proyecto == null) return null;
 
-            // 2. Mapeamos los datos básicos al DTO
-            var dto = new ProyectoEdicionDto
+            // Mapeamos a la nueva clase Response
+            var response = new EditarProyectoResponse
             {
                 Id = proyecto.Id,
-                ParticipanteId = proyecto.ParticipanteId,
                 Nombre = proyecto.Name,
                 Descripcion = proyecto.Description,
                 NombresEquipo = proyecto.NombresEquipo,
                 UrlMateriales = proyecto.UrlMaterialesExternos,
+                // Usamos el método de dominio para obtener la especialidad si existe
                 Especialidad = proyecto.CategoriaEspecialidad()
             };
 
-            // 3. Resolvemos los datos de relaciones profundas (Evento y Jurado)
             var categoria = proyecto.Categorias?.FirstOrDefault();
             if (categoria != null)
             {
-                dto.NombreCategoria = categoria.Name;
+                response.NombreCategoria = categoria.Name;
 
-                // Buscamos el evento completo para sacar el email de administración
-                // (Asumo que tienes un repositorio de eventos en tu UnitOfWork)
                 var evento = await _unitOfWork.Eventos.GetWithIncludesAsync(
                     e => e.Id == categoria.EventoId,
-                    e => e.Jurado // Incluimos el jurado/admins para sacar el email
+                    e => e.Jurado
                 );
 
                 if (evento != null)
                 {
-                    dto.NombreEvento = evento.Name;
-                    dto.CorreoAdmin = evento.Jurado?.FirstOrDefault()?.Email ?? "admin@evento.com";
+                    response.NombreEvento = evento.Name;
+                    response.CorreoAdmin = evento.Jurado?.FirstOrDefault()?.Email ?? "admin@evento.com";
                 }
             }
 
-            // Devolvemos un paquete limpio y seguro sin exponer el modelo real
-            return dto;
+            return response;
         }
     }
 }

@@ -277,7 +277,6 @@ else
     [Parameter]
     public int Id { get; set; }
 
-
     private Participante? participante;
     private bool cargando = true;
 
@@ -303,15 +302,19 @@ else
         }
     }
 
-@inject IJSRuntime JS
-
-    @code {
-        @code {
     async Task AbrirCertificado(Proyecto proyecto, Categoria categoria, int posicion)
     {
         var nombreEquipo = proyecto.Name;
-        var integrantes = new List<string> { participante!.Name };
+
+        // 🔥 IMPORTANTE
+        var integrantes = new List<string>
+{
+    proyecto.Participante?.Name ?? participante!.Name
+};
+            
+
         var integrantesString = string.Join(";", integrantes);
+
         var evento = categoria.Name;
 
         await JS.InvokeVoidAsync(
@@ -343,6 +346,7 @@ else
             foreach (var detalle in voto.Detalles)
             {
                 var criterio = votacion.Criterios.FirstOrDefault(c => c.Id == detalle.CriterioId);
+
                 if (criterio != null && criterio.Peso > 0)
                 {
                     puntajeVoto += detalle.Puntuacion * (criterio.Peso / 100.0);
@@ -352,17 +356,15 @@ else
 
             if (pesoTotalUsado > 0 && pesoTotalUsado < 100)
             {
-                puntajeVoto = puntajeVoto * (100.0 / pesoTotalUsado);
+                puntajeVoto *= (100.0 / pesoTotalUsado);
             }
 
             sumaPonderada += puntajeVoto;
             votosValidos++;
         }
 
-        return votosValidos > 0 ? sumaPonderada / votosValidos : 0;
+        return votosValidos > 0
+            ? sumaPonderada / votosValidos
+            : 0;
     }
-}
-
-}
-
 }

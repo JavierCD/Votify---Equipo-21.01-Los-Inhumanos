@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Votify.Services.Interfaces;
-using Votify.Services.Models.DTOs;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Implementations
 {
     public class EmailTemplateBuilder : IEmailTemplateBuilder
     {
-        public string GenerarTablaResultadosHtml(string nombreCategoria, List<PosicionRankingDto> ranking)
+        public string GenerarTablaResultadosHtml(string nombreCategoria, List<PosicionRankingResponse> ranking)
         {
             var htmlBuilder = new StringBuilder();
 

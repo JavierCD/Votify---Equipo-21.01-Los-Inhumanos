@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Services.Interfaces;
-using Votify.Services.Models;
+using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Implementations
 {
@@ -28,9 +28,16 @@ namespace Votify.Services.Implementations
                 FechaEmision = v.Fecha,
                 ProyectoNombre = v.Proyecto?.Name ?? "Proyecto Desconocido o Eliminado",
                 CategoriaNombre = v.Votacion?.Categoria?.Name ?? "Sin categoría",
-                TipoVotacion = v.RolVotante() switch
+                TipoVotacion = v.Votacion switch
                 {
-                    "PUBLIC" => "Popular",
+                    Core.Models.Popular => "Popular",
+                    Core.Models.Puntuacion => "Puntuación",
+                    Core.Models.Multicriterio => "Multicriterio",
+                    _ => "Desconocida"
+                },
+                TipoVotante = v.RolVotante() switch
+                {
+                    "PUBLIC" => "Público",
                     "EXPERT" => "Experto",
                     "SPONSOR" => "Sponsor",
                     _ => v.RolVotante()

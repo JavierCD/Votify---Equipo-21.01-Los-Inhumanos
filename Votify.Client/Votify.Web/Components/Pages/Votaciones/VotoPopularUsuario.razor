@@ -1,9 +1,12 @@
 ﻿@page "/voto-popular-usuario/{VotacionId:int}"
 @rendermode InteractiveServer
-@using Votify.Core.Models                        
+@using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
-@using Votify.Web.Services                      
+@using Votify.Services.Models.Responses
+@using Votify.Services.Models.Requests
+@using Votify.Web.Services
+                      
 @inject IPopularService PopularService          
 @inject UserSession Session                      
 @inject ILogger<VotoPopularUsuario> Logger
