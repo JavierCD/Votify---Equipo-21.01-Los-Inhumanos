@@ -115,6 +115,7 @@ namespace Votify.Persistence.Context
                       .WithOne(c => c.Votacion)
                       .HasForeignKey<Votacion>(v => v.CategoriaId)
                       .OnDelete(DeleteBehavior.Cascade);
+                
 
 
             });

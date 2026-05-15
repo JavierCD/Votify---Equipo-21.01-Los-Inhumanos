@@ -19,6 +19,9 @@
 @inject IAuditoriaService AuditoriaService
 @inject IResultadosService ResultadosService
 @inject IVotacionService VotacionService
+@inject ISupervisionService SupervisionService
+@inject IUnitOfWork _unitOfWork
+
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -330,15 +333,69 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <!-- Panel de Supervisión de Jueces -->
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-info w-100" @onclick="() => ToggleSupervision(categoria.Id)">
+                                            <RadzenIcon Icon="visibility" class="me-1" /> Votos de  jueces
+                                        </button>
+
+                                        @if (supervisionAbierta.ContainsKey(categoria.Id) && supervisionAbierta[categoria.Id])
+                                        {
+                                            <div class="card mt-2 border-info" style="font-size: 0.85rem;">
+                                                <div class="card-header bg-info text-white py-1 px-2 d-flex justify-content-between align-items-center">
+                                                    <small><RadzenIcon Icon="groups" class="me-1" /> Jueces asignados</small>
+                                                    <button class="btn btn-sm btn-light py-0 px-1" @onclick="() => ToggleSupervision(categoria.Id)">
+                                                        <RadzenIcon Icon="close" Style="font-size: 12px;" />
+                                                    </button>
+                                                </div>
+                                                <div class="card-body py-2 px-2">
+                                                    <!-- Contador + barra de progreso -->
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <small class="fw-bold">Votos: @CompletadosCount(categoria.Id)/@TotalCount(categoria.Id)</small>
+                                                        <div class="progress flex-grow-1 mx-2" style="height: 6px;">
+                                                            <div class="progress-bar bg-success" style="width: @Porcentaje(categoria.Id)%"></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Lista compacta de jueces -->
+                                                    @foreach (var juez in JuecesSupervision(categoria.Id))
+                                                    {
+                                                        <div class="d-flex justify-content-between align-items-center mb-1 py-1 border-bottom">
+                                                            <small>
+                                                                <RadzenIcon Icon="account_circle" class="me-1 text-secondary" />
+                                                                @juez.Nombre
+                                                            </small>
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <span class="badge @(juez.HaVotado ? "bg-success" : "bg-warning text-dark")" style="font-size: 0.7rem;">
+                                                                    @juez.Estado
+                                                                </span>
+                                                                @if (!juez.HaVotado)
+                                                                {
+                                                                    <button class="btn btn-sm btn-outline-primary py-0 px-2"
+                                                                            @onclick="() => EnviarRecordatorio(juez.JuezId, categoria.Votacion.Id, categoria.Id, categoria.Name, evento.Name)"
+                                                                            style="font-size: 0.7rem;">
+                                                                        Enviar recordatorio
+                                                                    </button>
+                                                                }
+                                                                
+                                                            </div>
+                                                        </div>
+                                                    }
+
+                                                  
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>                            
                                 </div>
                             </div>
-                        </div>
-                    }
-                </div>
             </div>
-        }
+                                }                            
+                            </div >                                      
+                         </div >                                         
+                    }
 
-        else if (tabActivo == "Participantes")
+                    else if (tabActivo == "Participantes")
         {
             <div class="card shadow-sm p-4">
                 <h4 class="mb-4">Participantes y Proyectos</h4>
@@ -539,6 +596,7 @@
 </div>
 
 @code {
+    
     [Parameter]
     public int EventoId { get; set; }
 
@@ -579,6 +637,10 @@
     private Dictionary<int, bool> editandoFechas = new();
     private List<string> estadosPosibles = new List<string> { "Programada", "Abierta", "Pausada", "Cerrada" };
 
+    // Supervisión de jueces
+    private Dictionary<int, bool> supervisionAbierta = new();
+    private Dictionary<int, List<JuezSupervisionDto>> juecesSupervision = new();
+    
     // Almacena las fechas temporales mientras el usuario edita (antes de guardar)
     public class FechasEdicionDto
     {
@@ -714,6 +776,11 @@
                     // basado en fechas, no es 100% obligatorio persistir el string inmediatamente.
                 }
             }
+        }
+        // Refrescar supervisión de categorías con panel abierto
+        foreach (var catId in supervisionAbierta.Keys.Where(k => supervisionAbierta[k]))
+        {
+            await CargarSupervisionAsync(catId);
         }
 
         // Si alguna votación cambió de estado (ej: de Programada a Abierta), actualizamos la UI
@@ -1008,4 +1075,66 @@
 
         return votosValidos > 0 ? sumaPonderada / votosValidos : 0;
     }
+
+    private void ToggleSupervision(int categoriaId)
+    {
+        supervisionAbierta[categoriaId] = !supervisionAbierta.GetValueOrDefault(categoriaId);
+
+        if (supervisionAbierta[categoriaId])
+        {
+            _ = CargarSupervisionAsync(categoriaId);
+        }
+    }
+
+    private async Task CargarSupervisionAsync(int categoriaId)
+    {
+        var categoria = evento?.CategoriasEvento.FirstOrDefault(c => c.Id == categoriaId);
+        if (categoria?.Votacion == null) return;
+
+        try
+        {
+            var estadoJueces = await SupervisionService.ObtenerEstadoJuecesAsync(categoria.Votacion.Id);
+            juecesSupervision[categoriaId] = estadoJueces;
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar supervisión: {ex.Message}";
+        }
+
+        await InvokeAsync(StateHasChanged);  // ← NUEVA LÍNEA
+    }
+
+    private async Task EnviarRecordatorio(int juezId, int votacionId, int categoriaId, string categoriaNombre, string eventoNombre)
+    {
+        try
+        {
+            await SupervisionService.EnviarRecordatorioAsync(juezId, votacionId, categoriaId, categoriaNombre, eventoNombre);
+            mensajeExito = "Recordatorio enviado correctamente.";
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al enviar recordatorio: {ex.Message}";
+        }
+    }
+    // Helpers para la UI
+    private List<JuezSupervisionDto> JuecesSupervision(int categoriaId) =>
+        juecesSupervision.GetValueOrDefault(categoriaId, new List<JuezSupervisionDto>());
+
+    private int CompletadosCount(int categoriaId) =>
+        JuecesSupervision(categoriaId).Count(j => j.HaVotado);
+
+    private int TotalCount(int categoriaId) =>
+        JuecesSupervision(categoriaId).Count;
+
+    private int Porcentaje(int categoriaId)
+    {
+        var total = TotalCount(categoriaId);
+        if (total == 0) return 0;
+        return (CompletadosCount(categoriaId) * 100) / total;
+    }
+}
+
+   
+
+
 }

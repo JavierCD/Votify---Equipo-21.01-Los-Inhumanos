@@ -97,5 +97,13 @@ namespace Votify.Persistence.Repositories
             return await _context.Miembros.OfType<Juez>()
                 .ToDictionaryAsync(j => j.Email.ToLower(), j => j.Name);
         }
+        public async Task<List<int>> ObtenerJuecesQueHanVotadoAsync(int votacionId)
+        {
+            return await _context.Votos.OfType<VotoExperto>()
+                .Where(v => v.VotacionId == votacionId && v.JuezId.HasValue)
+                .Select(v => v.JuezId!.Value)
+                .Distinct()
+                .ToListAsync();
+        }
     }
 }
