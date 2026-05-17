@@ -25,6 +25,7 @@ namespace Votify.Persistence.Context
         public DbSet<Voto> Votos { get; set; }
         public DbSet<Criterio> Criterios { get; set; }
         public DbSet<DetalleVoto> DetallesVoto { get; set; }
+        public DbSet<ResultadoIntervenido> ResultadosIntervenidos { get; set; }
 
         // --- Tablas con Herencia (Base) ---
         public DbSet<Miembro> Miembros { get; set; }
@@ -93,6 +94,13 @@ namespace Votify.Persistence.Context
                 entity.HasMany(e => e.Participantes)
                       .WithMany()
                       .UsingEntity(j => j.ToTable("EventosParticipantes"));
+            });
+            modelBuilder.Entity<ResultadoIntervenido>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+                entity.HasOne(r => r.Votacion).WithMany().HasForeignKey(r => r.VotacionId);
+                entity.HasOne(r => r.Proyecto).WithMany().HasForeignKey(r => r.ProyectoId);
+                entity.HasIndex(r => new { r.VotacionId, r.ProyectoId }).IsUnique();
             });
 
             // 4. CONFIGURACIÓN DE VOTACIÓN (Familia)

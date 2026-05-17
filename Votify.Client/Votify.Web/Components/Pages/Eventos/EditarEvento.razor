@@ -59,6 +59,11 @@
                     <RadzenIcon Icon="verified_user" class="me-1" /> Auditoría
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link @(tabActivo == "Resultados" ? "active fw-bold" : "")" @onclick='() => CambiarTab("Resultados")' style="cursor:pointer">
+                    <RadzenIcon Icon="emoji_events" class="me-1" /> Resultados
+                </a>
+            </li>
         </ul>
 
         @* MENSAJES GLOBALES DE ÉXITO Y ERROR *@
@@ -534,9 +539,137 @@
                     </RadzenDataGrid>
                 }
             </div>
+        
+        
+        }
+
+        else if (tabActivo == "Resultados")
+        {
+            <div class="card shadow-sm p-4">
+                <h4 class="mb-4"><RadzenIcon Icon="emoji_events" class="fs-4 me-2 text-warning" /> Intervención de Resultados</h4>
+
+                @if (cargandoResultados)
+                {
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2">Calculando clasificaciones...</p>
+                    </div>
+                }
+                else if (!resultadosPorCategoria.Any())
+                {
+                    <div class="alert alert-info">
+                        <RadzenIcon Icon="info" class="me-1" /> No hay votaciones cerradas en este evento. Cierra una votación para ver sus resultados.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var cat in resultadosPorCategoria)
+                    {
+                        <div class="mb-5">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold text-primary mb-0">@cat.CategoriaNombre</h5>
+                                <button class="btn btn-sm btn-outline-primary"
+                                        @onclick="() => MostrarSelectorAgregar(cat)"
+                                        disabled="@(!cat.ProyectosDisponibles.Any())">
+                                    <RadzenIcon Icon="add" class="me-1" /> Agregar Proyecto
+                                </button>
+                            </div>
+
+                            @if (categoriaAgregandoId == cat.CategoriaId)
+                            {
+                                <div class="bg-light border rounded p-3 mb-3">
+                                    <div class="row align-items-end">
+                                        <div class="col-md-8">
+                                            <label class="form-label small fw-bold">Seleccionar proyecto a añadir:</label>
+                                            <select class="form-select" @bind="proyectoAAgregarId">
+                                                <option value="0">-- Elige un proyecto --</option>
+                                                @foreach (var disp in cat.ProyectosDisponibles)
+                                                {
+                                                    <option value="@disp.ProyectoId">@disp.NombreProyecto (@disp.NombreEquipo)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 d-flex gap-2">
+                                            <button class="btn btn-success btn-sm"
+                                                    @onclick="() => AgregarProyectoAlRanking(cat)"
+                                                    disabled="@(proyectoAAgregarId == 0)">
+                                                Añadir
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                    @onclick="() => categoriaAgregandoId = null">
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (!cat.Proyectos.Any())
+                            {
+                                <p class="text-muted fst-italic">No hay proyectos en la clasificación.</p>
+                            }
+                            else
+                            {
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 60px;">Pos.</th>
+                                            <th>Proyecto</th>
+                                            <th>Equipo</th>
+                                            <th style="width: 100px;" class="text-center">Puntaje</th>
+                                            <th style="width: 120px;" class="text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int i = 0; i < cat.Proyectos.Count; i++)
+                                        {
+                                            var proyecto = cat.Proyectos[i];
+                                            var idx = i;
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-primary rounded-pill fs-6">@(idx + 1)</span>
+                                                </td>
+                                                <td class="fw-bold">@proyecto.NombreProyecto</td>
+                                                <td class="text-muted">@proyecto.NombreEquipo</td>
+                                                <td class="text-center fw-bold">@proyecto.Puntaje.ToString("F0")</td>
+                                                <td class="text-center">
+                                                    <button class="btn btn-sm btn-outline-secondary border-0"
+                                                            title="Subir"
+                                                            disabled="@(idx == 0)"
+                                                            @onclick="() => MoverProyecto(cat, idx, -1)">
+                                                        <RadzenIcon Icon="arrow_upward" />
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-secondary border-0"
+                                                            title="Bajar"
+                                                            disabled="@(idx == cat.Proyectos.Count - 1)"
+                                                            @onclick="() => MoverProyecto(cat, idx, 1)">
+                                                        <RadzenIcon Icon="arrow_downward" />
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger border-0"
+                                                            title="Eliminar del ranking"
+                                                            @onclick="() => EliminarDelRanking(cat, idx)">
+                                                        <RadzenIcon Icon="delete" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                        </div>
+                    }
+
+                    <div class="text-end mt-4">
+                        <button class="btn btn-primary btn-lg px-5" @onclick="GuardarTodosLosResultados">
+                            <RadzenIcon Icon="save" class="me-1" /> Guardar Resultados
+                        </button>
+                    </div>
+                }
+            </div>
         }
     }
 </div>
+ 
 
 @code {
     [Parameter]
@@ -884,6 +1017,10 @@
         {
             await CargarAuditoria();
         }
+        else if (tabActivo == "Resultados")
+        {
+            await CargarResultados();
+        }
     }
 
     private async Task CargarAuditoria()
@@ -1007,5 +1144,103 @@
         }
 
         return votosValidos > 0 ? sumaPonderada / votosValidos : 0;
+    }
+    // ============================================
+    // RESULTADOS — UT 3275
+    // ============================================
+    private List<ResultadoIntervenidoResponse> resultadosPorCategoria = new();
+    private bool cargandoResultados = false;
+    private int? categoriaAgregandoId = null;
+    private int proyectoAAgregarId = 0;
+
+    private async Task CargarResultados()
+    {
+        cargandoResultados = true;
+        try
+        {
+            resultadosPorCategoria = await ResultadosService.ObtenerResultadosPorEventoAsync(EventoId);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar resultados: {ex.Message}";
+        }
+        finally
+        {
+            cargandoResultados = false;
+        }
+    }
+
+    private void MoverProyecto(ResultadoIntervenidoResponse categoria, int index, int direccion)
+    {
+        int nuevoIndex = index + direccion;
+        if (nuevoIndex < 0 || nuevoIndex >= categoria.Proyectos.Count) return;
+
+        var temp = categoria.Proyectos[index];
+        categoria.Proyectos[index] = categoria.Proyectos[nuevoIndex];
+        categoria.Proyectos[nuevoIndex] = temp;
+
+        RecalcularPosiciones(categoria);
+    }
+
+    private void EliminarDelRanking(ResultadoIntervenidoResponse categoria, int index)
+    {
+        var eliminado = categoria.Proyectos[index];
+        categoria.Proyectos.RemoveAt(index);
+        categoria.ProyectosDisponibles.Add(eliminado);
+        RecalcularPosiciones(categoria);
+    }
+
+    private void MostrarSelectorAgregar(ResultadoIntervenidoResponse categoria)
+    {
+        categoriaAgregandoId = categoria.CategoriaId;
+        proyectoAAgregarId = 0;
+    }
+
+    private void AgregarProyectoAlRanking(ResultadoIntervenidoResponse categoria)
+    {
+        var proyecto = categoria.ProyectosDisponibles.FirstOrDefault(p => p.ProyectoId == proyectoAAgregarId);
+        if (proyecto == null) return;
+
+        proyecto.Posicion = categoria.Proyectos.Count + 1;
+        categoria.Proyectos.Add(proyecto);
+        categoria.ProyectosDisponibles.Remove(proyecto);
+
+        categoriaAgregandoId = null;
+        proyectoAAgregarId = 0;
+    }
+
+    private void RecalcularPosiciones(ResultadoIntervenidoResponse categoria)
+    {
+        for (int i = 0; i < categoria.Proyectos.Count; i++)
+        {
+            categoria.Proyectos[i].Posicion = i + 1;
+        }
+    }
+
+    private async Task GuardarTodosLosResultados()
+    {
+        mensajeExito = null;
+        mensajeError = null;
+
+        try
+        {
+            foreach (var cat in resultadosPorCategoria)
+            {
+                var requests = cat.Proyectos.Select(p => new GuardarResultadoRequest
+                {
+                    ProyectoId = p.ProyectoId,
+                    Posicion = p.Posicion,
+                    PuntajeOriginal = p.Puntaje
+                }).ToList();
+
+                await ResultadosService.GuardarResultadosIntervenidosAsync(cat.VotacionId, requests);
+            }
+
+            mensajeExito = "Los resultados se han guardado correctamente.";
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al guardar resultados: {ex.Message}";
+        }
     }
 }

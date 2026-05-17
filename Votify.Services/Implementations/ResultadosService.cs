@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Interfaces;
+using Votify.Services.Models.Requests;
 using Votify.Services.Models.Responses;
 
 namespace Votify.Services.Implementations
@@ -194,6 +195,127 @@ namespace Votify.Services.Implementations
             }
 
             return votosValidos > 0 ? sumaPonderada / votosValidos : 0;
+        }
+
+        public async Task<List<ResultadoIntervenidoResponse>> ObtenerResultadosPorEventoAsync(int eventoId)
+        {
+            var evento = await _unitOfWork.EventoRepository.ObtenerEventoConDetallesAsync(eventoId);
+            if (evento == null) throw new Exception("Evento no encontrado.");
+
+            var resultado = new List<ResultadoIntervenidoResponse>();
+
+            foreach (var categoria in evento.CategoriasEvento)
+            {
+                if (categoria.Votacion == null) continue;
+
+                // Solo mostramos categorías con votación cerrada
+                var votacion = categoria.Votacion;
+                if (votacion.Estado != "Cerrada" && votacion.Estado != "CerradaManual"
+                    && !votacion.EstaCerrada && !votacion.ResultadosPublicados)
+                    continue;
+
+                // Verificar si hay intervención guardada
+                var intervenidos = (await _unitOfWork.ResultadosIntervenidos.GetAllAsync())
+                    .Where(r => r.VotacionId == votacion.Id)
+                    .OrderBy(r => r.Posicion)
+                    .ToList();
+
+                var dto = new ResultadoIntervenidoResponse
+                {
+                    CategoriaId = categoria.Id,
+                    CategoriaNombre = categoria.Name,
+                    VotacionId = votacion.Id,
+                    EstadoVotacion = votacion.Estado,
+                    TieneIntervencion = intervenidos.Any()
+                };
+
+                if (intervenidos.Any())
+                {
+                    // Mostrar el ranking intervenido guardado
+                    foreach (var ri in intervenidos)
+                    {
+                        var proyecto = categoria.Proyectos.FirstOrDefault(p => p.Id == ri.ProyectoId);
+                        dto.Proyectos.Add(new ProyectoResultadoResponse
+                        {
+                            ProyectoId = ri.ProyectoId,
+                            NombreProyecto = proyecto?.Name ?? "Proyecto eliminado",
+                            NombreEquipo = proyecto?.Participante?.Name ?? "Desconocido",
+                            Puntaje = ri.PuntajeOriginal,
+                            Posicion = ri.Posicion
+                        });
+                    }
+                }
+                else
+                {
+                    // Calcular ranking automático (reutilizamos la lógica existente)
+                    var categoriaCompleta = await _unitOfWork.CategoriaRepository
+                        .ObtenerCategoriaConVotacionYVotosAsync(categoria.Id);
+
+                    if (categoriaCompleta != null)
+                    {
+                        var ranking = CalcularRankingConEmpates(categoriaCompleta);
+                        int pos = 1;
+                        foreach (var r in ranking)
+                        {
+                            var proyecto = categoriaCompleta.Proyectos
+                                .FirstOrDefault(p => p.Name == r.NombreProyecto);
+                            dto.Proyectos.Add(new ProyectoResultadoResponse
+                            {
+                                ProyectoId = proyecto?.Id ?? 0,
+                                NombreProyecto = r.NombreProyecto,
+                                NombreEquipo = proyecto?.Participante?.Name ?? "Desconocido",
+                                Puntaje = r.PuntosTotales,
+                                Posicion = pos++
+                            });
+                        }
+                    }
+                }
+
+                // Proyectos de la categoría que NO están en el ranking actual (para "Agregar")
+                var idsEnRanking = dto.Proyectos.Select(p => p.ProyectoId).ToHashSet();
+                dto.ProyectosDisponibles = categoria.Proyectos
+                    .Where(p => !idsEnRanking.Contains(p.Id))
+                    .Select(p => new ProyectoResultadoResponse
+                    {
+                        ProyectoId = p.Id,
+                        NombreProyecto = p.Name,
+                        NombreEquipo = p.Participante?.Name ?? "Desconocido",
+                        Puntaje = 0,
+                        Posicion = 0
+                    })
+                    .ToList();
+
+                resultado.Add(dto);
+            }
+
+            return resultado;
+        }
+        public async Task GuardarResultadosIntervenidosAsync(int votacionId, List<GuardarResultadoRequest> resultados)
+        {
+            // Borrar intervenciones previas de esta votación
+            var existentes = (await _unitOfWork.ResultadosIntervenidos.GetAllAsync())
+                .Where(r => r.VotacionId == votacionId)
+                .ToList();
+
+            foreach (var existente in existentes)
+            {
+                await _unitOfWork.ResultadosIntervenidos.DeleteAsync(existente.Id);
+            }
+
+            // Insertar los nuevos
+            foreach (var item in resultados)
+            {
+                await _unitOfWork.ResultadosIntervenidos.AddAsync(new ResultadoIntervenido
+                {
+                    VotacionId = votacionId,
+                    ProyectoId = item.ProyectoId,
+                    Posicion = item.Posicion,
+                    PuntajeOriginal = item.PuntajeOriginal,
+                    FechaIntervencion = DateTime.UtcNow
+                });
+            }
+
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }
