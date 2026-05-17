@@ -1212,6 +1212,65 @@
 
         return votosValidos > 0 ? sumaPonderada / votosValidos : 0;
     }
+
+    private void ToggleSupervision(int categoriaId)
+    {
+        supervisionAbierta[categoriaId] = !supervisionAbierta.GetValueOrDefault(categoriaId);
+
+        if (supervisionAbierta[categoriaId])
+        {
+            _ = CargarSupervisionAsync(categoriaId);
+        }
+    }
+
+    private async Task CargarSupervisionAsync(int categoriaId)
+    {
+        var categoria = evento?.CategoriasEvento.FirstOrDefault(c => c.Id == categoriaId);
+        if (categoria?.Votacion == null) return;
+
+        try
+        {
+            var estadoJueces = await SupervisionService.ObtenerEstadoJuecesAsync(categoria.Votacion.Id);
+            juecesSupervision[categoriaId] = estadoJueces;
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar supervisión: {ex.Message}";
+        }
+
+        await InvokeAsync(StateHasChanged);  // ← NUEVA LÍNEA
+    }
+
+    private async Task EnviarRecordatorio(int juezId, int votacionId, int categoriaId, string categoriaNombre, string eventoNombre)
+    {
+        try
+        {
+            await SupervisionService.EnviarRecordatorioAsync(juezId, votacionId, categoriaId, categoriaNombre, eventoNombre);
+            mensajeExito = "Recordatorio enviado correctamente.";
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al enviar recordatorio: {ex.Message}";
+        }
+    }
+    // Helpers para la UI
+    private List<JuezSupervisionDto> JuecesSupervision(int categoriaId) =>
+        juecesSupervision.GetValueOrDefault(categoriaId, new List<JuezSupervisionDto>());
+
+    private int CompletadosCount(int categoriaId) =>
+        JuecesSupervision(categoriaId).Count(j => j.HaVotado);
+
+    private int TotalCount(int categoriaId) =>
+        JuecesSupervision(categoriaId).Count;
+
+    private int Porcentaje(int categoriaId)
+    {
+        var total = TotalCount(categoriaId);
+        if (total == 0) return 0;
+        return (CompletadosCount(categoriaId) * 100) / total;
+    }
+
+
     // ============================================
     // RESULTADOS — UT 3275
     // ============================================
