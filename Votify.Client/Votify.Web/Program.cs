@@ -68,6 +68,7 @@ builder.Services.AddScoped<IResultadosService, ResultadosService>();
 builder.Services.AddScoped<IEmailTemplateBuilder, EmailTemplateBuilder>();
 builder.Services.AddScoped<IVotacionService, VotacionService>();
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
+builder.Services.AddScoped<ISupervisionService, SupervisionService>();
 
 builder.Services.AddHostedService<NotificacionBackgroundService>();
 
@@ -84,6 +85,7 @@ builder.Services.AddScoped<IVotacionStateObserver, CierreNotificationObserver>()
 builder.Services.AddScoped<IVotacionStateObserver, RecordatorioObserver>();
 builder.Services.AddSingleton<IVotacionStateObserver, RealTimeUINotificationObserver>();
 builder.Services.AddScoped<VotacionStateCronDetector>();
+builder.Services.AddSingleton<RealTimeUINotificationObserver>();
 
 
 
