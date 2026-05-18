@@ -1,0 +1,178 @@
+@page "/hoja-ruta/{proyectoId:int}"
+@rendermode InteractiveServer
+
+@using Votify.Core.Models
+@using Votify.Services.Interfaces
+
+@inject IAnalisisMejoraService AnalisisMejoraService
+@inject NavigationManager NavManager
+
+<PageTitle>Hoja de Ruta de Mejora - Votify</PageTitle>
+
+<div class="container rz-mt-4 rz-mb-5">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+        @* CABECERA *@
+        <RadzenCard class="rz-shadow-2" Style="border-left: 4px solid var(--rz-success);">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <div>
+                    <RadzenButton Icon="arrow_back" Text="Volver al Dashboard" ButtonStyle="ButtonStyle.Light" class="rz-mb-2" Click="@Volver" />
+                    <RadzenText TextStyle="TextStyle.H4" class="rz-m-0 fw-bold">Hoja de Ruta de Mejora</RadzenText>
+                    @if (hojaRuta != null)
+                    {
+                        <RadzenText TextStyle="TextStyle.Body1" class="text-muted rz-m-0">Proyecto: @hojaRuta.ProyectoNombre</RadzenText>
+                    }
+                </div>
+            </RadzenStack>
+        </RadzenCard>
+
+        @* ESTADO: CARGANDO *@
+        @if (cargando)
+        {
+            <RadzenCard class="rz-text-align-center rz-p-5">
+                <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mt-3">Analizando comentarios de los jueces con IA...</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" class="text-muted">Esto puede tardar unos segundos</RadzenText>
+            </RadzenCard>
+        }
+
+        @* ESTADO: ERROR *@
+        else if (!string.IsNullOrEmpty(error))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="fw-bold">Error al generar la hoja de ruta</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1">@error</RadzenText>
+                    <RadzenButton Text="Reintentar" Icon="refresh" ButtonStyle="ButtonStyle.Danger" Click="GenerarHojaRuta" />
+                </RadzenStack>
+            </RadzenAlert>
+        }
+
+        @* ESTADO: SIN COMENTARIOS *@
+        else if (hojaRuta != null && hojaRuta.TotalComentariosAnalizados == 0)
+        {
+            <div class="text-center rz-mt-5 rz-mb-5 p-5 bg-light rounded border border-dashed">
+                <RadzenIcon Icon="comment" Style="font-size: 4rem; color: var(--rz-text-disabled);" class="rz-mb-3" />
+                <RadzenText TextStyle="TextStyle.H5" class="fw-bold">No hay comentarios de jueces</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" class="text-muted rz-mb-4">
+                    Aún no hay comentarios escritos por los jueces sobre este proyecto.
+                    Cuando los jueces dejen feedback, podrás generar una hoja de ruta personalizada con IA.
+                </RadzenText>
+                <RadzenButton Text="Volver al Dashboard" Icon="arrow_back" ButtonStyle="ButtonStyle.Secondary" Click="@Volver" />
+            </div>
+        }
+
+        @* ESTADO: RESULTADOS *@
+        else if (hojaRuta != null && hojaRuta.Sugerencias.Any())
+        {
+            @* METADATA *@
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenCard class="rz-text-center rz-shadow-1">
+                        <RadzenText TextStyle="TextStyle.Caption" class="text-muted">Comentarios analizados</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H3" class="fw-bold rz-color-success">@hojaRuta.TotalComentariosAnalizados</RadzenText>
+                    </RadzenCard>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenCard class="rz-text-center rz-shadow-1">
+                        <RadzenText TextStyle="TextStyle.Caption" class="text-muted">Sugerencias generadas</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H3" class="fw-bold rz-color-primary">@hojaRuta.Sugerencias.Count</RadzenText>
+                    </RadzenCard>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenCard class="rz-text-center rz-shadow-1">
+                        <RadzenText TextStyle="TextStyle.Caption" class="text-muted">Generado el</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6" class="fw-bold">@hojaRuta.FechaGeneracion.ToString("dd/MM/yyyy HH:mm")</RadzenText>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+
+            @* SUGERENCIAS *@
+            <RadzenText TextStyle="TextStyle.H5" class="fw-bold rz-mt-3">Sugerencias de Mejora</RadzenText>
+
+            @foreach (var sugerencia in hojaRuta.Sugerencias)
+            {
+                var colorBorde = sugerencia.Prioridad switch
+                {
+                    1 => "var(--rz-danger)",
+                    2 => "var(--rz-warning)",
+                    3 => "var(--rz-info)",
+                    _ => "var(--rz-text-secondary)"
+                };
+
+                var etiquetaPrioridad = sugerencia.Prioridad switch
+                {
+                    1 => "Urgente",
+                    2 => "Importante",
+                    3 => "Recomendado",
+                    _ => "Sugerido"
+                };
+
+                <RadzenCard class="rz-mb-3 rz-shadow-2" Style="@( $"border-left: 4px solid {colorBorde};" )">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenBadge BadgeStyle="@(sugerencia.Prioridad <= 2 ? BadgeStyle.Danger : BadgeStyle.Info)"
+                                         Text="@etiquetaPrioridad"
+                                         IsPill="true" />
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light"
+                                         Text="@sugerencia.Categoria"
+                                         IsPill="true" />
+                            <RadzenText TextStyle="TextStyle.H6" class="rz-m-0 fw-bold">@sugerencia.Descripcion</RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
+                            <RadzenIcon Icon="lightbulb" Style="color: var(--rz-warning); font-size: 1.2rem; margin-top: 2px;" />
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Subtitle2" class="fw-bold">Acción recomendada:</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body1">@sugerencia.AccionRecomendada</RadzenText>
+                            </div>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+
+            @* BOTÓN REGENERAR *@
+            <div class="rz-text-center rz-mt-4">
+                <RadzenButton Text="Regenerar con IA" Icon="autorenew" ButtonStyle="ButtonStyle.Primary" Click="GenerarHojaRuta" />
+            </div>
+        }
+    </RadzenStack>
+</div>
+
+@code {
+    [Parameter]
+    public int ProyectoId { get; set; }
+
+    private HojaRutaMejora? hojaRuta;
+    private bool cargando = true;
+    private string? error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await GenerarHojaRuta();
+    }
+
+    private async Task GenerarHojaRuta()
+    {
+        cargando = true;
+        error = null;
+        hojaRuta = null;
+
+        try
+        {
+            hojaRuta = await AnalisisMejoraService.GenerarHojaRutaAsync(ProyectoId);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void Volver()
+    {
+        NavManager.NavigateTo("/dashboard-participante/1");
+    }
+}

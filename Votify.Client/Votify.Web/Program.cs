@@ -6,6 +6,8 @@ using Votify.Core.Models;
 using Votify.Persistence.Context;
 using Votify.Persistence.UnitOfWork;
 using Votify.Services.Implementations;
+using Votify.Services.Implementations.Analysis;
+using Votify.Services.Implementations.IA;
 using Votify.Services.Implementations.Observers;
 using Votify.Services.Interfaces;
 using Votify.UI;
@@ -69,14 +71,13 @@ builder.Services.AddScoped<IEmailTemplateBuilder, EmailTemplateBuilder>();
 builder.Services.AddScoped<IVotacionService, VotacionService>();
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 builder.Services.AddScoped<ISupervisionService, SupervisionService>();
+builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
+builder.Services.AddScoped<ICertificadoService, CertificadoService>();
+builder.Services.AddScoped<INotificacionService, NotificacionService>();
 
 builder.Services.AddHostedService<NotificacionBackgroundService>();
 
 builder.Services.AddScoped<NotificationService>();
-
-builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
-builder.Services.AddScoped<ICertificadoService, CertificadoService>();
-builder.Services.AddScoped<INotificacionService, NotificacionService>();
 
 // Observer Pattern - Votacion State Notifications
 builder.Services.AddSingleton<IVotacionStateSubject, VotacionStateSubject>();
@@ -86,6 +87,10 @@ builder.Services.AddScoped<IVotacionStateObserver, RecordatorioObserver>();
 builder.Services.AddSingleton<IVotacionStateObserver, RealTimeUINotificationObserver>();
 builder.Services.AddScoped<VotacionStateCronDetector>();
 builder.Services.AddSingleton<RealTimeUINotificationObserver>();
+
+// IA - Análisis de Mejora
+builder.Services.AddSingleton<IIAProvider, MockIAProvider>();
+builder.Services.AddScoped<IAnalisisMejoraService, AnalisisMejoraService>();
 
 
 

@@ -124,7 +124,11 @@ else
                                               class="w-100"
                                               Click="@(() => NavManager.NavigateTo($"/evaluacion-proyecto/{proyecto.Id}"))" />
 
-                               
+                                <RadzenButton Text="Hoja de Ruta IA"
+                                              Icon="psychology"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              class="w-100"
+                                              Click="@(() => NavManager.NavigateTo($"/hoja-ruta/{proyecto.Id}"))" />
                             </RadzenStack>
                         </RadzenColumn>
 
