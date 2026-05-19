@@ -6,6 +6,7 @@
 
 @inject IAnalisisMejoraService AnalisisMejoraService
 @inject NavigationManager NavManager
+@inject IJSRuntime JS
 
 <PageTitle>Hoja de Ruta de Mejora - Votify</PageTitle>
 
@@ -130,9 +131,12 @@
                 </RadzenCard>
             }
 
-            @* BOTÓN REGENERAR *@
+            @* BOTONES *@
             <div class="rz-text-center rz-mt-4">
-                <RadzenButton Text="Regenerar con IA" Icon="autorenew" ButtonStyle="ButtonStyle.Primary" Click="GenerarHojaRuta" />
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center">
+                    <RadzenButton Text="Regenerar con IA" Icon="autorenew" ButtonStyle="ButtonStyle.Primary" Click="GenerarHojaRuta" />
+                    <RadzenButton Text="Descargar PDF" Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Click="DescargarPdf" />
+                </RadzenStack>
             </div>
         }
     </RadzenStack>
@@ -174,5 +178,10 @@
     private void Volver()
     {
         NavManager.NavigateTo("/dashboard-participante/1");
+    }
+
+    private async Task DescargarPdf()
+    {
+        await JS.InvokeVoidAsync("open", $"/hoja-ruta-pdf?proyectoId={ProyectoId}", "_blank");
     }
 }

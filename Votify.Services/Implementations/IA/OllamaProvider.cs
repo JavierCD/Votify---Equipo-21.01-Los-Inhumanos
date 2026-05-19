@@ -9,7 +9,7 @@ namespace Votify.Services.Implementations.IA
         private readonly HttpClient _httpClient;
         private readonly string _modelo;
 
-        public OllamaProvider(HttpClient httpClient, string modelo = "llama3")
+        public OllamaProvider(HttpClient httpClient, string modelo = "llama3.2")
         {
             _httpClient = httpClient;
             _modelo = modelo;
@@ -24,7 +24,7 @@ namespace Votify.Services.Implementations.IA
                 stream = false
             };
 
-            var response = await _httpClient.PostAsJsonAsync("http://localhost:11434/api/generate", body);
+            var response = await _httpClient.PostAsJsonAsync("/api/generate", body);
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();

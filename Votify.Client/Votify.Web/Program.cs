@@ -8,6 +8,7 @@ using Votify.Persistence.UnitOfWork;
 using Votify.Services.Implementations;
 using Votify.Services.Implementations.Analysis;
 using Votify.Services.Implementations.IA;
+using Votify.Services.Implementations.Pdf;
 using Votify.Services.Implementations.Observers;
 using Votify.Services.Interfaces;
 using Votify.UI;
@@ -89,8 +90,13 @@ builder.Services.AddScoped<VotacionStateCronDetector>();
 builder.Services.AddSingleton<RealTimeUINotificationObserver>();
 
 // IA - Análisis de Mejora
-builder.Services.AddSingleton<IIAProvider, MockIAProvider>();
+builder.Services.AddHttpClient<IIAProvider, OllamaProvider>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:11434");
+    client.Timeout = TimeSpan.FromMinutes(2);
+});
 builder.Services.AddScoped<IAnalisisMejoraService, AnalisisMejoraService>();
+builder.Services.AddScoped<IHojaRutaPdfService, HojaRutaPdfService>();
 
 
 
@@ -112,6 +118,16 @@ app.MapGet("/certificado", (
     );
 
     return Results.File(pdf, "application/pdf");
+});
+
+app.MapGet("/hoja-ruta-pdf", async (
+    int proyectoId,
+    IAnalisisMejoraService analisisService,
+    IHojaRutaPdfService pdfService) =>
+{
+    var hojaRuta = await analisisService.GenerarHojaRutaAsync(proyectoId);
+    var pdf = pdfService.GenerarPdf(hojaRuta);
+    return Results.File(pdf, "application/pdf", $"HojaRuta_{proyectoId}.pdf");
 });
 
 if (app.Environment.IsDevelopment())
