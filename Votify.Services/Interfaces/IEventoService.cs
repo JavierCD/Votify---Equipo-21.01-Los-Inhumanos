@@ -24,8 +24,10 @@ namespace Votify.Core.Interfaces
 
         // TODO: Borrar cuando Login terminado
         Task<int> ObtenerOrganizadorMockIdAsync();
-
         Task CrearEventoDesdeFormularioAsync(CrearEventoRequest request);
         Task<List<Juez>> ObtenerTodosLosJuecesAsync();
+
+        Task<IEnumerable<Evento>> ObtenerEventosDisponiblesAsync();
+        Task<IEnumerable<Evento>> ObtenerEventosPorParticipanteAsync(int participanteId);
     }
 }
