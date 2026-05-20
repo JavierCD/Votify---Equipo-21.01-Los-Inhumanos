@@ -1,114 +1,307 @@
-﻿@page "/panel-evento-/{EventoId:int}"
+﻿@page "/panel-evento-participante/{EventoId:int}"
 @rendermode InteractiveServer
-
-@using Votify.Core.Models
+@using System.Text
 @using Votify.Core.Interfaces
+@using Votify.Core.Models
 @using Votify.Services.Interfaces
-@using Votify.Web.Services
-@inject IEventoService EventoService
-@inject IParticipanteService ParticipanteService
+@using Votify.Services.Models.Responses
 @inject NavigationManager NavigationManager
-@inject UserSession Session
+@inject IEventoService EventoService
+@inject ISupervisionService SupervisionService
+@inject IResultadosService ResultadosService
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Mi Panel: <span class="text-primary">@(evento?.Name ?? "Cargando...")</span></h2>
-        <button class="btn btn-outline-secondary" @onclick='() => NavigationManager.NavigateTo("/")'>Volver al Inicio</button>
+        <h2>Panel del Evento: <span class="text-primary">@(evento?.Name ?? "Cargando...")</span></h2>
+        <button class="btn btn-outline-secondary" @onclick='() => NavigationManager.NavigateTo("/")'>Volver al Dashboard</button>
     </div>
 
-    @if (evento == null || participante == null)
+    @if (evento == null)
     {
-        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>
+            <p class="mt-2 text-muted">Cargando información del evento...</p>
+        </div>
     }
     else
     {
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
                 <a class="nav-link @(tabActivo == "Resumen" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Resumen"' style="cursor:pointer">
-                    <RadzenIcon Icon="info" class="me-1" /> Resumen del Evento
+                    <RadzenIcon Icon="info" class="me-1" /> Resumen Evento
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "MisProyectos" ? "active fw-bold" : "")" @onclick='() => tabActivo = "MisProyectos"' style="cursor:pointer">
-                    <RadzenIcon Icon="rocket_launch" class="me-1" /> Mis Proyectos
+                <a class="nav-link @(tabActivo == "Categorias" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Categorias"' style="cursor:pointer">
+                    <RadzenIcon Icon="category" class="me-1" /> Categorías y Premios
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Resultados" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Resultados"' style="cursor:pointer">
-                    <RadzenIcon Icon="emoji_events" class="me-1" /> Resultados Oficiales
+                <a class="nav-link @(tabActivo == "Participantes" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Participantes"' style="cursor:pointer">
+                    <RadzenIcon Icon="groups" class="me-1" /> Participantes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(tabActivo == "Jurado" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Jurado"' style="cursor:pointer">
+                    <RadzenIcon Icon="gavel" class="me-1" /> Jurado y Votos
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(tabActivo == "Resultados" ? "active fw-bold" : "")" @onclick='() => CambiarTab("Resultados")' style="cursor:pointer">
+                    <RadzenIcon Icon="emoji_events" class="me-1" /> Resultados
                 </a>
             </li>
         </ul>
 
-        @if (tabActivo == "Resumen")
+        @* --- PESTAÑA 1: RESUMEN EVENTO --- *@
+        if (tabActivo == "Resumen")
         {
-            <div class="card shadow-sm p-4 mb-4">
-                <h4 class="mb-3">Información General</h4>
-                <p class="text-muted">@evento.Description</p>
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item"><RadzenIcon Icon="calendar_today" class="me-2 text-primary" /> <strong>Inicio:</strong> @evento.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</li>
-                            <li class="list-group-item"><RadzenIcon Icon="event_busy" class="me-2 text-danger" /> <strong>Fin:</strong> @evento.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</li>
-                        </ul>
+            <div class="card shadow-sm p-4" style="max-width: 800px;">
+                <h4 class="mb-3 text-secondary">Información General</h4>
+                <div class="mb-4">
+                    <label class="fw-bold text-muted d-block mb-1">Descripción / Reglas del Evento</label>
+                    <div class="p-3 bg-light rounded border text-dark" style="white-space: pre-wrap;">
+                        @(string.IsNullOrWhiteSpace(evento.Description) ? "Sin descripción disponible para este evento." : evento.Description)
                     </div>
-                    <div class="col-md-6">
-                        <h6 class="fw-bold">Categorías en competición:</h6>
-                        @foreach (var cat in evento.CategoriasEvento)
-                        {
-                            <span class="badge bg-light text-dark border me-2 mb-2 p-2">@cat.Name</span>
-                        }
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card p-3 bg-light border-0 shadow-none">
+                            <span class="fw-bold text-muted small"><RadzenIcon Icon="calendar_today" Style="font-size:14px;" class="me-1" /> Fecha de Inicio</span>
+                            <span class="fs-5 mt-1">@evento.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card p-3 bg-light border-0 shadow-none">
+                            <span class="fw-bold text-muted small"><RadzenIcon Icon="event_busy" Style="font-size:14px;" class="me-1" /> Fecha de Finalización</span>
+                            <span class="fs-5 mt-1">@evento.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
                     </div>
                 </div>
             </div>
         }
 
-        else if (tabActivo == "MisProyectos")
+        @* --- PESTAÑA 2: CATEGORÍAS Y PREMIOS --- *@
+        else if (tabActivo == "Categorias")
         {
-            var misProyectosEnEsteEvento = participante.ObtenerProyectosParaEvento(evento);
-            @if (!misProyectosEnEsteEvento.Any())
-            {
-                <div class="alert alert-warning">No tienes proyectos inscritos en este evento.</div>
-            }
-            else
-            {
-                <div class="row">
-                    @foreach (var proyecto in misProyectosEnEsteEvento)
-                    {
-                        <div class="col-12 mb-4">
-                            <RadzenCard class="shadow-sm p-4" Style="border-top: 4px solid var(--rz-info);">
-                                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
-                                    <div>
-                                        <h4 class="fw-bold mb-0">@proyecto.Name</h4>
-                                        <small class="text-muted">Inscrito el @proyecto.FechaRegistro.ToString("dd/MM/yyyy")</small>
-                                    </div>
-                                    <button class="btn btn-sm btn-outline-secondary" @onclick="@(() => NavigationManager.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}"))">
-                                        <RadzenIcon Icon="edit" /> Editar
-                                    </button>
-                                </div>
-                                <p>@proyecto.Description</p>
+            <div class="row">
+                @foreach (var categoria in evento.CategoriasEvento.ToList())
+                {
+                    <div class="col-12 mb-4">
+                        <div class="card shadow-sm border-start border-primary border-4">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0 fw-bold text-primary">@categoria.Name</h5>
+                                @if (categoria.Votacion != null)
+                                {
+                                    <span class="badge bg-secondary">Estado: @categoria.Votacion.Estado</span>
+                                }
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">@(string.IsNullOrWhiteSpace(categoria.Descripcion) ? "Sin descripción técnica." : categoria.Descripcion)</p>
 
-                                <div class="alert alert-light border mt-3 text-center">
-                                    <RadzenIcon Icon="bar_chart" Style="font-size: 2rem; color: #ccc;" />
-                                    <p class="text-muted small m-0 mt-2">Métricas y evolución de votos (Próximamente)</p>
-                                </div>
-                            </RadzenCard>
+                                <h6 class="fw-bold mt-3 text-secondary"><RadzenIcon Icon="military_tech" class="me-1" /> Premios Configurador para esta Categoría</h6>
+                                @if (categoria.Premios == null || !categoria.Premios.Any())
+                                {
+                                    <p class="text-muted small fst-italic">Aún no se han cargado galardones para esta categoría.</p>
+                                }
+                                else
+                                {
+                                    <ul class="list-group list-group-flush border rounded shadow-none mt-2">
+                                        @foreach (var premio in categoria.Premios.OrderBy(p => p.Posicion))
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <span class="badge bg-warning text-dark me-2">#@premio.Posicion Puesto</span>
+                                                    <strong>@premio.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(premio.Descripcion))
+                                                    {
+                                                        <div class="text-muted small mt-1">@premio.Descripcion</div>
+                                                    }
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
                         </div>
-                    }
-                </div>
-            }
+                    </div>
+                }
+            </div>
         }
 
+        @* --- PESTAÑA 3: PARTICIPANTES --- *@
+        else if (tabActivo == "Participantes")
+        {
+            <div class="card shadow-sm p-4">
+                <h4 class="mb-4 text-secondary">Proyectos Inscritos por Categoría</h4>
+
+                @foreach (var categoria in evento.CategoriasEvento.ToList())
+                {
+                    <div class="mb-5">
+                        <h5 class="text-primary border-bottom pb-2 mb-3 fw-bold">
+                            <RadzenIcon Icon="label" class="fs-5 me-1" /> @categoria.Name
+                            <span class="badge bg-secondary ms-2 fs-6">@categoria.Proyectos.Count inscritos</span>
+                        </h5>
+
+                        @if (!categoria.Proyectos.Any())
+                        {
+                            <p class="text-muted fst-italic small">No hay proyectos inscritos en esta categoría todavía.</p>
+                        }
+                        else
+                        {
+                            <table class="table table-hover align-middle border">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nombre del Proyecto</th>
+                                        <th>Creador / Equipo</th>
+                                        <th>Tipo de Proyecto</th>
+                                        <th>Fecha Inscripción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var proyecto in categoria.Proyectos.ToList())
+                                    {
+                                        <tr>
+                                            <td class="fw-bold text-dark">@proyecto.Name</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <RadzenIcon Icon="person" class="me-1 text-secondary" />
+                                                    @(proyecto.Participante?.Name ?? "Participante")
+                                                </div>
+                                            </td>
+                                            <td><span class="badge bg-info text-dark">@proyecto.CategoriaEspecialidad()</span></td>
+                                            <td class="text-muted">@proyecto.FechaRegistro.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @* --- PESTAÑA 4: JURADO (CON SEGUIMIENTO DE VOTO EN VIVO) --- *@
+        else if (tabActivo == "Jurado")
+        {
+            <div class="card shadow-sm p-4">
+                <h4 class="mb-2 text-secondary"><RadzenIcon Icon="gavel" class="me-2 text-primary" /> Expertos y Evaluadores Asignados</h4>
+                <p class="text-muted small mb-4">A continuación se listan los jueces oficiales junto con el estado de sus evaluaciones en cada categoría del evento.</p>
+
+                @if (evento.Jurado == null || !evento.Jurado.Any())
+                {
+                    <div class="alert alert-light border text-center p-4 text-muted fst-italic">
+                        No hay miembros del jurado vinculados a este evento todavía.
+                    </div>
+                }
+                else
+                {
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        @foreach (var asignado in evento.Jurado.ToList())
+                        {
+                            <div class="col">
+                                <div class="card h-100 shadow-sm border border-light">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="bg-light p-2 rounded-circle me-3">
+                                                <RadzenIcon Icon="account_box" Style="font-size: 2.5rem; color: var(--rz-text-secondary);" />
+                                            </div>
+                                            <div>
+                                                <h5 class="card-title mb-0 fw-bold text-dark">@asignado.Name</h5>
+                                                <small class="text-muted">@asignado.Email</small>
+                                            </div>
+                                        </div>
+
+                                        <h6 class="fw-bold text-muted small border-bottom pb-1 mb-2">Estado de Votaciones asignadas:</h6>
+                                        <ul class="list-unstyled mb-0">
+                                            @foreach (var cat in evento.CategoriasEvento.Where(c => c.Votacion != null))
+                                            {
+                                                var controlJueces = juecesSupervision.GetValueOrDefault(cat.Id, new List<JuezSupervisionDto>());
+                                                var estadoJuez = controlJueces.FirstOrDefault(j => j.JuezId == asignado.Id);
+
+                                                <li class="d-flex justify-content-between align-items-center py-1 border-bottom border-light small">
+                                                    <span>@cat.Name</span>
+                                                    @if (estadoJuez != null)
+                                                    {
+                                                        <span class="badge @(estadoJuez.HaVotado ? "bg-success" : "bg-warning text-dark")">
+                                                            @(estadoJuez.HaVotado ? "Voto Emitido" : "Pendiente")
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-light text-muted border">Sin registrar</span>
+                                                    }
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @* --- PESTAÑA 5: RESULTADOS OFICIALES --- *@
         else if (tabActivo == "Resultados")
         {
             <div class="card shadow-sm p-4">
-                <h4 class="mb-3"><RadzenIcon Icon="leaderboard" class="me-2 text-warning" /> Clasificaciones</h4>
-                <p class="text-muted small">Los resultados aparecerán aquí conforme la organización cierre las votaciones y publique los ganadores de cada categoría.</p>
+                <h4 class="mb-4"><RadzenIcon Icon="emoji_events" class="fs-4 me-2 text-warning" /> Clasificaciones y Podio Oficial</h4>
 
-                <div class="text-center py-5 border rounded bg-light border-dashed">
-                    <RadzenIcon Icon="lock_clock" Style="font-size: 3rem; color: #aaa;" />
-                    <h6 class="mt-3 text-muted">Aún no hay resultados públicos para este evento.</h6>
-                </div>
+                @if (cargandoResultados)
+                {
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-2 text-muted">Consultando actas de votación...</p>
+                    </div>
+                }
+                else if (resultadosPorCategoria == null || !resultadosPorCategoria.Any())
+                {
+                    <div class="alert alert-info border-0 shadow-sm">
+                        <RadzenIcon Icon="info" class="me-1" /> Las clasificaciones finales aún no se han cerrado o publicado por la organización. Vuelve a consultar más tarde.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var cat in resultadosPorCategoria)
+                    {
+                        <div class="mb-5 border rounded p-4 bg-white">
+                            <h5 class="fw-bold text-primary mb-3 pb-2 border-bottom">@cat.CategoriaNombre</h5>
+
+                            @if (cat.Proyectos == null || !cat.Proyectos.Any())
+                            {
+                                <p class="text-muted fst-italic small">No hay posiciones publicadas para esta categoría.</p>
+                            }
+                            else
+                            {
+                                <table class="table table-hover align-middle table-sm border-0 m-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 80px;" class="text-center">Pos.</th>
+                                            <th>Proyecto</th>
+                                            <th>Equipo</th>
+                                            <th style="width: 120px;" class="text-center">Puntaje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var proyecto in cat.Proyectos.OrderBy(p => p.Posicion))
+                                        {
+                                            <tr>
+                                                <td class="text-center">
+                                                    <span class="badge bg-primary rounded-pill fs-6 px-3">@(proyecto.Posicion)º</span>
+                                                </td>
+                                                <td class="fw-bold text-dark">@proyecto.NombreProyecto</td>
+                                                <td class="text-muted">@proyecto.NombreEquipo</td>
+                                                <td class="text-center fw-bold text-success">@proyecto.Puntaje.ToString("F1") pts</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                        </div>
+                    }
+                }
             </div>
         }
     }
@@ -120,17 +313,59 @@
 
     private string tabActivo = "Resumen";
     private Evento? evento;
-    private Participante? participante;
+
+    // Almacén para los resultados oficiales
+    private List<ResultadoIntervenidoResponse> resultadosPorCategoria = new();
+    private bool cargandoResultados = false;
+
+    // Diccionario para controlar los estados de votación de los jueces por categoría
+    private Dictionary<int, List<JuezSupervisionDto>> juecesSupervision = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Obtener quién es el usuario conectado
-        if (Session.Usuario is Participante part)
+        try
         {
-            // 2. Cargar el evento específico
+            // 1. Cargamos el agregado completo usando tu backend optimizado
             evento = await EventoService.ObtenerEventoConDetallesAsync(EventoId);
-            // 3. Cargar los datos del participante (sus proyectos, etc)
-            participante = await ParticipanteService.ObtenerDashboardAsync(part.Id);
+
+            if (evento != null && evento.CategoriasEvento != null)
+            {
+                // 2. Cargamos el estado de votación de los jueces para cada categoría con votación configurada
+                foreach (var cat in evento.CategoriasEvento)
+                {
+                    if (cat.Votacion != null)
+                    {
+                        var estadoJueces = await SupervisionService.ObtenerEstadoJuecesAsync(cat.Votacion.Id);
+                        juecesSupervision[cat.Id] = estadoJueces;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar el panel de participante: {ex.Message}");
+        }
+    }
+
+    private async Task CambiarTab(string nuevoTab)
+    {
+        tabActivo = nuevoTab;
+
+        if (tabActivo == "Resultados")
+        {
+            cargandoResultados = true;
+            try
+            {
+                resultadosPorCategoria = await ResultadosService.ObtenerResultadosPorEventoAsync(EventoId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al consultar resultados: {ex.Message}");
+            }
+            finally
+            {
+                cargandoResultados = false;
+            }
         }
     }
 }
