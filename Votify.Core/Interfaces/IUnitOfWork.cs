@@ -40,5 +40,6 @@ namespace Votify.Core.Interfaces
         Task CommitTransactionAsync(CancellationToken cancellationToken = default);
         Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
         IGenericRepository<ResultadoIntervenido> ResultadosIntervenidos { get; }
+        IGenericRepository<SintesisIA> SintesisIA { get; }
     }
 }

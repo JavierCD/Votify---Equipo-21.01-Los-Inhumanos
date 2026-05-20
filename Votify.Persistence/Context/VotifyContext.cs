@@ -26,6 +26,7 @@ namespace Votify.Persistence.Context
         public DbSet<Criterio> Criterios { get; set; }
         public DbSet<DetalleVoto> DetallesVoto { get; set; }
         public DbSet<ResultadoIntervenido> ResultadosIntervenidos { get; set; }
+        public DbSet<SintesisIA> SintesisIA { get; set; }
 
         // --- Tablas con Herencia (Base) ---
         public DbSet<Miembro> Miembros { get; set; }

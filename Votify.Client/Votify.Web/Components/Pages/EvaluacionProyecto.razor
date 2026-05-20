@@ -10,6 +10,7 @@
 @inject IVotoExpertoServices VotoExpertoService
 @inject IProyectoService ProyectoService
 @inject NavigationManager NavManager
+@inject ISintesisIAService SintesisIAService
 
 <PageTitle>Evaluación de mi proyecto - Votify</PageTitle>
 
@@ -35,6 +36,79 @@
     }
     else
     {
+        @* ====== SECCIÓN SÍNTESIS IA — UT 3274 ====== *@
+        <RadzenCard class="rz-shadow-2 p-4 rz-mb-4">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="rz-mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">🤖</span>
+                    <div>
+                        <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-m-0">Síntesis del Jurado generada por IA</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="text-muted rz-m-0">Resumen automático que combina puntos clave de las evaluaciones.</RadzenText>
+                    </div>
+                </div>
+                @if (sintesis != null && sintesis.Existe)
+                {
+                    <RadzenButton Text="Regenerar Síntesis" Icon="refresh" ButtonStyle="ButtonStyle.Light"
+                                  Size="ButtonSize.Small"
+                                  Click="RegenerarSintesis"
+                                  Disabled="@generadoSintesis" />
+                }
+            </RadzenStack>
+
+            @if (generadoSintesis)
+            {
+                <div class="text-center py-4">
+                    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" class="rz-mb-3" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted">Analizando comentarios del jurado...</RadzenText>
+                </div>
+            }
+            else if (sintesis != null && sintesis.Existe)
+            {
+                <div class="row g-3 rz-mb-3">
+                    <div class="col-md-4">
+                        <div class="bg-light rounded p-3 h-100 border">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" class="fw-bold rz-mb-2">Puntos Fuertes Destacados</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2">@sintesis.PuntosFuertes</RadzenText>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded p-3 h-100 border">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" class="fw-bold rz-mb-2">Principales Áreas de Mejora</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2">@sintesis.AreasMejora</RadzenText>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded p-3 h-100 border">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" class="fw-bold rz-mb-2">Consenso General</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2">@sintesis.ConsensoGeneral</RadzenText>
+                        </div>
+                    </div>
+                </div>
+                <RadzenText TextStyle="TextStyle.Caption" class="text-muted">
+                    Generado el @sintesis.FechaGeneracion.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                </RadzenText>
+            }
+            else if (tieneComentariosSuficientes)
+            {
+                <div class="text-center py-4 bg-light rounded border">
+                    <RadzenIcon Icon="auto_awesome" Style="font-size: 2.5rem; opacity: 0.4;" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mt-2 rz-mb-3">
+                        Hay comentarios del jurado disponibles para sintetizar.
+                    </RadzenText>
+                    <RadzenButton Text="Generar Síntesis con IA" Icon="auto_awesome"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="GenerarSintesis" />
+                </div>
+            }
+            else
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" class="rz-m-0">
+                    No es posible generar una síntesis. Se necesitan al menos 2 comentarios del jurado.
+                </RadzenAlert>
+            }
+        </RadzenCard>
+
+        @* ====== SECCIÓN EVALUACIONES POR CRITERIO (existente) ====== *@
         <RadzenCard class="rz-shadow-2 p-4">
 
             <RadzenText TextStyle="TextStyle.H5" class="fw-bold rz-mb-3">@proyecto.Name</RadzenText>
@@ -124,6 +198,10 @@
     private List<Criterio> criteriosDelProyecto = new();
     private int criterioSeleccionadoId = 0;
     private List<EvaluacionJuezResponse> evaluaciones = new();
+    private SintesisIAResponse? sintesis;
+    private bool generadoSintesis = false;
+    private bool tieneComentariosSuficientes=false;
+    private string? errorSintesis;
 
     private bool cargando = true;
     private bool cargandoEvaluaciones = false;
@@ -142,6 +220,7 @@
             {
                 participanteId = proyecto.ParticipanteId;
                 criteriosDelProyecto = (await VotoExpertoService.ObtenerCriteriosPorProyectoAsync(ProyectoId)).ToList();
+                await CargarSintesis();
                
             }
         }
@@ -174,4 +253,51 @@
             cargandoEvaluaciones = false;
         }
     }
+
+    private async Task CargarSintesis()
+    {
+        try
+        {
+            
+            sintesis = await SintesisIAService.ObtenerSintesisPorProyectoAsync(ProyectoId);
+
+           
+            var comentarios = await VotoExpertoService.ObtenerComentariosJuezPorProyectoAsync(ProyectoId);
+            tieneComentariosSuficientes = comentarios.Count(c => !string.IsNullOrWhiteSpace(c.Comentario)) >= 2;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar síntesis: {ex.Message}");
+        }
+    }
+
+    private async Task GenerarSintesis()
+    {
+        errorSintesis = null;
+        generadoSintesis = true;
+        StateHasChanged();
+
+        try
+        {
+            sintesis = await SintesisIAService.GenerarSintesisAsync(ProyectoId);
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorSintesis = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorSintesis = $"Error al generar síntesis: {ex.Message}";
+        }
+        finally
+        {
+            generadoSintesis = false;
+        }
+    }
+
+    private async Task RegenerarSintesis()
+    {
+        await GenerarSintesis();
+    }
+
 }
