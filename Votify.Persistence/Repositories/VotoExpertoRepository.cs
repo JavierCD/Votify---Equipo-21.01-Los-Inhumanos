@@ -105,5 +105,16 @@ namespace Votify.Persistence.Repositories
                 .Distinct()
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<VotoExperto>> ObtenerComentariosPorProyectoAsync(int proyectoId)
+        {
+            return await _context.Votos.OfType<VotoExperto>()
+                .Include(v => v.Juez)
+                .Include(v => v.Proyecto)
+                .Where(v => v.ProyectoId == proyectoId
+                          && !string.IsNullOrWhiteSpace(v.Comentario))
+                .OrderBy(v => v.Fecha)
+                .ToListAsync();
+        }
     }
 }
