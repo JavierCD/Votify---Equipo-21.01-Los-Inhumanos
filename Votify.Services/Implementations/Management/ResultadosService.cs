@@ -39,13 +39,34 @@ namespace Votify.Services.Implementations
             await _unitOfWork.CategoriaRepository.UpdateAsync(categoria);
             await _unitOfWork.SaveChangesAsync();
 
+            var premios = categoria.Premios.OrderBy(p => p.Posicion).ToList();
 
+            List<PosicionRankingResponse> ranking;
 
-            List<PosicionRankingResponse> ranking = CalcularRankingConEmpates(categoria);
+            var intervenidos = (await _unitOfWork.ResultadosIntervenidos.GetAllAsync())
+                .Where(r => r.VotacionId == categoria.Votacion.Id)
+                .OrderBy(r => r.Posicion)
+                .ToList();
 
-            for (int i = 0; i < ranking.Count; i++)
+            if (intervenidos.Any())
             {
-                ranking[i].Posicion = i + 1;
+                ranking = intervenidos.Select(ri => new PosicionRankingResponse
+                {
+                    Posicion = ri.Posicion,
+                    NombreProyecto = ri.Proyecto.Name,
+                    PuntosTotales = ri.PuntajeOriginal,
+                    FechaInscripcion = ri.Proyecto.FechaRegistro,
+                    PremioGanado = premios.FirstOrDefault(p => p.Posicion == ri.Posicion)?.Name ?? "Sin premio"
+                }).ToList();
+            }
+            else
+            {
+                ranking = CalcularRankingConEmpates(categoria);
+
+                for (int i = 0; i < ranking.Count; i++)
+                {
+                    ranking[i].Posicion = i + 1;
+                }
             }
 
             var correosVotantes = categoria.Votacion.Votos
