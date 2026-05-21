@@ -97,6 +97,7 @@ builder.Services.AddHttpClient<IIAProvider, OllamaProvider>(client =>
 });
 builder.Services.AddScoped<IAnalisisMejoraService, AnalisisMejoraService>();
 builder.Services.AddScoped<IHojaRutaPdfService, HojaRutaPdfService>();
+builder.Services.AddScoped<ICriteriosSugeridosService, CriteriosSugeridosService>();
 
 
 

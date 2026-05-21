@@ -1,5 +1,7 @@
 ﻿@page "/voto-popular/{EventoId:int}/{CategoriaId:int}"
 @rendermode InteractiveServer
+@using Votify.Core.Interfaces
+@using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
 @using Votify.Services.Models.Responses
@@ -11,6 +13,8 @@
 @inject ILogger<VotoPopular> Logger
 @inject IMulticriterioService MulticriterioService
 @inject IJSRuntime JSRuntime
+@inject ICriteriosSugeridosService CriteriosSugeridosService
+@inject ICategoriaService CategoriaService
 
 <div class="container py-4" style="max-width:620px">
 
@@ -302,9 +306,22 @@
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <label class="form-label fw-semibold small text-uppercase text-muted mb-0">Criterios de Evaluación</label>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="AñadirFilaCriterio">
-                                + Añadir Criterio
-                            </button>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="SugerirCriteriosConIA" disabled="@cargandoSugerenciaIA">
+                                    @if (cargandoSugerenciaIA)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-1" style="width:0.75rem;height:0.75rem;"></span>
+                                        <span>Generando...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>✨ Sugerir con IA</span>
+                                    }
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="AñadirFilaCriterio">
+                                    + Añadir Criterio
+                                </button>
+                            </div>
                         </div>
 
                         <RadzenDataGrid @ref="gridCriterios" Data="@requestMulticriterio.Criterios" TItem="CriterioRequest" KeyProperty="IdTemporalUI" EditMode="DataGridEditMode.Single" EmptyText="No hay criterios configurados.">
@@ -335,6 +352,14 @@
                                 </RadzenDataGridColumn>
                             </Columns>
                         </RadzenDataGrid>
+
+                        @if (!string.IsNullOrEmpty(errorSugerenciaIA))
+                        {
+                            <div class="alert alert-warning alert-dismissible fade show mt-2 mb-0 py-2 small" role="alert">
+                                <RadzenIcon Icon="warning" class="me-1" /> @errorSugerenciaIA
+                                <button type="button" class="btn-close" style="font-size:0.6rem;" @onclick="() => errorSugerenciaIA = null"></button>
+                            </div>
+                        }
 
                         <div class="text-end mt-1">
                             <small class="@(requestMulticriterio.Criterios.Sum(c => c.Peso) == 100 ? "text-success fw-bold" : "text-danger fw-bold")">
@@ -437,6 +462,9 @@
     // --- MULTICRITERIO STATE ---
     private bool mostrandoConfiguracionMulticriterio = false;
     private RadzenDataGrid<CriterioRequest> gridCriterios;
+    private bool cargandoSugerenciaIA = false;
+    private string? errorSugerenciaIA;
+    private Categoria? categoriaActual;
 
     protected override void OnInitialized()
     {
@@ -587,6 +615,43 @@
         requestMulticriterio.Criterios.Remove(criterio);
         await gridCriterios.Reload();
         StateHasChanged();
+    }
+
+    private async Task SugerirCriteriosConIA()
+    {
+        cargandoSugerenciaIA = true;
+        errorSugerenciaIA = null;
+
+        try
+        {
+            if (categoriaActual == null)
+            {
+                categoriaActual = await CategoriaService.ObtenerPorIdAsync(CategoriaId);
+            }
+
+            if (categoriaActual == null)
+            {
+                errorSugerenciaIA = "No se pudo obtener la información de la categoría.";
+                return;
+            }
+
+            var criteriosSugeridos = await CriteriosSugeridosService.SugerirCriteriosAsync(
+                categoriaActual.Name,
+                categoriaActual.Descripcion);
+
+            requestMulticriterio.Criterios.Clear();
+            requestMulticriterio.Criterios.AddRange(criteriosSugeridos);
+
+            await gridCriterios.Reload();
+        }
+        catch (Exception)
+        {
+            errorSugerenciaIA = "El servicio de sugerencia con IA no está disponible en este momento.";
+        }
+        finally
+        {
+            cargandoSugerenciaIA = false;
+        }
     }
 
     private async Task CrearVotacionMulticriterioAsync()
