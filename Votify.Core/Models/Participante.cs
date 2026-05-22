@@ -29,6 +29,22 @@ namespace Votify.Core.Models
 
             Descripcion = nuevaDescripcion;
         }
+        public IEnumerable<Proyecto> ObtenerProyectosParaEvento(Evento evento)
+        {
+            if (Proyectos == null || evento?.CategoriasEvento == null)
+            {
+                return new List<Proyecto>();
+            }
+
+            // Toda la lógica de negocio (LINQ) se encapsula en el Core, 
+            // haciéndola 100% testeable con xUnit.
+            return Proyectos.Where(p =>
+                p.Categorias != null &&
+                p.Categorias.Any(catProyecto =>
+                    evento.CategoriasEvento.Any(catEvento => catEvento.Id == catProyecto.Id)
+                )
+            ).ToList();
+        }
     }
 }
 

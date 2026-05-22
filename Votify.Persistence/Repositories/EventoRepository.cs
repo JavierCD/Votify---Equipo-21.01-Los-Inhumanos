@@ -53,5 +53,26 @@ namespace Votify.Persistence.Repositories
                 .Where(e => e.Jurado.Any(j => j.Id == juezId))
                .ToListAsync();
         }
+
+        public async Task<IEnumerable<Evento>> ObtenerEventosDisponiblesAsync()
+        {
+            // Obtenemos eventos activos (FechaFin superior a hoy) para mostrarlos en el Dashboard
+            return await _context.Eventos
+                .Include(e => e.CategoriasEvento)
+                .Where(e => e.FechaFin >= DateTime.UtcNow)
+                .OrderBy(e => e.FechaInicio)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Evento>> ObtenerEventosPorParticipanteAsync(int participanteId)
+        {
+            // Buscamos eventos donde alguna de sus categorías contenga un proyecto del participante
+            return await _context.Eventos
+                .Include(e => e.CategoriasEvento)
+                    .ThenInclude(c => c.Proyectos)
+                .Where(e => e.CategoriasEvento.Any(c => c.Proyectos.Any(p => p.ParticipanteId == participanteId)))
+                .OrderByDescending(e => e.FechaInicio)
+                .ToListAsync();
+        }
     }
 }

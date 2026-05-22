@@ -70,41 +70,41 @@ namespace Votify.Services.Implementations
         {
             var proyecto = await _unitOfWork.Proyectos.GetWithIncludesAsync(
                 p => p.Id == proyectoId,
-                p => p.Categorias
+                p => p.Participante
             );
 
             if (proyecto == null) return null;
 
-            // Mapeamos a la nueva clase Response
-            var response = new EditarProyectoResponse
-            {
-                Id = proyecto.Id,
-                Nombre = proyecto.Name,
-                Descripcion = proyecto.Description,
-                NombresEquipo = proyecto.NombresEquipo,
-                UrlMateriales = proyecto.UrlMaterialesExternos,
-                // Usamos el método de dominio para obtener la especialidad si existe
-                Especialidad = proyecto.CategoriaEspecialidad()
-            };
-
             var categoria = proyecto.Categorias?.FirstOrDefault();
+
+            Evento? evento = null;
             if (categoria != null)
             {
-                response.NombreCategoria = categoria.Name;
-
-                var evento = await _unitOfWork.Eventos.GetWithIncludesAsync(
-                    e => e.Id == categoria.EventoId,
-                    e => e.Jurado
-                );
-
-                if (evento != null)
-                {
-                    response.NombreEvento = evento.Name;
-                    response.CorreoAdmin = evento.Jurado?.FirstOrDefault()?.Email ?? "admin@evento.com";
-                }
+                evento = await _unitOfWork.Eventos.GetWithIncludesAsync(
+                            e => e.Id == categoria.EventoId,
+                            e => e.Jurado,
+                            e => e.Organizador // <--- AQUÍ ESTÁ EL CAMBIO: Incluimos el organizador
+                        );
             }
 
-            return response;
+            // 4. Mapeo al Response
+            return new EditarProyectoResponse
+            {
+                Id = proyecto.Id,
+                ParticipanteId = proyecto.ParticipanteId,
+                Nombre = proyecto.Name,
+                Descripcion = proyecto.Description,
+                Especialidad = proyecto.CategoriaEspecialidad(),
+                NombresEquipo = proyecto.NombresEquipo,
+                UrlMateriales = proyecto.UrlMaterialesExternos,
+
+                NombreCategoria = categoria?.Name ?? "Sin categoría",
+                NombreEvento = evento?.Name ?? "Evento no especificado",
+
+                CorreoParticipante = proyecto.Participante?.Email ?? "participante@desconocido.com",
+
+                CorreoAdmin = evento?.Organizador?.Email ?? "admin@evento.com",
+            };
         }
     }
 }

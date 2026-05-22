@@ -15,10 +15,12 @@ namespace Votify.Services.Implementations
     public class EventoService : IEventoService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEventoRepository _eventoRepository;
 
         public EventoService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+            _eventoRepository = unitOfWork.EventoRepository;
         }
 
         public async Task ActualizarAsync(EditarEventoRequest eventoMod)
@@ -194,6 +196,16 @@ namespace Votify.Services.Implementations
             // Asumiendo que tienes inyectado un _miembroRepository
             var miembros = (await _unitOfWork.Jueces.GetAllAsync()).ToList();
             return miembros.OfType<Juez>().ToList();
+        }
+
+        public async Task<IEnumerable<Evento>> ObtenerEventosDisponiblesAsync()
+        {
+            return await _unitOfWork.EventoRepository.ObtenerEventosDisponiblesAsync();
+        }
+
+        public async Task<IEnumerable<Evento>> ObtenerEventosPorParticipanteAsync(int participanteId)
+        {
+            return await _unitOfWork.EventoRepository.ObtenerEventosPorParticipanteAsync(participanteId);
         }
     }
 }

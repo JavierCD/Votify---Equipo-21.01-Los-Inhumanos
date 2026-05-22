@@ -16,99 +16,211 @@
 @inject IVotoPuntuacionService VotoPuntuacionService
 @inject IVotoMulticriterioService VotoMulticriterioService
 
-
 <PageTitle>Inicio - Votify</PageTitle>
 
-
-
-
 @* ==========================================
-   CONTENIDO DINÁMICO SEGÚN EL ROL
+   DASHBOARD PARTICIPANTE
    ========================================== *@
-
 @if (Session.Usuario is Participante)
 {
-    <div class="container mt-5" style="max-width: 600px;">
-        <div class="card p-4 shadow-sm text-center">
-            <h3 class="mb-3">Inscripción de Proyecto</h3>
-            <p class="text-muted mb-4">Introduce el código del evento al que fuiste invitado.</p>
-
-            @if (!string.IsNullOrEmpty(mensajeErrorParticipante))
-            {
-                <div class="alert alert-danger mt-3">
-                    <RadzenIcon Icon="error" class="me-1" /> @mensajeErrorParticipante
-                </div>
-            }
-            @if (!string.IsNullOrEmpty(mensajeExitoParticipante))
-            {
-                <div class="alert alert-success mt-3">
-                    <RadzenIcon Icon="check_circle" class="me-1" /> @mensajeExitoParticipante
-                </div>
-            }
-
-            @if (eventoEncontrado == null)
-            {
-                <input type="text" @bind="codigoBusqueda" placeholder="Ej: HACK26" class="form-control mb-3 fs-5 text-center text-uppercase mx-auto" style="max-width: 300px;" />
-                <button class="btn btn-primary px-5" @onclick="BuscarEvento">Buscar Evento</button>
-            }
-            else
-            {
-                <div class="text-start mt-4">
-                    <label class="fw-bold mb-1">Nombre de tu Proyecto *</label>
-                    <input type="text" @bind="nombreProyecto" class="form-control mb-3" />
-
-                    <label class="fw-bold mb-1">Descripción del Proyecto</label>
-                    <textarea @bind="descripcionProyecto" class="form-control mb-3" rows="3" placeholder="Explica brevemente qué hace tu proyecto..."></textarea>
-
-                    <label class="fw-bold mb-1">Especialidad del Proyecto *</label>
-                    <select @bind="tipoProyectoSeleccionado" class="form-select mb-3">
-                        @foreach (var opcion in opcionesTipoProyecto)
-                        {
-                            <option value="@opcion">@opcion</option>
-                        }
-                    </select>
-
-                    <label class="fw-bold mb-1">Categoría en la que compites *</label>
-                    <select @bind="categoriaSeleccionadaId" class="form-select mb-4">
-                        <option value="0">Selecciona una categoría...</option>
-                        @if (eventoEncontrado.CategoriasEvento != null)
-                        {
-                            @foreach (var cat in eventoEncontrado.CategoriasEvento)
-                            {
-                                <option value="@cat.Id">@cat.Name</option>
-                            }
-                        }
-                    </select>
-
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <button class="btn btn-link text-muted text-decoration-none" @onclick="() => eventoEncontrado = null">
-                            Cancelar
-                        </button>
-
-                        <button class="btn btn-primary btn-lg" @onclick="InscribirProyecto">
-                            <RadzenIcon Icon="rocket_launch" class="me-2" /> Completar Inscripción
-                        </button>
-                    </div>
-                </div>
-            }
+    <div class="container-fluid mt-4 px-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Hola, @NombreUsuario <span class="text-muted fs-5">(Participante)</span></h2>
         </div>
-    </div>
 
-    <div class="container d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
-        <h2 class="mb-4">Accede como votante a una votación</h2>
-        <div class="card shadow-sm p-4 text-center" style="max-width: 400px; width: 100%;">
-            <label class="form-label mb-3">Introduce el código de la votación</label>
-            <input type="number" class="form-control mb-3 text-center fs-4"
-                   placeholder="Ej: 1"
-                   @bind="codigoVotacion" />
-            @if (!string.IsNullOrEmpty(mensajeErrorVotante))
-            {
-                <div class="alert alert-danger small">@mensajeErrorVotante</div>
-            }
-            <button class="btn btn-primary w-100" @onclick="AccederVotacion">Continuar</button>
+        <div class="row">
+            <div class="col-lg-8 pe-lg-4 border-end">
+
+                <h4 class="mb-3"><RadzenIcon Icon="task_alt" class="me-2 text-success" /> Mis Eventos Inscritos</h4>
+                @if (!misEventos.Any())
+                {
+                    <div class="alert alert-light border shadow-sm mb-5 text-muted fst-italic">
+                        Aún no te has inscrito en ningún evento. Explora los eventos disponibles abajo o usa un código de invitación.
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-3 mb-5">
+                        @foreach (var ev in misEventos)
+                        {
+                            <div class="col-md-6">
+                                <RadzenCard class="h-100 shadow-sm border-0 border-start border-success border-4" Style="border-radius: 12px;">
+                                    <h5 class="mb-1 fw-bold text-dark">@ev.Name</h5>
+                                    <p class="text-muted mb-3 small">
+                                        <RadzenIcon Icon="date_range" Style="font-size: 0.8rem" /> @ev.FechaInicio.ToLocalTime().ToString("dd MMM yyyy") - @ev.FechaFin.ToLocalTime().ToString("dd MMM yyyy")
+                                    </p>
+                                    <button class="btn btn-sm btn-success w-100 fw-bold shadow-sm" @onclick='() => NavigationManager.NavigateTo($"/panel-evento/{ev.Id}")'>
+                                        <RadzenIcon Icon="dashboard" class="me-1" /> Ir al panel del Evento
+                                    </button>
+                                </RadzenCard>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <h4 class="mb-3"><RadzenIcon Icon="explore" class="me-2 text-primary" /> Eventos Disponibles</h4>
+                @if (!eventosDisponibles.Any())
+                {
+                    <div class="alert alert-info shadow-sm">Actualmente no hay eventos públicos abiertos para inscripción.</div>
+                }
+                else
+                {
+                    <div class="row g-3 mb-4">
+                        @foreach (var ev in eventosDisponibles)
+                        {
+                            <div class="col-md-6">
+                                <RadzenCard class="h-100 shadow-sm border-0" Style="border-radius: 12px;">
+                                    <div class="d-flex mb-3">
+                                        <div class="bg-primary text-white d-flex align-items-center justify-content-center rounded" style="width: 50px; height: 50px;">
+                                            <RadzenIcon Icon="emoji_events" Style="font-size: 1.8rem" />
+                                        </div>
+                                        <div class="ms-3">
+                                            <h6 class="mb-1 fw-bold text-dark">@ev.Name</h6>
+                                            <p class="text-muted mb-0 small">
+                                                <RadzenIcon Icon="calendar_today" Style="font-size: 0.8rem" /> Cierra: @ev.FechaFin.ToLocalTime().ToString("dd/MM/yyyy")
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                                        <span class="badge bg-light text-primary border">@(ev.CategoriasEvento?.Count ?? 0) Categorías</span>
+                                        <button class="btn btn-sm btn-outline-primary fw-bold px-3" @onclick="() => PrepararInscripcion(ev)">
+                                            Participar
+                                        </button>
+                                    </div>
+                                </RadzenCard>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-4 ps-lg-4">
+                <h5 class="mb-3 fw-bold text-secondary">Accesos Rápidos</h5>
+
+                <div class="card p-4 shadow-sm mb-4 border-0" Style="border-radius: 12px; background-color: #f8f9fa;">
+                    <h6 class="mb-2 fw-bold"><RadzenIcon Icon="vpn_key" class="me-1 text-primary" /> Inscripción a Evento</h6>
+                    <p class="text-muted small mb-3">Únete usando el código proporcionado o seleccionando un evento de la lista.</p>
+
+                    @if (!string.IsNullOrEmpty(mensajeErrorParticipante))
+                    {
+                        <div class="alert alert-danger p-2 small"><RadzenIcon Icon="error" class="me-1" /> @mensajeErrorParticipante</div>
+                    }
+                    @if (!string.IsNullOrEmpty(mensajeExitoParticipante))
+                    {
+                        <div class="alert alert-success p-2 small"><RadzenIcon Icon="check_circle" class="me-1" /> @mensajeExitoParticipante</div>
+                    }
+
+                    @if (eventoEncontrado == null)
+                    {
+                        <input type="text" @bind="codigoBusqueda" placeholder="Ej: HACK26" class="form-control mb-3 text-center fw-bold text-uppercase" />
+                        <button class="btn btn-primary w-100 fw-bold shadow-sm" @onclick="BuscarEvento">Validar Código</button>
+                    }
+                    else
+                    {
+                        <div class="text-start mt-2">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-success text-start py-2 w-100">Evento: @eventoEncontrado.Name</span>
+                                <button class="btn btn-link text-muted p-0 m-0 ms-2" title="Cancelar" @onclick="CancelarInscripcion"><RadzenIcon Icon="close" /></button>
+                            </div>
+
+                            <label class="fw-bold small mb-1 mt-2">Nombre del Proyecto *</label>
+                            <input type="text" @bind="nombreProyecto" class="form-control form-control-sm mb-2 shadow-sm" />
+
+                            <label class="fw-bold small mb-1">Descripción</label>
+                            <textarea @bind="descripcionProyecto" class="form-control form-control-sm mb-2 shadow-sm" rows="2"></textarea>
+
+                            <label class="fw-bold small mb-1">Especialidad *</label>
+                            <select @bind="tipoProyectoSeleccionado" class="form-select form-select-sm mb-2 shadow-sm">
+                                @foreach (var opcion in opcionesTipoProyecto)
+                                {
+                                    <option value="@opcion">@opcion</option>
+                                }
+                            </select>
+
+                            <label class="fw-bold small mb-1">Categoría *</label>
+                            <select @bind="categoriaSeleccionadaId" class="form-select form-select-sm mb-3 shadow-sm">
+                                <option value="0">Selecciona...</option>
+                                @if (eventoEncontrado.CategoriasEvento != null)
+                                {
+                                    @foreach (var cat in eventoEncontrado.CategoriasEvento)
+                                    {
+                                        <option value="@cat.Id">@cat.Name</option>
+                                    }
+                                }
+                            </select>
+
+                            <button class="btn btn-primary w-100 fw-bold shadow-sm" @onclick="InscribirProyecto">
+                                <RadzenIcon Icon="rocket_launch" class="me-1" /> Completar Inscripción
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                <div class="card p-4 shadow-sm border-0" Style="border-radius: 12px; background-color: #f8f9fa;">
+                    <h6 class="mb-2 fw-bold"><RadzenIcon Icon="how_to_vote" class="me-1 text-success" /> Acceso a Votación</h6>
+                    <p class="text-muted small mb-3">Introduce el código ID de la votación manual.</p>
+                    <input type="number" class="form-control mb-3 text-center fw-bold" placeholder="ID (Ej: 12)" @bind="codigoVotacion" />
+                    @if (!string.IsNullOrEmpty(mensajeErrorVotante))
+                    {
+                        <div class="alert alert-danger p-2 small">@mensajeErrorVotante</div>
+                    }
+                    <button class="btn btn-success w-100 fw-bold shadow-sm" @onclick="AccederVotacion">Ir a Votar</button>
+                </div>
+            </div>
         </div>
     </div>
 }
+@* ==========================================
+                DASHBOARD JURADO 
+   ========================================== *@
+else if (Session.Usuario is Juez juez)
+{
+    <div class="container-fluid mt-4 px-4">
+        <h2 class="mb-4">Hola, @NombreUsuario <span class="text-muted fs-5">(Jurado)</span></h2>
+        <div class="row">
+            <div class="col-12">
+                <h4 class="mb-3"><RadzenIcon Icon="gavel" class="me-2 text-warning" /> Mis Eventos a Evaluar (@eventosJuez.Count)</h4>
+                @if (!eventosJuez.Any())
+                {
+                    <div class="alert alert-light border shadow-sm mb-5 text-muted fst-italic">
+                        No tienes eventos asignados por el momento.
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        @foreach (var ev in eventosJuez)
+                        {
+                            <div class="col-md-4 mb-4">
+                                <RadzenCard class="h-100 shadow-sm border-0 border-start border-warning border-4" Style="border-radius: 12px;">
+                                    <div class="d-flex mb-3">
+                                        <div class="bg-warning text-dark d-flex align-items-center justify-content-center rounded" style="width: 50px; height: 50px;">
+                                            <RadzenIcon Icon="balance" Style="font-size: 1.8rem" />
+                                        </div>
+                                        <div class="ms-3">
+                                            <h5 class="mb-1 fw-bold">@ev.Name</h5>
+                                            <p class="text-muted mb-1 small">
+                                                <RadzenIcon Icon="calendar_today" Style="font-size: 0.8rem" /> @ev.FechaInicio.ToLocalTime().ToString("dd MMM yyyy") - @ev.FechaFin.ToLocalTime().ToString("dd MMM yyyy")
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex flex-column gap-2 mt-auto">
+                                        <button class="btn btn-sm btn-outline-dark w-100 fw-bold" @onclick='() => NavigationManager.NavigateTo($"/panel-evento/{ev.Id}")'>
+                                            <RadzenIcon Icon="visibility" class="me-1" /> Ver Detalles del Evento
+                                        </button>
+                                    </div>
+                                </RadzenCard>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+@* ==========================================
+   DASHBOARD ORGANIZADOR Y PÚBLICO (Se mantiene intacto)
+   ========================================== *@
 else if (Session.Usuario is Organizador)
 {
     <div class="container mt-4">
@@ -147,43 +259,11 @@ else if (Session.Usuario is Organizador)
                             </div>
                         </div>
                         <div class="d-flex gap-2">
-                            <RadzenButton Text="Modificar" ButtonStyle="ButtonStyle.Light" class="w-100" 
+                            <RadzenButton Text="Modificar" ButtonStyle="ButtonStyle.Light" class="w-100"
                                           Click="@(() => NavigationManager.NavigateTo($"/eventos/editar/{ev.Id}"))" />
                             <RadzenButton Text="Publicar" ButtonStyle="ButtonStyle.Primary" class="w-100" />
                         </div>
                     </RadzenCard>
-                </div>
-            }
-        </div>
-    </div>
-}
-else if (Session.Usuario is Juez juez)
-{
-    <div class="container mt-4">
-        <h2 class="mb-4">Hola, @NombreUsuario</h2>
-        <h4 class="mb-3">Mis Eventos a evaluar (@eventosJuez.Count)</h4>
-        <div class="row">
-            @foreach (var ev in eventosJuez)
-            {
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex mb-3">
-                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center rounded" style="width: 80px; height: 80px;">Img</div>
-                                <div class="ms-3">
-                                    <h5>@ev.Name</h5>
-                                    <p class="text-muted mb-1 small">@ev.FechaInicio.ToLocalTime().ToString("dd MMM") - @ev.FechaFin.ToLocalTime().ToString("dd MMM yyyy")</p>
-                                </div>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-outline-secondary w-100"
-                                        @onclick='() => NavigationManager.NavigateTo($"/juez/evento/{ev.Id}")'>
-                                    Ver Proyectos y Participantes
-                                </button>
-                                <button class="btn btn-primary w-100" disabled>Acceder a Votación (Cerrada)</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             }
         </div>
@@ -253,15 +333,10 @@ else
 
         mensajeErrorVotante = "No se encontró ninguna votación con ese código.";
     }
-    private string _rolActual = "Votante";
-    private string RolActual
-    {
-        get => _rolActual;
-        set { _rolActual = value; OnRoleChanged(); }
-    }
 
     private string NombreUsuario = "Invitado";
     private IEnumerable<Evento> misEventos = new List<Evento>();
+    private IEnumerable<Evento> eventosDisponibles = new List<Evento>();
     private List<Evento> eventosJuez = new();
 
     private string codigoBusqueda = "";
@@ -270,7 +345,7 @@ else
     private string? mensajeExitoParticipante;
 
     private string nombreProyecto = "";
-    private string? descripcionProyecto; 
+    private string? descripcionProyecto;
     private int categoriaSeleccionadaId;
 
     private string tipoProyectoSeleccionado = "IA";
@@ -281,30 +356,18 @@ else
         await CargarDatosSegunRol();
     }
 
-    private async void OnRoleChanged()
-    {
-        eventoEncontrado = null;
-        codigoBusqueda = "";
-        nombreProyecto = "";
-        descripcionProyecto = null;
-        mensajeErrorParticipante = null;
-        mensajeExitoParticipante = null;
-
-        await CargarDatosSegunRol();
-        StateHasChanged(); // Forzamos a Blazor a repintar
-    }
-
     private async Task CargarDatosSegunRol()
     {
         if (Session.Usuario is Organizador org)
         {
-            NombreUsuario = Session.Usuario.Name; 
+            NombreUsuario = Session.Usuario.Name;
             misEventos = await EventoService.ObtenerEventosPorOrganizadorAsync(org.Id);
         }
-        else if (Session.Usuario is Participante)
+        else if (Session.Usuario is Participante part)
         {
-            misEventos = new List<Evento>(); // Falta método en el EventoService
-            NombreUsuario = Session.Usuario.Name; 
+            NombreUsuario = Session.Usuario.Name;
+            misEventos = await EventoService.ObtenerEventosPorParticipanteAsync(part.Id);
+            eventosDisponibles = await EventoService.ObtenerEventosDisponiblesAsync();
         }
         else if (Session.Usuario is Juez juez)
         {
@@ -337,6 +400,23 @@ else
         }
     }
 
+    private void PrepararInscripcion(Evento ev)
+    {
+        mensajeErrorParticipante = null;
+        mensajeExitoParticipante = null;
+        eventoEncontrado = ev;
+        codigoBusqueda = ev.CodigoAcceso; // Autocompleta el código para la vista de usuario
+    }
+
+    private void CancelarInscripcion()
+    {
+        eventoEncontrado = null;
+        codigoBusqueda = "";
+        nombreProyecto = "";
+        descripcionProyecto = null;
+        categoriaSeleccionadaId = 0;
+    }
+
     private async Task InscribirProyecto()
     {
         mensajeErrorParticipante = null;
@@ -349,42 +429,26 @@ else
 
         try
         {
-            
             int participanteId = Session.Usuario.Id;
 
-            // 2. Instanciamos tu Proyecto usando el constructor blindado
-            ProyectoCreator creator;
-
-            if (tipoProyectoSeleccionado == "IA")
+            ProyectoCreator creator = tipoProyectoSeleccionado switch
             {
-                creator = new AiProjectCreator();
-            }
-            else if (tipoProyectoSeleccionado == "Sostenibilidad")
-            {
-                creator = new SustainabilityProjectCreator();
-            }
-            else if (tipoProyectoSeleccionado == "Ciberseguridad")
-            {
-                creator = new CybersecurityProjectCreator();
-            }
-            else
-            {
-                creator = new AiProjectCreator(); // Fallback por seguridad
-            }
+                "IA" => new AiProjectCreator(),
+                "Sostenibilidad" => new SustainabilityProjectCreator(),
+                "Ciberseguridad" => new CybersecurityProjectCreator(),
+                _ => new AiProjectCreator() // Fallback
+            };
 
+            Proyecto nuevoProyecto = creator.CrearProyecto(nombreProyecto, participanteId, default, default, descripcionProyecto);
 
-            Proyecto nuevoProyecto = creator.CrearProyecto(nombreProyecto, participanteId, default, default ,descripcionProyecto);
-
-            // 3. Lo guardamos a través del servicio
             await ProyectoService.CrearProyectoConCategoriaAsync(nuevoProyecto, categoriaSeleccionadaId);
 
-            // 4. Limpiamos la UI y mostramos el éxito
             mensajeExitoParticipante = $"¡Tu proyecto '{nombreProyecto}' fue inscrito exitosamente!";
-            eventoEncontrado = null;
-            codigoBusqueda = "";
-            nombreProyecto = "";
-            descripcionProyecto = null;
-            categoriaSeleccionadaId = 0;
+
+            // Recargamos los eventos para que aparezca automáticamente a la izquierda
+            await CargarDatosSegunRol();
+
+            CancelarInscripcion();
         }
         catch (Exception ex)
         {
