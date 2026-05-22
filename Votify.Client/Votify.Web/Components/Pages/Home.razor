@@ -49,8 +49,8 @@
                                     <p class="text-muted mb-3 small">
                                         <RadzenIcon Icon="date_range" Style="font-size: 0.8rem" /> @ev.FechaInicio.ToLocalTime().ToString("dd MMM yyyy") - @ev.FechaFin.ToLocalTime().ToString("dd MMM yyyy")
                                     </p>
-                                    <button class="btn btn-sm btn-success w-100 fw-bold shadow-sm" @onclick='() => NavigationManager.NavigateTo($"/dashboard-participante/{ev.Id}")'>
-                                        <RadzenIcon Icon="dashboard" class="me-1" /> Ir a mi panel
+                                    <button class="btn btn-sm btn-success w-100 fw-bold shadow-sm" @onclick='() => NavigationManager.NavigateTo($"/panel-evento/{ev.Id}")'>
+                                        <RadzenIcon Icon="dashboard" class="me-1" /> Ir al panel del Evento
                                     </button>
                                 </RadzenCard>
                             </div>
@@ -171,14 +171,14 @@
     </div>
 }
 @* ==========================================
-   DASHBOARD JURADO
+                DASHBOARD JURADO 
    ========================================== *@
 else if (Session.Usuario is Juez juez)
 {
     <div class="container-fluid mt-4 px-4">
         <h2 class="mb-4">Hola, @NombreUsuario <span class="text-muted fs-5">(Jurado)</span></h2>
         <div class="row">
-            <div class="col-lg-8 pe-lg-4 border-end">
+            <div class="col-12">
                 <h4 class="mb-3"><RadzenIcon Icon="gavel" class="me-2 text-warning" /> Mis Eventos a Evaluar (@eventosJuez.Count)</h4>
                 @if (!eventosJuez.Any())
                 {
@@ -191,7 +191,7 @@ else if (Session.Usuario is Juez juez)
                     <div class="row g-3">
                         @foreach (var ev in eventosJuez)
                         {
-                            <div class="col-md-6 mb-4">
+                            <div class="col-md-4 mb-4">
                                 <RadzenCard class="h-100 shadow-sm border-0 border-start border-warning border-4" Style="border-radius: 12px;">
                                     <div class="d-flex mb-3">
                                         <div class="bg-warning text-dark d-flex align-items-center justify-content-center rounded" style="width: 50px; height: 50px;">
@@ -205,29 +205,15 @@ else if (Session.Usuario is Juez juez)
                                         </div>
                                     </div>
                                     <div class="d-flex flex-column gap-2 mt-auto">
-                                        <button class="btn btn-sm btn-outline-dark w-100 fw-bold" @onclick='() => NavigationManager.NavigateTo($"/juez/evento/{ev.Id}")'>
-                                            <RadzenIcon Icon="visibility" class="me-1" /> Ver Proyectos y Participantes
+                                        <button class="btn btn-sm btn-outline-dark w-100 fw-bold" @onclick='() => NavigationManager.NavigateTo($"/panel-evento/{ev.Id}")'>
+                                            <RadzenIcon Icon="visibility" class="me-1" /> Ver Detalles del Evento
                                         </button>
-                                        <button class="btn btn-sm btn-warning w-100 fw-bold text-dark" disabled>Acceder a Votación (Cerrada)</button>
                                     </div>
                                 </RadzenCard>
                             </div>
                         }
                     </div>
                 }
-            </div>
-            <div class="col-lg-4 ps-lg-4">
-                <h5 class="mb-3 fw-bold text-secondary">Accesos Rápidos</h5>
-                <div class="card p-4 shadow-sm border-0" Style="border-radius: 12px; background-color: #f8f9fa;">
-                    <h6 class="mb-2 fw-bold"><RadzenIcon Icon="how_to_vote" class="me-1 text-success" /> Acceso a Votación</h6>
-                    <p class="text-muted small mb-3">Introduce el código ID de la votación.</p>
-                    <input type="number" class="form-control mb-3 text-center fw-bold" placeholder="ID (Ej: 12)" @bind="codigoVotacion" />
-                    @if (!string.IsNullOrEmpty(mensajeErrorVotante))
-                    {
-                        <div class="alert alert-danger p-2 small">@mensajeErrorVotante</div>
-                    }
-                    <button class="btn btn-success w-100 fw-bold shadow-sm" @onclick="AccederVotacion">Ir a Votar</button>
-                </div>
             </div>
         </div>
     </div>

@@ -9,6 +9,8 @@ namespace Votify.Services.Models.Responses
     public class EditarProyectoResponse
     {
         public int Id { get; set; }
+        public int ParticipanteId { get; set; }
+        public string CorreoParticipante { get; set; } = string.Empty;
         // Datos actuales para pre-rellenar el formulario
         public string Nombre { get; set; } = string.Empty;
         public string? Descripcion { get; set; }

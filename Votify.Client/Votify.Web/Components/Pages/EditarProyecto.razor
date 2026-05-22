@@ -5,6 +5,7 @@
 @using Votify.Services.Models.Requests
 @using Votify.Services.Models.Responses
 @using Votify.Web.Services
+@using Votify.Core.Models
 
 @inject IProyectoService ProyectoService
 @inject NavigationManager NavManager
@@ -23,7 +24,6 @@
 }
 else if (vistaProyecto != null)
 {
-    var correoParticipante = Session.Usuario?.Email ?? "No disponible";
 
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -70,14 +70,14 @@ else if (vistaProyecto != null)
                         <div>
                             <RadzenText TextStyle="TextStyle.Caption" class="text-muted text-uppercase fw-bold mb-2 d-block">Contactos</RadzenText>
                             <div class="mb-2">
-                                <small class="text-muted d-block">Tu correo de registro:</small>
+                                <small class="text-muted d-block">Correo del participante titular:</small>
                                 <div class="d-flex align-items-center gap-2 bg-light p-2 rounded border">
                                     <RadzenIcon Icon="person" Style="font-size: 1rem;" />
-                                    <span style="font-size: 0.85rem;" class="fw-semibold">@correoParticipante</span>
+                                    <span style="font-size: 0.85rem;" class="fw-semibold">@vistaProyecto.CorreoParticipante</span>
                                 </div>
                             </div>
                             <div>
-                                <small class="text-muted d-block">Soporte / Administrador:</small>
+                                <small class="text-muted d-block">Soporte / Administrador del Evento:</small>
                                 <div class="d-flex align-items-center gap-2 bg-light p-2 rounded border">
                                     <RadzenIcon Icon="support_agent" Style="font-size: 1rem;" />
                                     <span style="font-size: 0.85rem;" class="fw-semibold">@vistaProyecto.CorreoAdmin</span>
@@ -271,13 +271,19 @@ else if (vistaProyecto != null)
                 return;
             }
 
-            // Validamos seguridad (Ahora las propiedades vienen del Response)
-            string rolUsuario = usuarioActual.GetType().Name;
-            // Nota: Asumimos que añadimos ParticipanteId a ProyectoParaEdicionResponse para esta validación,
-            // si no lo hiciste, lo puedes traer desde otra llamada o añadirlo al Response.
-            // Lo añadiré asumiendo que lo tienes.
-            // puedeEditar = (rolUsuario == "Administrador" || vistaProyecto.ParticipanteId == usuarioActual.Id);
-            puedeEditar = true; // Forzado a true para el ejemplo, ajústalo según tu lógica.
+            // ==========================================
+            // LOGICA DE SEGURIDAD CORREGIDA
+            // ==========================================
+            // Solo puede editar si el usuario es un Participante Y su ID coincide con el del dueño del proyecto.
+            if (usuarioActual is Participante && vistaProyecto.ParticipanteId == usuarioActual.Id)
+            {
+                puedeEditar = true;
+            }
+            else
+            {
+                // Si es un Organizador, Juez, u otro participante, NO puede editar.
+                puedeEditar = false;
+            }
         }
         catch (Exception)
         {
