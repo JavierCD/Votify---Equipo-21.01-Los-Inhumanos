@@ -31,6 +31,7 @@ namespace Votify.Persistence.UnitOfWork
         private IGenericRepository<Organizador>? _organizadores;
         private IGenericRepository<Notificacion>? _notificaciones;
         private IGenericRepository<ResultadoIntervenido>? _resultadosIntervenidos;
+        private IGenericRepository<SintesisIA>? _sintesisIA;
 
         private IEventoRepository? _eventoRepository;
         private ICategoriaRepository? _categoriaRepository;
@@ -63,6 +64,7 @@ namespace Votify.Persistence.UnitOfWork
         public IGenericRepository<Organizador> Organizadores => _organizadores ??= new GenericRepository<Organizador>(_context);
         public IGenericRepository<Notificacion> Notificaciones => _notificaciones ??= new GenericRepository<Notificacion>(_context);
         public IGenericRepository<ResultadoIntervenido> ResultadosIntervenidos => _resultadosIntervenidos ??= new GenericRepository<ResultadoIntervenido>(_context);
+        public IGenericRepository<SintesisIA> SintesisIA => _sintesisIA ??= new GenericRepository<SintesisIA>(_context);
 
         public IEventoRepository EventoRepository => _eventoRepository ??= new EventoRepository(_context);
         public ICategoriaRepository CategoriaRepository => _categoriaRepository ??= new CategoriaRepository(_context);

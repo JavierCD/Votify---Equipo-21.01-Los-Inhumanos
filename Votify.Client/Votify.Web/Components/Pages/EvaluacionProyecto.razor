@@ -10,6 +10,7 @@
 @inject IVotoExpertoServices VotoExpertoService
 @inject IProyectoService ProyectoService
 @inject NavigationManager NavManager
+@inject ISintesisIAService SintesisIAService
 
 <PageTitle>Evaluación de mi proyecto - Votify</PageTitle>
 
@@ -35,9 +36,30 @@
     }
     else
     {
-        <RadzenCard class="rz-shadow-2 p-4">
+        @* ====== CABECERA DEL PROYECTO ====== *@
+        <div class="mb-4 p-4 rounded-4 border" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #4361ee; color: white; font-size: 1.4rem;">
+                    📁
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0" style="color: #1a1a2e;">@proyecto.Name</h4>
+                    <span class="text-muted" style="font-size: 0.85rem;">Evaluación detallada del jurado</span>
+                </div>
+            </div>
+        </div>
 
-            <RadzenText TextStyle="TextStyle.H5" class="fw-bold rz-mb-3">@proyecto.Name</RadzenText>
+        @* ====== SECCIÓN 1: EVALUACIONES POR CRITERIO (ARRIBA) ====== *@
+        <RadzenCard class="rz-shadow-2 p-4 rz-mb-4" Style="border-radius: 16px;">
+            <div class="d-flex align-items-center gap-2 rz-mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #4361ee15; color: #4361ee;">
+                    <RadzenIcon Icon="rate_review" Style="font-size: 1.2rem;" />
+                </div>
+                <div>
+                    <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-m-0" Style="color: #1a1a2e;">Evaluaciones por Criterio</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" class="text-muted rz-m-0">Consulta la puntuación y comentarios del jurado filtrados por criterio.</RadzenText>
+                </div>
+            </div>
 
             @if (!criteriosDelProyecto.Any())
             {
@@ -47,7 +69,6 @@
             }
             else
             {
-                @* --- SELECTOR DE CRITERIO --- *@
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="1rem" class="rz-mb-4">
                     <div style="flex: 1;">
                         <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mb-1">Selecciona un criterio</RadzenText>
@@ -60,15 +81,15 @@
                     </div>
                     <RadzenButton Text="Buscar" Icon="search" ButtonStyle="ButtonStyle.Primary"
                                   Click="BuscarEvaluaciones"
-                                  Disabled="@(criterioSeleccionadoId == 0)" />
+                                  Disabled="@(criterioSeleccionadoId == 0)"
+                                  Style="border-radius: 10px;" />
                 </RadzenStack>
 
-                @* --- CONTENIDO --- *@
                 @if (!busquedaRealizada)
                 {
-                    <div class="text-center p-5 bg-light rounded border border-dashed">
-                        <RadzenIcon Icon="rate_review" Style="font-size: 3rem; opacity: 0.3;" />
-                        <RadzenText TextStyle="TextStyle.H6" class="text-muted rz-mt-2">
+                    <div class="text-center p-5 rounded-3" style="background: #f8f9fc; border: 2px dashed #d0d5e0;">
+                        <RadzenIcon Icon="rate_review" Style="font-size: 3rem; color: #c0c5d0;" />
+                        <RadzenText TextStyle="TextStyle.H6" class="rz-mt-2" Style="color: #8890a0;">
                             Selecciona un criterio para ver tu evaluación
                         </RadzenText>
                     </div>
@@ -85,33 +106,125 @@
                 }
                 else
                 {
-                    <RadzenDataGrid Data="@evaluaciones" TItem="EvaluacionJuezResponse"
-                                    AllowSorting="true"
-                                    class="rz-mt-2">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="EvaluacionJuezResponse" Property="NombreJuez" Title="Juez" Width="200px" />
-                            <RadzenDataGridColumn TItem="EvaluacionJuezResponse" Property="Puntuacion" Title="Puntuación" Width="120px" TextAlign="TextAlign.Center">
-                                <Template Context="eval">
-                                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@eval.Puntuacion.ToString("0.#")" IsPill="true" />
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="EvaluacionJuezResponse" Property="Comentario" Title="Comentario">
-                                <Template Context="eval">
-                                    @if (string.IsNullOrEmpty(eval.Comentario))
-                                    {
-                                        <span class="text-muted fst-italic">Sin comentario</span>
-                                    }
-                                    else
-                                    {
-                                        @eval.Comentario
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
+                    <div class="d-flex flex-column gap-3">
+                        @for (int i = 0; i < evaluaciones.Count; i++)
+                        {
+                            var eval = evaluaciones[i];
+                            var idx = i;
+                            <div class="p-3 rounded-3 border" style="background: #fafbff;">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                                             style="width: 38px; height: 38px; background: #4361ee20; color: #4361ee; font-size: 0.8rem;">
+                                            J@(idx + 1)
+                                        </div>
+                                        <span class="fw-semibold" style="color: #1a1a2e;">Jurado Anónimo @(idx + 1)</span>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2 fw-bold"
+                                          style="background: #4361ee; color: white; font-size: 0.85rem;">
+                                        @eval.Puntuacion.ToString("0.#") pts
+                                    </span>
+                                </div>
+                                @if (string.IsNullOrEmpty(eval.Comentario))
+                                {
+                                    <p class="text-muted fst-italic mb-0 ms-5" style="font-size: 0.9rem;">Sin comentario</p>
+                                }
+                                else
+                                {
+                                    <p class="mb-0 ms-5" style="color: #444; font-size: 0.9rem; line-height: 1.5;">@eval.Comentario</p>
+                                }
+                            </div>
+                        }
+                    </div>
                 }
             }
+        </RadzenCard>
 
+        @* ====== SECCIÓN 2: SÍNTESIS IA (ABAJO) ====== *@
+        <RadzenCard class="rz-shadow-2 p-4" Style="border-radius: 16px; border-top: 4px solid #4361ee;">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="rz-mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: linear-gradient(135deg, #4361ee, #7c3aed); color: white; font-size: 1.1rem;">
+                        🤖
+                    </div>
+                    <div>
+                        <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-m-0" Style="color: #1a1a2e;">Síntesis del Jurado generada por IA</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="text-muted rz-m-0">Resumen automático que combina puntos clave de las evaluaciones.</RadzenText>
+                    </div>
+                </div>
+                @if (sintesis != null && sintesis.Existe)
+                {
+                    <RadzenButton Text="Regenerar Síntesis" Icon="refresh" ButtonStyle="ButtonStyle.Light"
+                                  Size="ButtonSize.Small"
+                                  Click="RegenerarSintesis"
+                                  Disabled="@generadoSintesis"
+                                  Style="border-radius: 10px;" />
+                }
+            </RadzenStack>
+
+            @if (generadoSintesis)
+            {
+                <div class="text-center py-5">
+                    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" class="rz-mb-3" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted">Analizando comentarios del jurado...</RadzenText>
+                </div>
+            }
+            else if (sintesis != null && sintesis.Existe)
+            {
+                <div class="row g-3 rz-mb-3">
+                    <div class="col-md-4">
+                        <div class="h-100 p-3 rounded-3" style="background: linear-gradient(135deg, #e8f5e9, #f1f8e9); border: 1px solid #c8e6c9;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span style="font-size: 1.2rem;">✅</span>
+                                <span class="fw-bold" style="color: #2e7d32; font-size: 0.85rem;">Puntos Fuertes Destacados</span>
+                            </div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: #333; line-height: 1.6;">@sintesis.PuntosFuertes</RadzenText>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="h-100 p-3 rounded-3" style="background: linear-gradient(135deg, #fff3e0, #fbe9e7); border: 1px solid #ffcc80;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span style="font-size: 1.2rem;">🔧</span>
+                                <span class="fw-bold" style="color: #e65100; font-size: 0.85rem;">Principales Áreas de Mejora</span>
+                            </div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: #333; line-height: 1.6;">@sintesis.AreasMejora</RadzenText>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="h-100 p-3 rounded-3" style="background: linear-gradient(135deg, #e3f2fd, #e8eaf6); border: 1px solid #90caf9;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span style="font-size: 1.2rem;">📊</span>
+                                <span class="fw-bold" style="color: #1565c0; font-size: 0.85rem;">Consenso General</span>
+                            </div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="color: #333; line-height: 1.6;">@sintesis.ConsensoGeneral</RadzenText>
+                        </div>
+                    </div>
+                </div>
+                <RadzenText TextStyle="TextStyle.Caption" class="text-muted">
+                    Generado el @sintesis.FechaGeneracion.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                </RadzenText>
+            }
+            else if (tieneComentariosSuficientes)
+            {
+                <div class="text-center py-5 rounded-3" style="background: #f8f9fc; border: 2px dashed #d0d5e0;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px; background: linear-gradient(135deg, #4361ee20, #7c3aed20);">
+                        <RadzenIcon Icon="auto_awesome" Style="font-size: 1.8rem; color: #4361ee;" />
+                    </div>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mb-3">
+                        Hay comentarios del jurado disponibles para sintetizar.
+                    </RadzenText>
+                    <RadzenButton Text="Generar Síntesis con IA" Icon="auto_awesome"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="GenerarSintesis"
+                                  Style="border-radius: 10px; padding: 10px 24px;" />
+                </div>
+            }
+            else
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" class="rz-m-0">
+                    No es posible generar una síntesis. Se necesitan al menos 2 comentarios del jurado.
+                </RadzenAlert>
+            }
         </RadzenCard>
     }
 </div>
@@ -124,6 +237,10 @@
     private List<Criterio> criteriosDelProyecto = new();
     private int criterioSeleccionadoId = 0;
     private List<EvaluacionJuezResponse> evaluaciones = new();
+    private SintesisIAResponse? sintesis;
+    private bool generadoSintesis = false;
+    private bool tieneComentariosSuficientes=false;
+    private string? errorSintesis;
 
     private bool cargando = true;
     private bool cargandoEvaluaciones = false;
@@ -142,6 +259,7 @@
             {
                 participanteId = proyecto.ParticipanteId;
                 criteriosDelProyecto = (await VotoExpertoService.ObtenerCriteriosPorProyectoAsync(ProyectoId)).ToList();
+                await CargarSintesis();
                
             }
         }
@@ -174,4 +292,51 @@
             cargandoEvaluaciones = false;
         }
     }
+
+    private async Task CargarSintesis()
+    {
+        try
+        {
+            
+            sintesis = await SintesisIAService.ObtenerSintesisPorProyectoAsync(ProyectoId);
+
+           
+            var comentarios = await VotoExpertoService.ObtenerComentariosJuezPorProyectoAsync(ProyectoId);
+            tieneComentariosSuficientes = comentarios.Count(c => !string.IsNullOrWhiteSpace(c.Comentario)) >= 2;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar síntesis: {ex.Message}");
+        }
+    }
+
+    private async Task GenerarSintesis()
+    {
+        errorSintesis = null;
+        generadoSintesis = true;
+        StateHasChanged();
+
+        try
+        {
+            sintesis = await SintesisIAService.GenerarSintesisAsync(ProyectoId);
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorSintesis = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorSintesis = $"Error al generar síntesis: {ex.Message}";
+        }
+        finally
+        {
+            generadoSintesis = false;
+        }
+    }
+
+    private async Task RegenerarSintesis()
+    {
+        await GenerarSintesis();
+    }
+
 }
