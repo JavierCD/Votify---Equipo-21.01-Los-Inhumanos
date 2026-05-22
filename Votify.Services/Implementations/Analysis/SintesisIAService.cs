@@ -61,6 +61,7 @@ namespace Votify.Services.Implementations
 
             // 3. Llamar a la IA
             var respuestaIA = await _iaProvider.AnalizarAsync(prompt);
+            Console.WriteLine($"========== RESPUESTA IA CRUDA ==========\n{respuestaIA}\n========================================");
 
             // 4. Parsear la respuesta
             var resultado = ParsearRespuesta(respuestaIA);
@@ -124,38 +125,87 @@ namespace Votify.Services.Implementations
         {
             try
             {
-                // Intentar limpiar si viene con backticks
+                // Limpiar backticks y texto extra
                 var limpio = respuestaIA
                     .Replace("```json", "")
                     .Replace("```", "")
                     .Trim();
 
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var parsed = JsonSerializer.Deserialize<SintesisJsonDto>(limpio, options);
+                // Extraer solo el bloque JSON si hay texto antes o después
+                int inicioJson = limpio.IndexOf('{');
+                int finJson = limpio.LastIndexOf('}');
 
-                return new SintesisIAResponse
+                if (inicioJson >= 0)
                 {
-                    PuntosFuertes = parsed?.PuntosFuertes ?? "No se pudo extraer.",
-                    AreasMejora = parsed?.AreasMejora ?? "No se pudo extraer.",
-                    ConsensoGeneral = parsed?.ConsensoGeneral ?? "No se pudo extraer."
-                };
+                    finJson = limpio.LastIndexOf('}');
+                    if (finJson > inicioJson)
+                    {
+                        limpio = limpio.Substring(inicioJson, finJson - inicioJson + 1);
+                    }
+                    else
+                    {
+                        // Ollama a veces no cierra el JSON — lo cerramos nosotros
+                        limpio = limpio.Substring(inicioJson) + "}";
+                    }
+                }
+
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+                // Parsear como diccionario genérico para capturar cualquier formato de claves
+                // Fix: si el último valor no cierra comillas, cerrarlas
+                if (limpio.EndsWith("\"}") == false && limpio.EndsWith("}"))
+                {
+                    // Verificar si falta cerrar comillas antes del }
+                    var sinUltimo = limpio.TrimEnd('}').TrimEnd();
+                    if (!sinUltimo.EndsWith("\""))
+                    {
+                        limpio = sinUltimo + "\"}";
+                    }
+                }
+                var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(limpio, options);
+
+                if (dict != null)
+                {
+                    return new SintesisIAResponse
+                    {
+                        PuntosFuertes = dict.GetValueOrDefault("puntosFuertes")
+                            ?? dict.GetValueOrDefault("PuntosFuertes")
+                            ?? dict.GetValueOrDefault("puntos_fuertes")
+                            ?? "No se pudo extraer.",
+                        AreasMejora = dict.GetValueOrDefault("areasMejora")
+                            ?? dict.GetValueOrDefault("AreasMejora")
+                            ?? dict.GetValueOrDefault("areas_mejora")
+                            ?? "No se pudo extraer.",
+                        ConsensoGeneral = dict.GetValueOrDefault("consensoGeneral")
+                            ?? dict.GetValueOrDefault("ConsensoGeneral")
+                            ?? dict.GetValueOrDefault("consenso_general")
+                            ?? "No se pudo extraer."
+                    };
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                // Fallback: si la IA no devuelve JSON válido, usar toda la respuesta como consenso
-                return new SintesisIAResponse
-                {
-                    PuntosFuertes = "La IA no pudo estructurar la respuesta correctamente.",
-                    AreasMejora = "Intenta regenerar la síntesis.",
-                    ConsensoGeneral = respuestaIA
-                };
+                Console.WriteLine($"[SintesisIA] Error parseando respuesta: {ex.Message}");
+                Console.WriteLine($"[SintesisIA] Respuesta cruda: {respuestaIA}");
             }
+
+            return new SintesisIAResponse
+            {
+                PuntosFuertes = "La IA no pudo estructurar la respuesta correctamente.",
+                AreasMejora = "Intenta regenerar la síntesis.",
+                ConsensoGeneral = respuestaIA
+            };
         }
 
         private class SintesisJsonDto
         {
+            [System.Text.Json.Serialization.JsonPropertyName("puntosFuertes")]
             public string PuntosFuertes { get; set; } = string.Empty;
+
+            [System.Text.Json.Serialization.JsonPropertyName("areasMejora")]
             public string AreasMejora { get; set; } = string.Empty;
+
+            [System.Text.Json.Serialization.JsonPropertyName("consensoGeneral")]
             public string ConsensoGeneral { get; set; } = string.Empty;
         }
 
