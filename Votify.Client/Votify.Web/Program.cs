@@ -53,6 +53,7 @@ builder.Services.AddCors(options =>
 });
 
 // --- Inyección de Dependencias (Core, Persistence, Services) ---
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<IProyectoService, ProyectoService>();

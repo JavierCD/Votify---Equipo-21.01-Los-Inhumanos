@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Caching.Memory;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Persistence.Context;
@@ -14,6 +15,7 @@ namespace Votify.Persistence.UnitOfWork
     public class UnitOfWork : IUnitOfWork
     {
         private readonly VotifyContext _context;
+        private readonly IMemoryCache _cache;
         private IDbContextTransaction? _transaction;
 
         private IGenericRepository<Evento>? _eventos;
@@ -44,12 +46,13 @@ namespace Votify.Persistence.UnitOfWork
         private IVotoMulticriterioRepository? _votoMulticriterioRepository;
         private IAuditoriaRepository? _auditoriaRepository;
 
-        public UnitOfWork(VotifyContext context)
+        public UnitOfWork(VotifyContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
-        public IGenericRepository<Evento> Eventos => _eventos ??= new GenericRepository<Evento>(_context);
+        public IGenericRepository<Evento> Eventos => _eventos ??= new CachedGenericRepository<Evento>(new GenericRepository<Evento>(_context), _cache);
         public IGenericRepository<Proyecto> Proyectos => _proyectos ??= new GenericRepository<Proyecto>(_context);
         public IGenericRepository<Categoria> Categorias => _categorias ??= new GenericRepository<Categoria>(_context);
         public IGenericRepository<Voto> Votos => _votos ??= new GenericRepository<Voto>(_context);
@@ -60,13 +63,13 @@ namespace Votify.Persistence.UnitOfWork
         public IGenericRepository<Votacion> Votaciones => _votaciones ??= new GenericRepository<Votacion>(_context);
         public IGenericRepository<Votante> Votantes => _votantes ??= new GenericRepository<Votante>(_context);
         public IGenericRepository<Participante> Participantes => _participantes ??= new GenericRepository<Participante>(_context);
-        public IGenericRepository<Juez> Jueces => _jueces ??= new GenericRepository<Juez>(_context);
+        public IGenericRepository<Juez> Jueces => _jueces ??= new CachedGenericRepository<Juez>(new GenericRepository<Juez>(_context), _cache);
         public IGenericRepository<Organizador> Organizadores => _organizadores ??= new GenericRepository<Organizador>(_context);
         public IGenericRepository<Notificacion> Notificaciones => _notificaciones ??= new GenericRepository<Notificacion>(_context);
         public IGenericRepository<ResultadoIntervenido> ResultadosIntervenidos => _resultadosIntervenidos ??= new GenericRepository<ResultadoIntervenido>(_context);
         public IGenericRepository<SintesisIA> SintesisIA => _sintesisIA ??= new GenericRepository<SintesisIA>(_context);
 
-        public IEventoRepository EventoRepository => _eventoRepository ??= new EventoRepository(_context);
+        public IEventoRepository EventoRepository => _eventoRepository ??= new CachedEventoRepository(new EventoRepository(_context), _cache);
         public ICategoriaRepository CategoriaRepository => _categoriaRepository ??= new CategoriaRepository(_context);
         public IParticipanteRepository ParticipanteRepository => _participanteRepository ??= new ParticipanteRepository(_context);
         public IPopularRepository PopularRepository => _popularRepository ??= new PopularRepository(_context);

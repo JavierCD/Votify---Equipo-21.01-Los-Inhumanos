@@ -12,10 +12,15 @@ namespace Votify.Services.Implementations
     public class VotoMulticriterioService : IVotoMulticriterioService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IVotoValidationHandler _validationChain;
 
         public VotoMulticriterioService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+            _validationChain = VotoValidationChainBuilder.BuildMulticriterioChain(
+                obtenerVotacion: id => _unitOfWork.VotoMulticriterioRepository.ObtenerVotacionMulticriterioPorIdAsync(id),
+                emailYaVoto: (votId, email) => _unitOfWork.VotoMulticriterioRepository.EmailYaVotoEnVotacionAsync(votId, email)
+            );
         }
 
         public async Task<List<VotacionMulticriterioDetalleResponse>> ObtenerVotacionesMulticriterioDisponiblesAsync()
@@ -64,48 +69,42 @@ namespace Votify.Services.Implementations
                         Peso = c.Peso
                     }).ToList() ?? new()
             };
-        }           
+        }
 
         public async Task EmitirVotoMulticriterioAsync(EmitirVotoMulticriterioRequest request)
         {
-            var votacion = await _unitOfWork.VotoMulticriterioRepository.ObtenerVotacionMulticriterioPorIdAsync(request.VotacionId);
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
 
-            if (votacion == null)
-                throw new Exception("La votación especificada no existe.");
-
-            if (!votacion.PuedeVotar(DateTime.UtcNow))
-                throw new InvalidOperationException("La votación no está abierta en este momento.");
-
-            if (!string.IsNullOrWhiteSpace(request.Email) && votacion.RestriccionVotoUnico)
+            var context = new VotoValidationContext
             {
-                var yaVoto = await _unitOfWork.VotoMulticriterioRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
-                if (yaVoto) throw new Exception("Este correo ya ha emitido una evaluación para esta categoría.");
-            }
+                VotacionId = request.VotacionId,
+                VotanteId = request.VotanteId,
+                JuezId = request.JuezId,
+                Email = request.Email,
+                Anonimo = request.Anonimo,
+                PuntuacionesMulticriterio = request.Puntuaciones
+            };
+
+            await _validationChain.HandleAsync(context);
+
+            var votacion = (Multicriterio)context.Votacion!;
 
             Votante? votanteFinal = null;
-
             if (!string.IsNullOrWhiteSpace(request.Email))
             {
                 var todosLosVotantes = await _unitOfWork.Votantes.GetAllAsync();
                 votanteFinal = todosLosVotantes.FirstOrDefault(v => v.Email == request.Email);
-
                 if (votanteFinal == null)
                 {
-                    votanteFinal = new Votante
-                    {
-                        Email = request.Email,
-                    };
-
+                    votanteFinal = new Votante { Email = request.Email };
                     await _unitOfWork.Votantes.AddAsync(votanteFinal);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
 
             bool esJuez = request.JuezId.HasValue && request.JuezId.Value > 0;
-
-            VotoCreator creador = esJuez
-                ? new VotoExpertoCreator()
-                : new VotoPublicoCreator();
+            VotoCreator creador = esJuez ? new VotoExpertoCreator() : new VotoPublicoCreator();
             List<Voto> votosAInsertar = new List<Voto>();
 
             foreach (var proyectoEvaluado in request.Puntuaciones)
@@ -113,7 +112,6 @@ namespace Votify.Services.Implementations
                 int proyectoId = proyectoEvaluado.Key;
                 double puntuacionBase = 0;
 
-                
                 Voto? papeleta = votacion.Votos?.FirstOrDefault(v =>
                     v.ProyectoId == proyectoId &&
                     (
@@ -125,12 +123,17 @@ namespace Votify.Services.Implementations
                 bool esNuevo = false;
                 if (papeleta == null)
                 {
-                    // 2. Si no hay comentario previo, creamos el voto de cero
                     string? hash = null;
                     if (request.Anonimo)
                     {
-                        string identificadorSecreto = esJuez ? request.JuezId!.Value.ToString() : (!string.IsNullOrWhiteSpace(request.Email) ? request.Email : request.VotanteId.ToString());
-                        hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{request.VotacionId}-{identificadorSecreto}-VotifySecretSalt2026"))).Substring(0, 16);
+                        string identificadorSecreto = esJuez
+                            ? request.JuezId!.Value.ToString()
+                            : (!string.IsNullOrWhiteSpace(request.Email) ? request.Email : request.VotanteId.ToString());
+                        hash = Convert.ToHexString(
+                            SHA256.HashData(
+                                Encoding.UTF8.GetBytes($"{request.VotacionId}-{identificadorSecreto}-VotifySecretSalt2026")
+                            )
+                        ).Substring(0, 16);
                     }
 
                     papeleta = creador.CrearVoto(request.VotacionId, proyectoId, puntuacionBase, request.Anonimo, hash);
@@ -142,7 +145,6 @@ namespace Votify.Services.Implementations
                     esNuevo = true;
                 }
 
-                // 3. Añadimos las puntuaciones a la papeleta (sea la nueva o la recuperada del comentario)
                 foreach (var criterioEvaluado in proyectoEvaluado.Value)
                 {
                     if (criterioEvaluado.Value > 0 && !papeleta.Detalles.Any(d => d.CriterioId == criterioEvaluado.Key))
@@ -157,17 +159,11 @@ namespace Votify.Services.Implementations
                 }
 
                 if (esNuevo && papeleta.Detalles.Any())
-                {
-                    votosAInsertar.Add(papeleta); // Se hará INSERT
-                }
-                // Si no es nuevo, Entity Framework ya lo está rastreando (Tracking). 
-                // Al hacer _unitOfWork.SaveChangesAsync() al final, hará un UPDATE automático.
+                    votosAInsertar.Add(papeleta);
             }
 
             if (votosAInsertar.Any())
-            {
                 await _unitOfWork.VotoMulticriterioRepository.GuardarVotosAsync(votosAInsertar);
-            }
 
             await _unitOfWork.SaveChangesAsync();
         }

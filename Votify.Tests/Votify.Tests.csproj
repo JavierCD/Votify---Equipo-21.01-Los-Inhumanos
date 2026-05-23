@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="xunit" Version="2.9.2" />
@@ -22,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Votify.Core\Votify.Core.csproj" />
     <ProjectReference Include="..\Votify.Services\Votify.Services.csproj" />
+    <ProjectReference Include="..\Votify.Persistence\Votify.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>

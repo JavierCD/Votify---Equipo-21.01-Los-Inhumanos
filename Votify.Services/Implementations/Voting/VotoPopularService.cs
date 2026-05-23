@@ -16,10 +16,16 @@ namespace Votify.Services.Implementations
     public class VotoPopularService : IVotoPopularService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IVotoValidationHandler _validationChain;
 
         public VotoPopularService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+            _validationChain = VotoValidationChainBuilder.BuildPopularChain(
+                obtenerVotacion: id => _unitOfWork.VotoPopularRepository.ObtenerVotacionPopularPorIdAsync(id),
+                obtenerProyectos: catId => _unitOfWork.VotoPopularRepository.ObtenerProyectosPorCategoriaAsync(catId),
+                emailYaVoto: (votId, email) => _unitOfWork.VotoPopularRepository.EmailYaVotoEnVotacionAsync(votId, email)
+            );
         }
 
         public async Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesPopularesDisponiblesAsync()
@@ -33,7 +39,7 @@ namespace Votify.Services.Implementations
                 CategoriaNombre = v.Categoria?.Name ?? "Sin categoría",
                 Estado = v.Estado,
                 MaxSelection = v.MaxSelection,
-                Proyectos = new() 
+                Proyectos = new()
             }).ToList();
         }
 
@@ -67,72 +73,41 @@ namespace Votify.Services.Implementations
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            var votacion = await _unitOfWork.VotoPopularRepository.ObtenerVotacionPopularPorIdAsync(request.VotacionId);
-
-            if (votacion == null)
-                throw new ArgumentException("La votación popular no existe.");
-
-            // Evaluamos la regla de negocio pura de la máquina de estados.
-            // Si la fecha actual no está dentro de la ventana de tiempo, lanzamos excepción.
-            if (!votacion.PuedeVotar(DateTime.UtcNow))
-                throw new InvalidOperationException("La votación no está abierta en este momento.");
-
-
-            if (request.ProyectosSeleccionadosIds == null || !request.ProyectosSeleccionadosIds.Any())
-                throw new ArgumentException("Debes seleccionar al menos un proyecto.");
-
-            if (request.ProyectosSeleccionadosIds.Count > votacion.MaxSelection)
-                throw new ArgumentException($"Solo puedes seleccionar hasta {votacion.MaxSelection} proyecto(s).");
-
-            var proyectosValidos = await _unitOfWork.VotoPopularRepository.ObtenerProyectosPorCategoriaAsync(votacion.CategoriaId);
-            var proyectosValidosIds = proyectosValidos.Select(p => p.Id).ToHashSet();
-
-            if (request.ProyectosSeleccionadosIds.Any(id => !proyectosValidosIds.Contains(id)))
-                throw new ArgumentException("Uno o más proyectos no pertenecen a la categoría de la votación.");
-
-            if (!string.IsNullOrWhiteSpace(request.Email) && votacion.RestriccionVotoUnico)
+            var context = new VotoValidationContext
             {
-                bool yaVoto = await _unitOfWork.VotoPopularRepository.EmailYaVotoEnVotacionAsync(request.VotacionId, request.Email);
-                if (yaVoto)
-                    throw new InvalidOperationException("Este correo electrónico ya ha emitido su voto en esta votación.");
-            }
+                VotacionId = request.VotacionId,
+                VotanteId = request.VotanteId,
+                JuezId = request.JuezId,
+                Email = request.Email,
+                Anonimo = request.Anonimo,
+                ProyectosSeleccionadosIds = request.ProyectosSeleccionadosIds
+            };
 
-            int votanteIdFinal = request.VotanteId;
+            await _validationChain.HandleAsync(context);
+
+            var votacion = (Popular)context.Votacion!;
 
             Votante votanteFinal = null;
-
             if (!string.IsNullOrWhiteSpace(request.Email))
             {
                 var todosLosVotantes = await _unitOfWork.Votantes.GetAllAsync();
                 votanteFinal = todosLosVotantes.FirstOrDefault(v => v.Email == request.Email);
-
                 if (votanteFinal == null)
                 {
-                    votanteFinal = new Votante
-                    {
-                        Email = request.Email,
-                    };
-
+                    votanteFinal = new Votante { Email = request.Email };
                     await _unitOfWork.Votantes.AddAsync(votanteFinal);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
 
             bool esJuez = request.JuezId.HasValue && request.JuezId.Value > 0;
-
-            VotoCreator creadorVoto = esJuez
-                ? new VotoExpertoCreator()
-                : new VotoPublicoCreator();
-
-            // Suponiendo que tienes una puntuación base que el usuario acaba de emitir
-            double puntuacionBaseEmitida = 10.0; // ¡Cámbialo por la variable real si es necesario!
+            VotoCreator creadorVoto = esJuez ? new VotoExpertoCreator() : new VotoPublicoCreator();
+            double puntuacionBaseEmitida = 10.0;
 
             List<Voto> votosAInsertar = new List<Voto>();
 
-            // 1. Iteramos por cada proyecto que el usuario/juez ha seleccionado
             foreach (var proyectoId in request.ProyectosSeleccionadosIds)
             {
-                // 2. UPSERT: Buscamos si ya existe el "cascarón" (el comentario previo)
                 Voto? papeleta = votacion.Votos?.FirstOrDefault(v =>
                     v.ProyectoId == proyectoId &&
                     (
@@ -143,12 +118,10 @@ namespace Votify.Services.Implementations
 
                 if (papeleta != null)
                 {
-                    // 3A. UPDATE: El voto o comentario ya existe. Le inyectamos la puntuación.
                     papeleta.PuntuacionBase = puntuacionBaseEmitida;
                 }
                 else
                 {
-                    // 3B. INSERT: No hay nada previo. Creamos el voto de cero.
                     string? hash = null;
                     if (request.Anonimo)
                     {
@@ -171,39 +144,24 @@ namespace Votify.Services.Implementations
                         hash
                     );
 
-                    if (esJuez)
-                    {
-                        papeleta.AsignarEmisorId(request.JuezId!.Value);
-                    }
-                    else if (votanteFinal != null)
-                    {
-                        papeleta.AsignarEmisorId(votanteFinal.Id);
-                    }
-                    else
-                    {
-                        papeleta.AsignarEmisorId(request.VotanteId);
-                    }
+                    if (esJuez) papeleta.AsignarEmisorId(request.JuezId!.Value);
+                    else if (votanteFinal != null) papeleta.AsignarEmisorId(votanteFinal.Id);
+                    else papeleta.AsignarEmisorId(request.VotanteId);
 
                     votosAInsertar.Add(papeleta);
                 }
             }
 
-            // 4. Solo insertamos en base de datos los que sean totalmente nuevos
             if (votosAInsertar.Any())
-            {
                 await _unitOfWork.VotoPopularRepository.GuardarVotosAsync(votosAInsertar);
-            }
 
-            // Guardamos todo (tanto los Updates trackeados como los nuevos Inserts)
             await _unitOfWork.SaveChangesAsync();
         }
+
         public async Task<List<VotacionPopularDisponibleResponse>> ObtenerVotacionesDisponiblesAsync(int votanteId)
         {
-            
             var votaciones = await _unitOfWork.VotoPopularRepository.ObtenerVotacionesPopularesDisponiblesAsync();
-           
 
-           
             return votaciones.Select(v => new VotacionPopularDisponibleResponse
             {
                 VotacionId = v.Id,
@@ -212,7 +170,7 @@ namespace Votify.Services.Implementations
                 Estado = v.Estado,
                 MaxSelection = v.MaxSelection,
                 PermiteAutoVoto = v.PermiteAutoVoto,
-                Proyectos = new List<ProyectoVotacionPopularResponse>() 
+                Proyectos = new List<ProyectoVotacionPopularResponse>()
             }).ToList();
         }
     }
