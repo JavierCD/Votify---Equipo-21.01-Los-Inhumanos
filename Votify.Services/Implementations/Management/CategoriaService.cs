@@ -94,6 +94,9 @@ namespace Votify.Services.Implementations
 
         public async Task ConfigurarFechas(Categoria categoria, DateTime fechaInicio, DateTime fechaFin)
         {
+            if (categoria.Votacion == null)
+                throw new InvalidOperationException($"La categoría '{categoria.Name}' no tiene una votación configurada.");
+
             categoria.Votacion.ConfigurarFechas(fechaInicio, fechaFin);
             await _unitOfWork.Categorias.UpdateAsync(categoria);
             await _unitOfWork.SaveChangesAsync();
@@ -101,6 +104,9 @@ namespace Votify.Services.Implementations
 
         public async Task ForzarCierre(Categoria categoria)
         {
+            if (categoria.Votacion == null)
+                throw new InvalidOperationException($"La categoría '{categoria.Name}' no tiene una votación configurada.");
+
             categoria.Votacion.ForzarCierre();
             await _unitOfWork.Categorias.UpdateAsync(categoria);
             await _unitOfWork.SaveChangesAsync();
@@ -108,6 +114,9 @@ namespace Votify.Services.Implementations
 
         public async Task ForzarApertura(Categoria categoria)
         {
+            if (categoria.Votacion == null)
+                throw new InvalidOperationException($"La categoría '{categoria.Name}' no tiene una votación configurada.");
+
             categoria.Votacion.ForzarApertura();
             await _unitOfWork.Categorias.UpdateAsync(categoria);
             await _unitOfWork.SaveChangesAsync();
@@ -115,6 +124,9 @@ namespace Votify.Services.Implementations
 
         public async Task PausarVotacion(Categoria categoria)
         {
+            if (categoria.Votacion == null)
+                throw new InvalidOperationException($"La categoría '{categoria.Name}' no tiene una votación configurada.");
+
             categoria.Votacion.PausarVotacion();
             await _unitOfWork.Categorias.UpdateAsync(categoria);
             await _unitOfWork.SaveChangesAsync();
@@ -122,6 +134,9 @@ namespace Votify.Services.Implementations
 
         public async Task ForzarProgramada(Categoria categoria)
         {
+            if (categoria.Votacion == null)
+                throw new InvalidOperationException($"La categoría '{categoria.Name}' no tiene una votación configurada.");
+
             categoria.Votacion.ForzarProgramada();
             await _unitOfWork.Categorias.UpdateAsync(categoria);
             await _unitOfWork.SaveChangesAsync();

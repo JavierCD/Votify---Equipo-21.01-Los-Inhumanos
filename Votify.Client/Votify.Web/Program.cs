@@ -9,6 +9,7 @@ using Votify.Services.Implementations;
 using Votify.Services.Implementations.Analysis;
 using Votify.Services.Implementations.IA;
 using Votify.Services.Implementations.Pdf;
+using Votify.Services.Implementations.Strategies;
 using Votify.Services.Implementations.Observers;
 using Votify.Services.Interfaces;
 using Votify.UI;
@@ -75,6 +76,12 @@ builder.Services.AddScoped<ISupervisionService, SupervisionService>();
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
 builder.Services.AddScoped<ICertificadoService, CertificadoService>();
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
+
+// Strategy Pattern - Ranking Strategies
+builder.Services.AddScoped<MulticriterioRankingStrategy>();
+builder.Services.AddScoped<PopularRankingStrategy>();
+builder.Services.AddScoped<PuntuacionRankingStrategy>();
+builder.Services.AddScoped<RankingStrategyFactory>();
 
 builder.Services.AddHostedService<NotificacionBackgroundService>();
 

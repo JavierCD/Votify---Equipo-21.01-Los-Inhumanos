@@ -23,15 +23,17 @@ namespace Votify.Services.Implementations
 
             var votaciones = await _unitOfWork.Votaciones.GetAllWithIncludesAsync(
                 v => v.Categoria,
-                v => v.Categoria.Evento,
-                v => v.Categoria.Evento.Jurado,
                 v => v.Votos
             );
 
-            Console.WriteLine($"[CRON DETECTOR] Total votaciones consultadas: {votaciones.Count()}");
+            var votacionesValidas = votaciones.Where(v => v.Categoria != null).ToList();
+
+            Console.WriteLine($"[CRON DETECTOR] Total votaciones válidas: {votacionesValidas.Count}");
+
+            var eventoCache = new Dictionary<int, Evento?>();
 
             // 1. APERTURAS
-            var aperturas = votaciones
+            var aperturas = votacionesValidas
                 .Where(v => v.FechaApertura <= ahora
                          && v.EnviarNotificacionApertura == true
                          && v.NotificacionAperturaEnviada == false)
@@ -41,7 +43,7 @@ namespace Votify.Services.Implementations
 
             foreach (var votacion in aperturas)
             {
-                var evento = votacion.Categoria?.Evento;
+                var evento = await GetEventoCached(votacion.Categoria!.EventoId, eventoCache);
                 if (evento == null) continue;
 
                 votacion.Estado = "Abierta";
@@ -58,7 +60,7 @@ namespace Votify.Services.Implementations
 
             // 2. RECORDATORIOS DE CIERRE PRÓXIMO
             var limiteRecordatorio = ahora.AddMinutes(5);
-            var recordatorios = votaciones.
+            var recordatorios = votacionesValidas.
                 Where(v => v.Estado == "Abierta"
                         && v.FechaCierre <= limiteRecordatorio
                         && v.FechaCierre > ahora
@@ -67,7 +69,7 @@ namespace Votify.Services.Implementations
 
             foreach (var votacion in recordatorios)
             {
-                var evento = votacion.Categoria?.Evento;
+                var evento = await GetEventoCached(votacion.Categoria!.EventoId, eventoCache);
                 if (evento == null) continue;
 
                 await _subject.NotifyAsync(new VotacionStateChangedArgs
@@ -80,7 +82,7 @@ namespace Votify.Services.Implementations
             }
 
             // 3. CIERRES
-            var cierres = votaciones
+            var cierres = votacionesValidas
                 .Where(v => v.Estado == "Abierta"
                          && v.FechaCierre <= ahora
                          && !v.NotificacionCierreEnviada)
@@ -88,7 +90,7 @@ namespace Votify.Services.Implementations
 
             foreach (var votacion in cierres)
             {
-                var evento = votacion.Categoria?.Evento;
+                var evento = await GetEventoCached(votacion.Categoria!.EventoId, eventoCache);
                 if (evento == null) continue;
 
 
@@ -102,6 +104,20 @@ namespace Votify.Services.Implementations
             }
 
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        private async Task<Evento?> GetEventoCached(int eventoId, Dictionary<int, Evento?> cache)
+        {
+            if (cache.TryGetValue(eventoId, out var evento))
+                return evento;
+
+            evento = await _unitOfWork.Eventos.GetWithIncludesAsync(
+                e => e.Id == eventoId,
+                e => e.Jurado
+            );
+
+            cache[eventoId] = evento;
+            return evento;
         }
     }
 }

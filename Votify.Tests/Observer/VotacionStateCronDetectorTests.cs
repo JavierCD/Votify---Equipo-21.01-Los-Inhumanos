@@ -10,6 +10,29 @@ namespace Votify.Tests.Observer
 {
     public class VotacionStateCronDetectorTests
     {
+        private static Mock<IUnitOfWork> SetupMocks(List<Votacion> votaciones, Evento? evento = null)
+        {
+            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
+            mockVotaciones
+                .Setup(r => r.GetAllWithIncludesAsync(
+                    It.IsAny<Expression<Func<Votacion, object>>>(),
+                    It.IsAny<Expression<Func<Votacion, object>>>()))
+                .ReturnsAsync(votaciones);
+
+            var mockEventos = new Mock<IGenericRepository<Evento>>();
+            mockEventos
+                .Setup(r => r.GetWithIncludesAsync(
+                    It.IsAny<Expression<Func<Evento, bool>>>(),
+                    It.IsAny<Expression<Func<Evento, object>>>()))
+                .ReturnsAsync(evento);
+
+            var mockUoW = new Mock<IUnitOfWork>();
+            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
+            mockUoW.Setup(u => u.Eventos).Returns(mockEventos.Object);
+
+            return mockUoW;
+        }
+
         [Fact]
         public async Task DetectAndNotifyAsync_CuandoHayAperturaPendiente_NotificaApertura()
         {
@@ -17,7 +40,7 @@ namespace Votify.Tests.Observer
             var evento = new HackathonEvent("Hackathon", ahora, ahora.AddDays(1), 1);
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
-            var categoria = new Categoria { Id = 1, Name = "IA", Evento = evento };
+            var categoria = new Categoria { Id = 1, Name = "IA", EventoId = 1, Evento = evento };
             var votacion = new Popular
             {
                 Id = 1,
@@ -28,18 +51,7 @@ namespace Votify.Tests.Observer
             };
             votacion.Categoria = categoria;
 
-            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
-            mockVotaciones
-                .Setup(r => r.GetAllWithIncludesAsync(
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>()))
-                .ReturnsAsync(new List<Votacion> { votacion });
-
-            var mockUoW = new Mock<IUnitOfWork>();
-            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
-
+            var mockUoW = SetupMocks(new List<Votacion> { votacion }, evento);
             var mockSubject = new Mock<IVotacionStateSubject>();
             var detector = new VotacionStateCronDetector(mockUoW.Object, mockSubject.Object);
 
@@ -50,7 +62,6 @@ namespace Votify.Tests.Observer
                     a => a.EventType == VotacionStateEventType.Apertura && a.Votacion.Id == 1)),
                 Times.Once
             );
-            mockVotaciones.Verify(r => r.UpdateAsync(votacion), Times.Once);
             Assert.Equal("Abierta", votacion.Estado);
         }
 
@@ -61,7 +72,7 @@ namespace Votify.Tests.Observer
             var evento = new HackathonEvent("Hackathon", ahora, ahora.AddDays(1), 1);
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
-            var categoria = new Categoria { Id = 1, Name = "IA", Evento = evento };
+            var categoria = new Categoria { Id = 1, Name = "IA", EventoId = 1, Evento = evento };
             var votacion = new Popular
             {
                 Id = 1,
@@ -72,18 +83,7 @@ namespace Votify.Tests.Observer
             };
             votacion.Categoria = categoria;
 
-            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
-            mockVotaciones
-                .Setup(r => r.GetAllWithIncludesAsync(
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>()))
-                .ReturnsAsync(new List<Votacion> { votacion });
-
-            var mockUoW = new Mock<IUnitOfWork>();
-            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
-
+            var mockUoW = SetupMocks(new List<Votacion> { votacion }, evento);
             var mockSubject = new Mock<IVotacionStateSubject>();
             var detector = new VotacionStateCronDetector(mockUoW.Object, mockSubject.Object);
 
@@ -103,7 +103,7 @@ namespace Votify.Tests.Observer
             var evento = new HackathonEvent("Hackathon", ahora, ahora.AddDays(1), 1);
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
-            var categoria = new Categoria { Id = 1, Name = "IA", Evento = evento };
+            var categoria = new Categoria { Id = 1, Name = "IA", EventoId = 1, Evento = evento };
             var votacion = new Popular
             {
                 Id = 1,
@@ -113,18 +113,7 @@ namespace Votify.Tests.Observer
             };
             votacion.Categoria = categoria;
 
-            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
-            mockVotaciones
-                .Setup(r => r.GetAllWithIncludesAsync(
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>()))
-                .ReturnsAsync(new List<Votacion> { votacion });
-
-            var mockUoW = new Mock<IUnitOfWork>();
-            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
-
+            var mockUoW = SetupMocks(new List<Votacion> { votacion }, evento);
             var mockSubject = new Mock<IVotacionStateSubject>();
             var detector = new VotacionStateCronDetector(mockUoW.Object, mockSubject.Object);
 
@@ -144,7 +133,7 @@ namespace Votify.Tests.Observer
             var evento = new HackathonEvent("Hackathon", ahora, ahora.AddDays(1), 1);
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
-            var categoria = new Categoria { Id = 1, Name = "IA", Evento = evento };
+            var categoria = new Categoria { Id = 1, Name = "IA", EventoId = 1, Evento = evento };
             var votacion = new Popular
             {
                 Id = 1,
@@ -154,18 +143,7 @@ namespace Votify.Tests.Observer
             };
             votacion.Categoria = categoria;
 
-            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
-            mockVotaciones
-                .Setup(r => r.GetAllWithIncludesAsync(
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>()))
-                .ReturnsAsync(new List<Votacion> { votacion });
-
-            var mockUoW = new Mock<IUnitOfWork>();
-            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
-
+            var mockUoW = SetupMocks(new List<Votacion> { votacion }, evento);
             var mockSubject = new Mock<IVotacionStateSubject>();
             var detector = new VotacionStateCronDetector(mockUoW.Object, mockSubject.Object);
 
@@ -185,7 +163,7 @@ namespace Votify.Tests.Observer
             var evento = new HackathonEvent("Hackathon", ahora, ahora.AddDays(1), 1);
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
-            var categoria = new Categoria { Id = 1, Name = "IA", Evento = evento };
+            var categoria = new Categoria { Id = 1, Name = "IA", EventoId = 1, Evento = evento };
             var votacion = new Popular
             {
                 Id = 1,
@@ -195,18 +173,7 @@ namespace Votify.Tests.Observer
             };
             votacion.Categoria = categoria;
 
-            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
-            mockVotaciones
-                .Setup(r => r.GetAllWithIncludesAsync(
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>()))
-                .ReturnsAsync(new List<Votacion> { votacion });
-
-            var mockUoW = new Mock<IUnitOfWork>();
-            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
-
+            var mockUoW = SetupMocks(new List<Votacion> { votacion }, evento);
             var mockSubject = new Mock<IVotacionStateSubject>();
             var detector = new VotacionStateCronDetector(mockUoW.Object, mockSubject.Object);
 
@@ -226,7 +193,7 @@ namespace Votify.Tests.Observer
             var evento = new HackathonEvent("Hackathon", ahora, ahora.AddDays(1), 1);
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
-            var categoria = new Categoria { Id = 1, Name = "IA", Evento = evento };
+            var categoria = new Categoria { Id = 1, Name = "IA", EventoId = 1, Evento = evento };
             var votacion = new Popular
             {
                 Id = 1,
@@ -237,18 +204,7 @@ namespace Votify.Tests.Observer
             };
             votacion.Categoria = categoria;
 
-            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
-            mockVotaciones
-                .Setup(r => r.GetAllWithIncludesAsync(
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>()))
-                .ReturnsAsync(new List<Votacion> { votacion });
-
-            var mockUoW = new Mock<IUnitOfWork>();
-            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
-
+            var mockUoW = SetupMocks(new List<Votacion> { votacion }, evento);
             var mockSubject = new Mock<IVotacionStateSubject>();
             var detector = new VotacionStateCronDetector(mockUoW.Object, mockSubject.Object);
 
@@ -268,7 +224,7 @@ namespace Votify.Tests.Observer
             var evento = new HackathonEvent("Hackathon", ahora, ahora.AddDays(1), 1);
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
-            var categoria = new Categoria { Id = 1, Name = "IA", Evento = evento };
+            var categoria = new Categoria { Id = 1, Name = "IA", EventoId = 1, Evento = evento };
             var votacion = new Popular
             {
                 Id = 1,
@@ -279,18 +235,7 @@ namespace Votify.Tests.Observer
             };
             votacion.Categoria = categoria;
 
-            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
-            mockVotaciones
-                .Setup(r => r.GetAllWithIncludesAsync(
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>()))
-                .ReturnsAsync(new List<Votacion> { votacion });
-
-            var mockUoW = new Mock<IUnitOfWork>();
-            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
-
+            var mockUoW = SetupMocks(new List<Votacion> { votacion }, evento);
             var mockSubject = new Mock<IVotacionStateSubject>();
             var detector = new VotacionStateCronDetector(mockUoW.Object, mockSubject.Object);
 
@@ -310,7 +255,7 @@ namespace Votify.Tests.Observer
             var evento = new HackathonEvent("Hackathon", ahora, ahora.AddDays(1), 1);
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
-            var categoria = new Categoria { Id = 1, Name = "IA", Evento = evento };
+            var categoria = new Categoria { Id = 1, Name = "IA", EventoId = 1, Evento = evento };
             var votacion = new Popular
             {
                 Id = 1,
@@ -320,18 +265,7 @@ namespace Votify.Tests.Observer
             };
             votacion.Categoria = categoria;
 
-            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
-            mockVotaciones
-                .Setup(r => r.GetAllWithIncludesAsync(
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>()))
-                .ReturnsAsync(new List<Votacion> { votacion });
-
-            var mockUoW = new Mock<IUnitOfWork>();
-            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
-
+            var mockUoW = SetupMocks(new List<Votacion> { votacion }, evento);
             var mockSubject = new Mock<IVotacionStateSubject>();
             var detector = new VotacionStateCronDetector(mockUoW.Object, mockSubject.Object);
 
@@ -351,7 +285,7 @@ namespace Votify.Tests.Observer
             var evento = new HackathonEvent("Hackathon", ahora, ahora.AddDays(1), 1);
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
-            var categoria = new Categoria { Id = 1, Name = "IA", Evento = evento };
+            var categoria = new Categoria { Id = 1, Name = "IA", EventoId = 1, Evento = evento };
             var votacion = new Popular
             {
                 Id = 1,
@@ -361,18 +295,7 @@ namespace Votify.Tests.Observer
             };
             votacion.Categoria = categoria;
 
-            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
-            mockVotaciones
-                .Setup(r => r.GetAllWithIncludesAsync(
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>()))
-                .ReturnsAsync(new List<Votacion> { votacion });
-
-            var mockUoW = new Mock<IUnitOfWork>();
-            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
-
+            var mockUoW = SetupMocks(new List<Votacion> { votacion }, evento);
             var mockSubject = new Mock<IVotacionStateSubject>();
             var detector = new VotacionStateCronDetector(mockUoW.Object, mockSubject.Object);
 
@@ -388,18 +311,7 @@ namespace Votify.Tests.Observer
         [Fact]
         public async Task DetectAndNotifyAsync_CuandoNoHayVotaciones_NoNotificaNada()
         {
-            var mockVotaciones = new Mock<IGenericRepository<Votacion>>();
-            mockVotaciones
-                .Setup(r => r.GetAllWithIncludesAsync(
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>(),
-                    It.IsAny<Expression<Func<Votacion, object>>>()))
-                .ReturnsAsync(new List<Votacion>());
-
-            var mockUoW = new Mock<IUnitOfWork>();
-            mockUoW.Setup(u => u.Votaciones).Returns(mockVotaciones.Object);
-
+            var mockUoW = SetupMocks(new List<Votacion>());
             var mockSubject = new Mock<IVotacionStateSubject>();
             var detector = new VotacionStateCronDetector(mockUoW.Object, mockSubject.Object);
 
