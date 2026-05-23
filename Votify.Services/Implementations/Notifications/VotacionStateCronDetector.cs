@@ -46,7 +46,7 @@ namespace Votify.Services.Implementations
                 var evento = await GetEventoCached(votacion.Categoria!.EventoId, eventoCache);
                 if (evento == null) continue;
 
-                votacion.Estado = "Abierta";
+                votacion.EvaluarEstadoTemporal(ahora);
                 await _unitOfWork.Votaciones.UpdateAsync(votacion);
 
                 await _subject.NotifyAsync(new VotacionStateChangedArgs

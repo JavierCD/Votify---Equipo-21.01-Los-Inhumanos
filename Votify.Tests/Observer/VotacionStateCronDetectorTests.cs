@@ -45,6 +45,7 @@ namespace Votify.Tests.Observer
             {
                 Id = 1,
                 FechaApertura = ahora.AddMinutes(-1),
+                FechaCierre = ahora.AddDays(1),
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = false,
                 Estado = "Pendiente"
@@ -167,9 +168,10 @@ namespace Votify.Tests.Observer
             var votacion = new Popular
             {
                 Id = 1,
-                FechaCierre = ahora.AddMinutes(-1),
+                FechaCierre = ahora.AddMinutes(-10),
                 Estado = "Abierta",
-                NotificacionCierreEnviada = false
+                NotificacionCierreEnviada = false,
+                EnviarNotificacionApertura = false
             };
             votacion.Categoria = categoria;
 
