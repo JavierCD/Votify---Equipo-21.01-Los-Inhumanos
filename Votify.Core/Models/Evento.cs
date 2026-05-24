@@ -25,6 +25,8 @@ namespace Votify.Core.Models
         public DateTime FechaFin { get; set; }
 
         public EstadoEvento Estado { get; set; } = EstadoEvento.Borrador;
+        //Si es publico y aparece en el dashboard inical
+        public bool EsPublico { get; set; } = true;
 
         // Clave foránea del organizador (fundamental para el rendimiento)
         public int OrganizadorId { get; set; }

@@ -37,6 +37,8 @@ namespace Votify.Services.Implementations
                 eventoMod.FechaFin, 
                 eventoMod.Description);
 
+            eventoExistente.EsPublico = eventoMod.EsPublico;
+
             await _unitOfWork.SaveChangesAsync();
 
         }

@@ -26,6 +26,13 @@ namespace Votify.Core.Models
         public bool RestriccionVotoUnico { get; set; } = false;
         public bool PermiteAutoVoto { get; set; } =false;
 
+        //Propiedades Visibilidad, permisos y configuración
+        public bool MostrarNombresJueces { get; set; } = true;
+        public bool MostrarComentarios { get; set; } = true;
+        public bool MostrarRanking { get; set; } = true;
+        public bool MostrarResultadosDetallados { get; set; } = true;
+
+
         //Notis
         public bool NotificacionRecordatorioEnviada { get; set; } = false;
         public bool NotificacionCierreEnviada { get; set; } = false;
