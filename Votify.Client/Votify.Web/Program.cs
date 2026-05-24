@@ -121,6 +121,17 @@ app.MapGet("/certificado", (
 
     return Results.File(pdf, "application/pdf");
 });
+app.MapGet("/certificado-participacion", (
+    string nombreParticipante,
+    string nombreProyecto,
+    string nombreEvento,
+    DateTime fechaParticipacion,
+    ICertificadoService certificadoService) =>
+{
+    var pdf = certificadoService.GenerarCertificadoParticipacion(
+        nombreParticipante, nombreProyecto, nombreEvento, fechaParticipacion);
+    return Results.File(pdf, "application/pdf");
+});
 
 app.MapGet("/hoja-ruta-pdf", async (
     int proyectoId,

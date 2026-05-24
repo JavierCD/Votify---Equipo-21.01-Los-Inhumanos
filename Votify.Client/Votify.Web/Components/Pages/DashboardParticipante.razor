@@ -48,7 +48,7 @@ else
 
         <RadzenText TextStyle="TextStyle.H5" class="rz-mb-4 fw-bold text-secondary">Tus Participaciones Activas</RadzenText>
 
-        @* --- ESTADO VACÍO (SIN PROYECTOS) --- *@
+        @* --- ESTADO VACÍO (SIN PROYECTOS) --- <RadzenButton Text
         @if (participante.Proyectos?.Any() != true)
         {
             <div class="text-center rz-mt-5 rz-mb-5 p-5 bg-light rounded border border-dashed">
@@ -64,8 +64,13 @@ else
             @foreach (var proyecto in participante.Proyectos)
             {
                 <RadzenCard class="rz-mb-5 rz-shadow-3 p-4" Style="border-top: 4px solid var(--rz-info);">
-
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="border-bottom pb-3 rz-mb-3">
+                        <RadzenButton Text="Certificado de Participación"
+                                      Icon="verified"
+                                      ButtonStyle="ButtonStyle.Success"
+                                      class="w-100"
+                                      Visible="@(proyecto.Votos?.Any() == true)"
+                                      Click="@(() => AbrirCertificadoParticipacion(proyecto,null))" />
                         <div>
                             <RadzenText TextStyle="TextStyle.H5" class="rz-m-0 fw-bold">@proyecto.Name</RadzenText>
                             <RadzenText TextStyle="TextStyle.Caption" class="text-muted">
@@ -258,14 +263,28 @@ else
                                                 </li>
                                             }
                                         </ul>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Tu posición: <strong class="fs-5 ms-1">@(miPosicion > 0 ? miPosicion + "º" : "-")</strong></span>
-                                           <RadzenButton Text="Certificado"
-              Size="ButtonSize.Small"
-              ButtonStyle="ButtonStyle.Secondary"
-              Icon="download"
-              Click="@(() => AbrirCertificado(proyecto, categoria, miPosicion))" />
-                                        </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>Tu posición: <strong class="fs-5 ms-1">@(miPosicion > 0 ? miPosicion + "º" : "-")</strong></span>
+
+                                        @if (miPosicion <= 3)
+                                        {
+                                            // TOP 3: Certificado de Premio (Dorado/Rojo)
+                                            <RadzenButton Text="Certificado de Premio"
+                                                          Size="ButtonSize.Small"
+                                                          ButtonStyle="ButtonStyle.Danger"
+                                                          Icon="emoji_events"
+                                                          Click="@(() => AbrirCertificado(proyecto, categoria, miPosicion))" />
+                                        }
+                                        else
+                                        {
+                                            // RESTO: Certificado de Participación (Verde/Azul)
+                                            <RadzenButton Text="Certificado de Participación"
+                                                          Size="ButtonSize.Small"
+                                                          ButtonStyle="ButtonStyle.Success"
+                                                          Icon="verified"
+                                                          Click="@(() => AbrirCertificadoParticipacion(proyecto, categoria))" />
+                                        }
+                                    </div>
                                     </div>
                                 </RadzenColumn>
                             }
@@ -370,5 +389,24 @@ else
         return votosValidos > 0
             ? sumaPonderada / votosValidos
             : 0;
+    }
+    async Task AbrirCertificadoParticipacion(Proyecto proyecto, Categoria categoria)
+    {
+        var nombreParticipante = participante!.Name;
+        var nombreProyecto = proyecto.Name;
+
+        // Usamos la categoría que nos pasan directamente para asegurar que es la correcta
+        var nombreEvento = categoria.Evento?.Name ?? "Evento";
+        var fechaParticipacion = proyecto.FechaRegistro;
+
+        await JS.InvokeVoidAsync(
+            "open",
+            $"/certificado-participacion?" +
+            $"nombreParticipante={Uri.EscapeDataString(nombreParticipante)}" +
+            $"&nombreProyecto={Uri.EscapeDataString(nombreProyecto)}" +
+            $"&nombreEvento={Uri.EscapeDataString(nombreEvento)}" +
+            $"&fechaParticipacion={fechaParticipacion:yyyy-MM-dd}",
+            "_blank"
+        );
     }
 }
