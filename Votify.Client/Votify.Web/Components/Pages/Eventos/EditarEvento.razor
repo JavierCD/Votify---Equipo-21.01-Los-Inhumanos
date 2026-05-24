@@ -21,6 +21,7 @@
 @inject IVotacionService VotacionService
 @inject ISupervisionService SupervisionService
 @inject IUnitOfWork _unitOfWork
+@inject IParticipanteService ParticipanteService
 
 
 <div class="container mt-4">
@@ -394,77 +395,230 @@
                                     </div>                            
                                 </div>
                             </div>
+                        </div>        
+                        }                            
+                      </div >                                      
+            </div >                                         
+        }
+
+        else if (tabActivo == "Participantes")
+{
+    <div class="card shadow-sm p-4">
+        <h4 class="mb-4">Participantes y Proyectos</h4>
+
+        @* --- SECCIÓN AÑADIR PARTICIPANTE --- *@
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><RadzenIcon Icon="person_add" class="me-2" /> Añadir Participante a Categoría</h5>
             </div>
-                                }                            
-                            </div >                                      
-                         </div >                                         
-                    }
-
-                    else if (tabActivo == "Participantes")
-        {
-            <div class="card shadow-sm p-4">
-                <h4 class="mb-4">Participantes y Proyectos</h4>
-
-                @foreach (var categoria in evento.CategoriasEvento.ToList())
-                {
-                    <div class="mb-5">
-                        <h5 class="text-primary border-bottom pb-2 mb-3">
-                            <RadzenIcon Icon="label" class="fs-5 me-1" /> @categoria.Name
-                            <span class="badge bg-secondary ms-2 fs-6">@categoria.Proyectos.Count inscritos</span>
-                        </h5>
-
-                        @if (!categoria.Proyectos.Any())
-                        {
-                            <p class="text-muted fst-italic">Aún no hay proyectos inscritos en esta categoría.</p>
-                        }
-                        else
-                        {
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Nombre del Proyecto</th>
-                                        <th>Creador</th>
-                                        <th>Tipo de Proyecto</th>
-                                        <th>Fecha Inscripción</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var proyecto in categoria.Proyectos.ToList())
-                                    {
-                                        <tr>
-                                            <td class="fw-bold">@proyecto.Name</td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <RadzenIcon Icon="person" class="me-1 text-secondary" />
-                                                    @(proyecto.Participante?.Name ?? "Desconocido")
-                                                </div>
-                                            </td>
-                                            <td><span class="badge bg-info text-dark">@proyecto.CategoriaEspecialidad()</span></td>
-                                            <td>@proyecto.FechaRegistro.ToShortDateString()</td>
-                                            <td>
-                                                @if (proyecto.Participante != null)
-                                                {
-                                                    <button class="btn btn-sm btn-outline-info me-1" title="Ver ficha del participante"
-                                                            @onclick='() => NavigationManager.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
-                                                        <RadzenIcon Icon="visibility" Style="font-size: 16px;" /> Ver Ficha
-                                                    </button>
-                                                }
-                                                <button class="btn btn-sm btn-outline-primary me-1 mb-1" title="Editar ficha del proyecto"
-                                                        @onclick='() => NavigationManager.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}")'>
-                                                    <RadzenIcon Icon="description" Style="font-size: 16px;" /> Proyecto
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-danger">Descalificar</button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        }
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Categoría destino:</label>
+                                <select class="form-select" @bind-value="categoriaSeleccionadaId" @bind-value:event="oninput" @onchange="CargarParticipantesDisponibles">
+                            <option value="0">-- Seleccionar categoría --</option>
+                            @foreach (var cat in evento.CategoriasEvento)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        </select>
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Participante:</label>
+                                <select class="form-select" @bind-value="participanteSeleccionadoId" @bind-value:event="oninput" @onchange="CargarProyectosDisponibles">
+                            <option value="0">-- Seleccionar participante --</option>
+                            @if (participantesDisponibles != null)
+                            {
+                                @foreach (var part in participantesDisponibles)
+                                {
+                                    <option value="@part.Id">@part.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Proyecto a asignar:</label>
+                        <select class="form-select" @bind="proyectoSeleccionadoId">
+                            <option value="0">-- Seleccionar proyecto --</option>
+                            @if (proyectosDisponibles != null)
+                            {
+                                @foreach (var proy in proyectosDisponibles)
+                                {
+                                    <option value="@proy.Id">@proy.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button class="btn btn-primary"
+                                @onclick="AsignarProyectoACategoria"
+                                disabled="@(categoriaSeleccionadaId == 0 || participanteSeleccionadoId == 0 || proyectoSeleccionadoId == 0)">
+                            <RadzenIcon Icon="add" class="me-1" /> Añadir a Categoría
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* --- LISTADO DE PARTICIPANTES POR CATEGORÍA --- *@
+        @foreach (var categoria in evento.CategoriasEvento.ToList())
+        {
+            <div class="mb-5">
+                <h5 class="text-primary border-bottom pb-2 mb-3">
+                    <RadzenIcon Icon="label" class="fs-5 me-1" /> @categoria.Name
+                    <span class="badge bg-secondary ms-2 fs-6">@categoria.Proyectos.Count inscritos</span>
+                </h5>
+
+                @if (!categoria.Proyectos.Any())
+                {
+                    <p class="text-muted fst-italic">Aún no hay proyectos inscritos en esta categoría.</p>
+                }
+                else
+                {
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre del Proyecto</th>
+                                <th>Creador</th>
+                                <th>Tipo de Proyecto</th>
+                                <th>Fecha Inscripción</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var proyecto in categoria.Proyectos.ToList())
+                            {
+                                <tr>
+                                    <td class="fw-bold">@proyecto.Name</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <RadzenIcon Icon="person" class="me-1 text-secondary" />
+                                            @(proyecto.Participante?.Name ?? "Desconocido")
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-info text-dark">@proyecto.CategoriaEspecialidad()</span></td>
+                                    <td>@proyecto.FechaRegistro.ToShortDateString()</td>
+                                    <td>
+                                        @if (proyecto.Participante != null)
+                                        {
+                                            <button class="btn btn-sm btn-outline-info me-1" title="Ver ficha del participante"
+                                                    @onclick='() => NavigationManager.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
+                                                <RadzenIcon Icon="visibility" Style="font-size: 16px;" /> Ver Ficha
+                                            </button>
+                                        }
+                                        <button class="btn btn-sm btn-outline-primary me-1 mb-1" title="Editar ficha del proyecto"
+                                                @onclick='() => NavigationManager.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}")'>
+                                            <RadzenIcon Icon="description" Style="font-size: 16px;" /> Proyecto
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning me-1 mb-1" title="Reasignar a otra categoría"
+                                                @onclick="() => AbrirModalReasignar(proyecto, categoria)">
+                                            <RadzenIcon Icon="swap_horiz" Style="font-size: 16px;" /> Reasignar
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger">Descalificar</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 }
             </div>
         }
+    </div>
+
+    @* --- MODAL DE REASIGNACIÓN --- *@
+    @if (mostrarModalReasignar)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title"><RadzenIcon Icon="swap_horiz" class="me-2" /> Reasignar Proyecto</h5>
+                        <button type="button" class="btn-close" @onclick="CerrarModalReasignar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="fw-bold">Proyecto: @proyectoAReasignar?.Name</p>
+                        <p class="text-muted">Categoría actual: @categoriaOrigenReasignar?.Name</p>
+
+                        <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="tipoReasignacion" id="mismaEvento" @onclick="SeleccionarMisma" checked="@(tipoReasignacion == "misma")" />
+                            <label class="form-check-label fw-bold" for="mismaEvento">
+                                Mover a otra categoría del mismo evento
+                            </label>
+                        </div>
+
+                        @if (tipoReasignacion == "misma")
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Categoría destino:</label>
+                                        <select class="form-select" @bind-value="categoriaDestinoId" @bind-value:event="oninput">
+                                    <option value="0">-- Seleccionar categoría --</option>
+                                    @foreach (var cat in evento.CategoriasEvento.Where(c => c.Id != categoriaOrigenReasignar?.Id))
+                                    {
+                                        <option value="@cat.Id">@cat.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+
+                        <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="tipoReasignacion" id="otroEvento" @onclick="SeleccionarOtro" checked="@(tipoReasignacion == "otro")" />
+                            <label class="form-check-label fw-bold" for="otroEvento">
+                                Mover a otro evento
+                            </label>
+                        </div>
+
+                        @if (tipoReasignacion == "otro")
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Evento destino:</label>
+                                    <select class="form-select" @bind-value="eventoDestinoId" @bind-value:event="oninput" @onchange="CargarCategoriasEventoDestino">
+                                    <option value="0">-- Seleccionar evento --</option>
+                                    @if (eventosDisponibles != null)
+                                    {
+                                        @foreach (var ev in eventosDisponibles)
+                                        {
+                                            <option value="@ev.Id">@ev.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            @if (eventoDestinoId > 0 && categoriasEventoDestino != null)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label">Categoría destino:</label>
+                                    <select class="form-select" @bind="categoriaDestinoId">
+                                        <option value="0">-- Seleccionar categoría --</option>
+                                        @foreach (var cat in categoriasEventoDestino)
+                                        {
+                                            <option value="@cat.Id">@cat.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CerrarModalReasignar">Cancelar</button>
+                        <button type="button" class="btn btn-warning"
+                                @onclick="ConfirmarReasignacion"
+                                disabled="@(categoriaDestinoId == 0)">
+                            <RadzenIcon Icon="check" class="me-1" /> Confirmar Reasignación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+                   
+        
+
+        
+
+
+
+
 
         @* ---------------------------------------------------- *@
         @* NUEVA SECCIÓN COMPLETA DE ASIGNACIÓN DE JURADO       *@
@@ -522,6 +676,7 @@
                 </div>
             </div>
         }
+
 
         @* NUEVA SECCIÓN COMPLETA DE AUDITORIAS *@
 
@@ -754,6 +909,23 @@
     private string? mensajeExito;
     private string? mensajeError;
 
+    // Gestión de participantes
+    private int categoriaSeleccionadaId = 0;
+    private int participanteSeleccionadoId = 0;
+    private int proyectoSeleccionadoId = 0;
+    private IEnumerable<Participante>? participantesDisponibles;
+    private IEnumerable<Proyecto>? proyectosDisponibles;
+
+    // Modal de reasignación
+    private bool mostrarModalReasignar = false;
+    private Proyecto? proyectoAReasignar;
+    private Categoria? categoriaOrigenReasignar;
+    private string tipoReasignacion = "misma";
+    private int categoriaDestinoId = 0;
+    private int eventoDestinoId = 0;
+    private IEnumerable<Evento>? eventosDisponibles;
+    private IEnumerable<Categoria>? categoriasEventoDestino;
+
     private EditarEventoRequest requestModel = new EditarEventoRequest();
     private AgregarPremioRequest requestPremio = new AgregarPremioRequest();
 
@@ -842,6 +1014,7 @@
             _timer = new System.Timers.Timer(10000);
             _timer.Elapsed += async (sender, e) => await ReevaluarEstadosEnVivo();
             _timer.Start();
+            await CargarEventosDisponibles();
         }
         catch (Exception ex)
         {
@@ -1369,4 +1542,162 @@
             mensajeError = $"Error al guardar resultados: {ex.Message}";
         }
     }
+    private async Task CargarProyectosDisponibles()
+    {
+        if (categoriaSeleccionadaId == 0 || participanteSeleccionadoId == 0)
+        {
+            proyectosDisponibles = null;
+            return;
+        }
+
+        try
+        {
+            proyectosDisponibles = await ParticipanteService.ObtenerProyectosDisponiblesParaAsignarAsync(
+                participanteSeleccionadoId, EventoId, categoriaSeleccionadaId);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar proyectos: {ex.Message}";
+        }
+    }
+
+    private async Task AsignarProyectoACategoria()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+
+        try
+        {
+            await ParticipanteService.AsignarProyectoACategoriaAsync(proyectoSeleccionadoId, categoriaSeleccionadaId);
+
+            mensajeExito = "Proyecto asignado a la categoría correctamente.";
+
+            // Recargar evento para actualizar la UI
+            await CargarEventoYJueces();
+
+            // Resetear selección
+            categoriaSeleccionadaId = 0;
+            participanteSeleccionadoId = 0;
+            proyectoSeleccionadoId = 0;
+            proyectosDisponibles = null;
+            participantesDisponibles = null;
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al asignar proyecto: {ex.Message}";
+        }
+    }
+
+    private void AbrirModalReasignar(Proyecto proyecto, Categoria categoriaOrigen)
+    {
+        proyectoAReasignar = proyecto;
+        categoriaOrigenReasignar = categoriaOrigen;
+        tipoReasignacion = "misma";
+        categoriaDestinoId = 0;
+        eventoDestinoId = 0;
+        categoriasEventoDestino = null;
+        mostrarModalReasignar = true;
+    }
+
+    private void CerrarModalReasignar()
+    {
+        mostrarModalReasignar = false;
+        proyectoAReasignar = null;
+        categoriaOrigenReasignar = null;
+        tipoReasignacion = "misma";
+        categoriaDestinoId = 0;
+        eventoDestinoId = 0;
+        categoriasEventoDestino = null;
+    }
+
+    private async Task CargarCategoriasEventoDestino()
+    {
+        if (eventoDestinoId == 0)
+        {
+            categoriasEventoDestino = null;
+            return;
+        }
+
+        try
+        {
+            categoriasEventoDestino = await ParticipanteService.ObtenerCategoriasDeEventoAsync(eventoDestinoId);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar categorías: {ex.Message}";
+        }
+    }
+
+    private async Task ConfirmarReasignacion()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+
+        try
+        {
+            if (proyectoAReasignar == null || categoriaOrigenReasignar == null)
+                return;
+
+            if (tipoReasignacion == "misma")
+            {
+                await ParticipanteService.ReasignarProyectoACategoriaAsync(
+                    proyectoAReasignar.Id,
+                    categoriaOrigenReasignar.Id,
+                    categoriaDestinoId);
+
+                mensajeExito = "Proyecto reasignado a otra categoría del mismo evento.";
+            }
+            else
+            {
+                await ParticipanteService.ReasignarProyectoAOtroEventoAsync(
+                    proyectoAReasignar.Id,
+                    eventoDestinoId,
+                    categoriaDestinoId);
+
+                mensajeExito = "Proyecto reasignado a otro evento.";
+            }
+
+            // Recargar evento para actualizar la UI
+            await CargarEventoYJueces();
+
+            // Cerrar modal
+            CerrarModalReasignar();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al reasignar proyecto: {ex.Message}";
+        }
+    }
+
+    private async Task CargarParticipantesDisponibles()
+    {
+        if (categoriaSeleccionadaId == 0)
+        {
+            participantesDisponibles = null;
+            return;
+        }
+
+        try
+        {
+            participantesDisponibles = await ParticipanteService.ObtenerParticipantesNoEnCategoriaAsync(EventoId, categoriaSeleccionadaId);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar participantes: {ex.Message}";
+        }
+    }
+
+    private async Task CargarEventosDisponibles()
+    {
+        try
+        {
+            eventosDisponibles = await ParticipanteService.ObtenerEventosDisponiblesParaReasignarAsync(EventoId);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar eventos: {ex.Message}";
+        }
+    }
+    private void SeleccionarMisma() => tipoReasignacion = "misma";
+    private void SeleccionarOtro() => tipoReasignacion = "otro";
 }
