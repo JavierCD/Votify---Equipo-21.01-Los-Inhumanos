@@ -307,38 +307,88 @@
                 {
                     @foreach (var cat in resultadosPorCategoria)
                     {
-                        <div class="mb-5 border rounded p-4 bg-white">
-                            <h5 class="fw-bold text-primary mb-3 pb-2 border-bottom">@cat.CategoriaNombre</h5>
+                        // 1. Buscamos la categoría en el modelo de dominio cargado para leer sus flags de seguridad
+                        var catDominio = evento?.CategoriasEvento.FirstOrDefault(c => c.Name == cat.CategoriaNombre);
 
-                            @if (cat.Proyectos == null || !cat.Proyectos.Any())
+                        // 2. Evaluamos los permisos (El ranking se ve si MostrarRanking es true o si el evento ya publicó los Resultados Finales)
+                        bool mostrarRanking = catDominio?.Votacion?.MostrarRanking ?? false;
+                        bool resultadosPublicados = catDominio?.Votacion?.ResultadosPublicados ?? false;
+                        bool puedeVerTabla = mostrarRanking || resultadosPublicados;
+                        bool verPuntajeExacto = (catDominio?.Votacion?.MostrarResultadosDetallados ?? false) || resultadosPublicados;
+
+                        <div class="mb-5 border rounded p-4 bg-white shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                <h5 class="fw-bold text-primary mb-0">@cat.CategoriaNombre</h5>
+
+                                @if (resultadosPublicados)
+                                {
+                                    <span class="badge bg-success shadow-sm"><RadzenIcon Icon="verified" Style="font-size:14px;" class="me-1" /> Resultados Finales</span>
+                                }
+                                else if (mostrarRanking)
+                                {
+                                    <span class="badge bg-info text-dark shadow-sm"><RadzenIcon Icon="live_tv" Style="font-size:14px;" class="me-1" /> Ranking en Vivo</span>
+                                }
+                            </div>
+
+                            @if (!puedeVerTabla)
                             {
-                                <p class="text-muted fst-italic small">No hay posiciones publicadas para esta categoría.</p>
+                                <div class="text-center py-5 rounded-3 mt-3" style="background: #f8f9fa; border: 1px solid #e9ecef;">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 64px; height: 64px; background: #e2e8f0;">
+                                        <RadzenIcon Icon="visibility_off" Style="font-size: 2rem; color: #64748b;" />
+                                    </div>
+                                    <h5 class="fw-bold text-dark mb-2">La información aún no está disponible</h5>
+                                    <p class="text-muted small px-4 mb-4" style="max-width: 500px; margin: 0 auto;">
+                                        El organizador del evento todavía no ha habilitado la visibilidad de las evaluaciones. Recibirás una notificación cuando los resultados se publiquen.
+                                    </p>
+                                    <div class="d-inline-flex align-items-center bg-white border rounded px-3 py-2 text-muted small shadow-sm">
+                                        <RadzenIcon Icon="schedule" class="me-2" Style="font-size: 16px;" /> Publicación estimada: al cierre del evento
+                                    </div>
+                                </div>
+                            }
+                            else if (cat.Proyectos == null || !cat.Proyectos.Any())
+                            {
+                                <p class="text-muted fst-italic small mt-3">No hay posiciones publicadas para esta categoría.</p>
                             }
                             else
                             {
-                                <table class="table table-hover align-middle table-sm border-0 m-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th style="width: 80px;" class="text-center">Pos.</th>
-                                            <th>Proyecto</th>
-                                            <th>Equipo</th>
-                                            <th style="width: 120px;" class="text-center">Puntaje</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var proyecto in cat.Proyectos.OrderBy(p => p.Posicion))
-                                        {
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-hover align-middle table-sm border-0 m-0">
+                                        <thead class="table-light">
                                             <tr>
-                                                <td class="text-center">
-                                                    <span class="badge bg-primary rounded-pill fs-6 px-3">@(proyecto.Posicion)º</span>
-                                                </td>
-                                                <td class="fw-bold text-dark">@proyecto.NombreProyecto</td>
-                                                <td class="text-muted">@proyecto.NombreEquipo</td>
-                                                <td class="text-center fw-bold text-success">@proyecto.Puntaje.ToString("F1") pts</td>
+                                                <th style="width: 80px;" class="text-center">Pos.</th>
+                                                <th>Proyecto</th>
+                                                <th>Equipo</th>
+                                                <th style="width: 120px;" class="text-center">Puntaje</th>
                                             </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var proyecto in cat.Proyectos.OrderBy(p => p.Posicion))
+                                            {
+                                                <tr>
+                                                    <td class="text-center">
+                                                        <span class="badge @(proyecto.Posicion == 1 ? "bg-warning text-dark" : "bg-primary") rounded-pill fs-6 px-3 shadow-sm">
+                                                            @(proyecto.Posicion)º
+                                                        </span>
+                                                    </td>
+                                                    <td class="fw-bold text-dark">@proyecto.NombreProyecto</td>
+                                                    <td class="text-muted">@proyecto.NombreEquipo</td>
+                                                    <td class="text-center fw-bold text-success">
+                                                        @if (verPuntajeExacto)
+                                                        {
+                                                            @($"{proyecto.Puntaje.ToString("F1")} pts")
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-light border text-muted px-3 py-2" title="Puntuación exacta oculta">
+                                                                <RadzenIcon Icon="lock" Style="font-size: 14px; vertical-align: middle;" /> Oculto
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
                             }
                         </div>
                     }

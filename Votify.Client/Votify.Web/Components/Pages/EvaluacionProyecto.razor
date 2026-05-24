@@ -38,109 +38,163 @@
     {
         @* ====== CABECERA DEL PROYECTO ====== *@
         <div class="mb-4 p-4 rounded-4 border" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);">
-            <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #4361ee; color: white; font-size: 1.4rem;">
-                    📁
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #4361ee; color: white; font-size: 1.4rem;">
+                        📁
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0" style="color: #1a1a2e;">@proyecto.Name</h4>
+                        <span class="text-muted" style="font-size: 0.85rem;">Resultados y feedback de la evaluación</span>
+                    </div>
                 </div>
-                <div>
-                    <h4 class="fw-bold mb-0" style="color: #1a1a2e;">@proyecto.Name</h4>
-                    <span class="text-muted" style="font-size: 0.85rem;">Evaluación detallada del jurado</span>
+
+                @* RESULTADO GLOBAL DINÁMICO *@
+                <div class="text-end">
+                    @if (tipoVotacion == "Popular")
+                    {
+                        <span class="d-block text-muted small text-uppercase fw-bold mb-1">Votos del Público</span>
+                        <h3 class="fw-bold text-primary mb-0">@totalVotos</h3>
+                    }
+                    else if (mostrarResultadosDetallados)
+                    {
+                        <span class="d-block text-muted small text-uppercase fw-bold mb-1">Puntuación Media</span>
+                        <h3 class="fw-bold text-primary mb-0">@puntuacionMedia.ToString("0.##") <span class="fs-6 text-muted fw-normal">pts</span></h3>
+                    }
+                    else
+                    {
+                        <span class="d-block text-muted small text-uppercase fw-bold mb-1">Puntuación Media</span>
+                        <span class="badge bg-secondary p-2"><RadzenIcon Icon="lock" Style="font-size: 14px;" /> Oculta</span>
+                    }
                 </div>
             </div>
         </div>
 
-        @* ====== SECCIÓN 1: EVALUACIONES POR CRITERIO (ARRIBA) ====== *@
-        <RadzenCard class="rz-shadow-2 p-4 rz-mb-4" Style="border-radius: 16px;">
-            <div class="d-flex align-items-center gap-2 rz-mb-3">
-                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #4361ee15; color: #4361ee;">
-                    <RadzenIcon Icon="rate_review" Style="font-size: 1.2rem;" />
-                </div>
-                <div>
-                    <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-m-0" Style="color: #1a1a2e;">Evaluaciones por Criterio</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Caption" class="text-muted rz-m-0">Consulta la puntuación y comentarios del jurado filtrados por criterio.</RadzenText>
-                </div>
-            </div>
-
-            @if (!criteriosDelProyecto.Any())
-            {
-                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
-                    No hay criterios de evaluación configurados para este proyecto.
-                </RadzenAlert>
-            }
-            else
-            {
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="1rem" class="rz-mb-4">
-                    <div style="flex: 1;">
-                        <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mb-1">Selecciona un criterio</RadzenText>
-                        <RadzenDropDown @bind-Value="criterioSeleccionadoId"
-                                        Data="@criteriosDelProyecto"
-                                        TextProperty="Name"
-                                        ValueProperty="Id"
-                                        Placeholder="Selecciona un criterio..."
-                                        Style="width: 100%;" />
+        @* ====== SECCIÓN 1: EVALUACIONES POR CRITERIO (Mantiene el diseño original, solo puntajes) ====== *@
+        @if (tipoVotacion == "Multicriterio")
+        {
+            <RadzenCard class="rz-shadow-2 p-4 rz-mb-4" Style="border-radius: 16px;">
+                <div class="d-flex align-items-center gap-2 rz-mb-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #4361ee15; color: #4361ee;">
+                        <RadzenIcon Icon="bar_chart" Style="font-size: 1.2rem;" />
                     </div>
-                    <RadzenButton Text="Buscar" Icon="search" ButtonStyle="ButtonStyle.Primary"
-                                  Click="BuscarEvaluaciones"
-                                  Disabled="@(criterioSeleccionadoId == 0)"
-                                  Style="border-radius: 10px;" />
-                </RadzenStack>
+                    <div>
+                        <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-m-0" Style="color: #1a1a2e;">Desglose Numérico por Criterio</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="text-muted rz-m-0">Filtra para ver los puntos asignados en cada aspecto.</RadzenText>
+                    </div>
+                </div>
 
-                @if (!busquedaRealizada)
+                @if (!mostrarResultadosDetallados)
                 {
-                    <div class="text-center p-5 rounded-3" style="background: #f8f9fc; border: 2px dashed #d0d5e0;">
-                        <RadzenIcon Icon="rate_review" Style="font-size: 3rem; color: #c0c5d0;" />
-                        <RadzenText TextStyle="TextStyle.H6" class="rz-mt-2" Style="color: #8890a0;">
-                            Selecciona un criterio para ver tu evaluación
-                        </RadzenText>
+                    <div class="text-center p-4 rounded-3" style="background: #f8f9fc; border: 2px dashed #d0d5e0;">
+                        <RadzenIcon Icon="lock" Style="font-size: 2rem; color: #c0c5d0;" />
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-mt-2 text-muted fw-bold">Puntuaciones detalladas ocultas por el organizador.</RadzenText>
                     </div>
                 }
-                else if (cargandoEvaluaciones)
+                else if (!criteriosDelProyecto.Any())
                 {
-                    <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">No hay criterios de evaluación configurados.</RadzenAlert>
                 }
-                else if (!evaluaciones.Any())
+                else
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
-                        Aún no hay evaluaciones para este criterio.
-                    </RadzenAlert>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="1rem" class="rz-mb-4">
+                        <div style="flex: 1;">
+                            <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mb-1">Selecciona un criterio</RadzenText>
+                            <RadzenDropDown @bind-Value="criterioSeleccionadoId" Data="@criteriosDelProyecto" TextProperty="Name" ValueProperty="Id" Placeholder="Selecciona un criterio..." Style="width: 100%;" />
+                        </div>
+                        <RadzenButton Text="Buscar" Icon="search" ButtonStyle="ButtonStyle.Primary" Click="BuscarEvaluaciones" Disabled="@(criterioSeleccionadoId == 0)" Style="border-radius: 10px;" />
+                    </RadzenStack>
+
+                    @if (!busquedaRealizada)
+                    {
+                        <div class="text-center p-4 rounded-3" style="background: #f8f9fc; border: 2px dashed #d0d5e0;">
+                            <RadzenText TextStyle="TextStyle.Body1" Style="color: #8890a0;">Selecciona un criterio arriba para ver las notas.</RadzenText>
+                        </div>
+                    }
+                    else if (cargandoEvaluaciones)
+                    {
+                        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                    }
+                    else if (!evaluaciones.Any())
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">Aún no hay puntuaciones para este criterio.</RadzenAlert>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-2">
+                            @for (int i = 0; i < evaluaciones.Count; i++)
+                            {
+                                var eval = evaluaciones[i];
+                                <div class="p-3 rounded-3 border d-flex justify-content-between align-items-center" style="background: #fafbff;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; background: #4361ee20; color: #4361ee; font-size: 0.8rem;">
+                                            J@(i + 1)
+                                        </div>
+                                        <span class="fw-semibold" style="color: #1a1a2e;">
+                                            @(mostrarNombresJueces ? (eval.NombreJuez ?? $"Jurado {i + 1}") : $"Jurado Anónimo {i + 1}")
+                                        </span>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2 fw-bold" style="background: #4361ee; color: white; font-size: 0.85rem;">
+                                        @eval.Puntuacion.ToString("0.#") pts
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </RadzenCard>
+        }
+
+        @* ====== SECCIÓN 2: FEEDBACK CUALITATIVO (Diseño heredado del original) ====== *@
+       
+            <RadzenCard class="rz-shadow-2 p-4 rz-mb-4" Style="border-radius: 16px;">
+                <div class="d-flex align-items-center gap-2 rz-mb-4">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #4361ee15; color: #4361ee;">
+                        <RadzenIcon Icon="rate_review" Style="font-size: 1.2rem;" />
+                    </div>
+                    <div>
+                        <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-m-0" Style="color: #1a1a2e;">Feedback del Jurado</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="text-muted rz-m-0">Comentarios y valoraciones cualitativas sobre tu proyecto.</RadzenText>
+                    </div>
+                </div>
+
+                @if (!mostrarComentarios)
+                {
+                    <div class="text-center p-4 rounded-3" style="background: #f8f9fc; border: 2px dashed #d0d5e0;">
+                        <RadzenIcon Icon="visibility_off" Style="font-size: 2rem; color: #c0c5d0;" />
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-mt-2 text-muted fw-bold">El organizador mantiene el feedback en privado en esta fase.</RadzenText>
+                    </div>
+                }
+                else if (comentariosGlobales == null || !comentariosGlobales.Any())
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">El jurado no ha dejado comentarios de texto aún.</RadzenAlert>
                 }
                 else
                 {
                     <div class="d-flex flex-column gap-3">
-                        @for (int i = 0; i < evaluaciones.Count; i++)
+                        @for (int i = 0; i < comentariosGlobales.Count; i++)
                         {
-                            var eval = evaluaciones[i];
-                            var idx = i;
+                            var eval = comentariosGlobales[i];
                             <div class="p-3 rounded-3 border" style="background: #fafbff;">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                                             style="width: 38px; height: 38px; background: #4361ee20; color: #4361ee; font-size: 0.8rem;">
-                                            J@(idx + 1)
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; background: #4361ee20; color: #4361ee; font-size: 0.8rem;">
+                                            J@(i + 1)
                                         </div>
-                                        <span class="fw-semibold" style="color: #1a1a2e;">Jurado Anónimo @(idx + 1)</span>
+                                        <span class="fw-semibold" style="color: #1a1a2e;">
+                                            @(mostrarNombresJueces ? (eval.NombreJuez ?? $"Jurado {i + 1}") : $"Jurado Anónimo {i + 1}")
+                                        </span>
                                     </div>
-                                    <span class="badge rounded-pill px-3 py-2 fw-bold"
-                                          style="background: #4361ee; color: white; font-size: 0.85rem;">
-                                        @eval.Puntuacion.ToString("0.#") pts
-                                    </span>
                                 </div>
-                                @if (string.IsNullOrEmpty(eval.Comentario))
-                                {
-                                    <p class="text-muted fst-italic mb-0 ms-5" style="font-size: 0.9rem;">Sin comentario</p>
-                                }
-                                else
-                                {
-                                    <p class="mb-0 ms-5" style="color: #444; font-size: 0.9rem; line-height: 1.5;">@eval.Comentario</p>
-                                }
+                                <p class="mb-0 ms-5" style="color: #444; font-size: 0.9rem; line-height: 1.5;">@eval.Comentario</p>
                             </div>
                         }
                     </div>
                 }
-            }
-        </RadzenCard>
+            </RadzenCard>
+        
 
-        @* ====== SECCIÓN 2: SÍNTESIS IA (ABAJO) ====== *@
+        @* ====== SECCIÓN 3: SÍNTESIS IA (El código de tu compañero intacto y siempre funcional) ====== *@
         <RadzenCard class="rz-shadow-2 p-4" Style="border-radius: 16px; border-top: 4px solid #4361ee;">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="rz-mb-3">
                 <div class="d-flex align-items-center gap-2">
@@ -155,10 +209,7 @@
                 @if (sintesis != null && sintesis.Existe)
                 {
                     <RadzenButton Text="Regenerar Síntesis" Icon="refresh" ButtonStyle="ButtonStyle.Light"
-                                  Size="ButtonSize.Small"
-                                  Click="RegenerarSintesis"
-                                  Disabled="@generadoSintesis"
-                                  Style="border-radius: 10px;" />
+                                  Size="ButtonSize.Small" Click="RegenerarSintesis" Disabled="@generadoSintesis" Style="border-radius: 10px;" />
                 }
             </RadzenStack>
 
@@ -214,9 +265,7 @@
                         Hay comentarios del jurado disponibles para sintetizar.
                     </RadzenText>
                     <RadzenButton Text="Generar Síntesis con IA" Icon="auto_awesome"
-                                  ButtonStyle="ButtonStyle.Primary"
-                                  Click="GenerarSintesis"
-                                  Style="border-radius: 10px; padding: 10px 24px;" />
+                                  ButtonStyle="ButtonStyle.Primary" Click="GenerarSintesis" Style="border-radius: 10px; padding: 10px 24px;" />
                 </div>
             }
             else
@@ -234,33 +283,66 @@
     public int ProyectoId { get; set; }
 
     private Proyecto? proyecto;
+    private int participanteId = 0;
+    private bool cargando = true;
+
+    // --- VARIABLES DE VISIBILIDAD Y VOTACIÓN ---
+    private bool mostrarNombresJueces = false;
+    private bool mostrarComentarios = false;
+    private bool mostrarResultadosDetallados = false;
+
+    private string tipoVotacion = "Estandar";
+    private decimal puntuacionMedia = 0;
+    private int totalVotos = 0;
+
+    // --- BLOQUE 1: Criterios Numéricos ---
     private List<Criterio> criteriosDelProyecto = new();
     private int criterioSeleccionadoId = 0;
     private List<EvaluacionJuezResponse> evaluaciones = new();
-    private SintesisIAResponse? sintesis;
-    private bool generadoSintesis = false;
-    private bool tieneComentariosSuficientes=false;
-    private string? errorSintesis;
-
-    private bool cargando = true;
     private bool cargandoEvaluaciones = false;
     private bool busquedaRealizada = false;
-    private int participanteId = 0;
+
+    // --- BLOQUE 2: Feedback Cualitativo ---
+    private List<EvaluacionJuezResponse> comentariosGlobales = new();
+
+    // --- BLOQUE 3: IA ---
+    private SintesisIAResponse? sintesis;
+    private bool generadoSintesis = false;
+    private bool tieneComentariosSuficientes = false;
+    private string? errorSintesis;
 
     protected override async Task OnParametersSetAsync()
     {
         try
         {
             cargando = true;
-
+            // Asegúrate de incluir el Include de la Categoría y Votación en el Service
             proyecto = await ProyectoService.ObtenerPorIdAsync(ProyectoId);
 
             if (proyecto != null)
             {
                 participanteId = proyecto.ParticipanteId;
-                criteriosDelProyecto = (await VotoExpertoService.ObtenerCriteriosPorProyectoAsync(ProyectoId)).ToList();
-                await CargarSintesis();
-               
+
+                var votacion = proyecto.Categorias?.FirstOrDefault()?.Votacion;
+                if (votacion != null)
+                {
+                    mostrarNombresJueces = votacion.MostrarNombresJueces;
+                    mostrarComentarios = votacion.MostrarComentarios;
+                    mostrarResultadosDetallados = votacion.MostrarResultadosDetallados;
+
+                    if (votacion is Multicriterio) tipoVotacion = "Multicriterio";
+                    else if (votacion is Puntuacion) tipoVotacion = "Puntuacion";
+                    else if (votacion is Popular) tipoVotacion = "Popular";
+
+                    // TODO: Llamadas a tu backend para asignar puntuacionMedia o totalVotos reales.
+                }
+
+                if (tipoVotacion == "Multicriterio")
+                {
+                    criteriosDelProyecto = (await VotoExpertoService.ObtenerCriteriosPorProyectoAsync(ProyectoId)).ToList();
+                }
+
+                await CargarSintesisYComentarios();
             }
         }
         catch (Exception ex)
@@ -279,12 +361,10 @@
         {
             cargandoEvaluaciones = true;
             busquedaRealizada = true;
-
             evaluaciones = await VotoExpertoService.ObtenerEvaluacionesParaParticipanteAsync(ProyectoId, criterioSeleccionadoId);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"Error al buscar evaluaciones: {ex.Message}");
             evaluaciones = new();
         }
         finally
@@ -293,16 +373,17 @@
         }
     }
 
-    private async Task CargarSintesis()
+    private async Task CargarSintesisYComentarios()
     {
         try
         {
-            
             sintesis = await SintesisIAService.ObtenerSintesisPorProyectoAsync(ProyectoId);
 
-           
-            var comentarios = await VotoExpertoService.ObtenerComentariosJuezPorProyectoAsync(ProyectoId);
-            tieneComentariosSuficientes = comentarios.Count(c => !string.IsNullOrWhiteSpace(c.Comentario)) >= 2;
+            // Cargamos todos los comentarios para la sección global
+            var todosLosComentarios = await VotoExpertoService.ObtenerComentariosJuezPorProyectoAsync(ProyectoId);
+            comentariosGlobales = todosLosComentarios.Where(c => !string.IsNullOrWhiteSpace(c.Comentario)).ToList();
+
+            tieneComentariosSuficientes = comentariosGlobales.Count >= 2;
         }
         catch (Exception ex)
         {
@@ -315,14 +396,9 @@
         errorSintesis = null;
         generadoSintesis = true;
         StateHasChanged();
-
         try
         {
             sintesis = await SintesisIAService.GenerarSintesisAsync(ProyectoId);
-        }
-        catch (InvalidOperationException ex)
-        {
-            errorSintesis = ex.Message;
         }
         catch (Exception ex)
         {
@@ -334,9 +410,5 @@
         }
     }
 
-    private async Task RegenerarSintesis()
-    {
-        await GenerarSintesis();
-    }
-
+    private async Task RegenerarSintesis() => await GenerarSintesis();
 }

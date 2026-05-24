@@ -98,58 +98,48 @@ namespace Votify.Services.Implementations
             var premios = categoria.Premios.OrderBy(p => p.Posicion).ToList();
             var votacion = categoria.Votacion;
 
-            List<PosicionRankingResponse> proyectosPuntuados;
+            List<PosicionRankingResponse> proyectosPuntuados = new();
 
             if (votacion is Multicriterio mc)
             {
-                proyectosPuntuados = categoria.Proyectos
-                    .Select(p =>
+                proyectosPuntuados = categoria.Proyectos.Select(p =>
+                {
+                    var votosProyecto = votacion.Votos.Where(v => v.ProyectoId == p.Id).ToList();
+                    return new PosicionRankingResponse
                     {
-                        var votosProyecto = votacion.Votos
-                            .Where(v => v.ProyectoId == p.Id)
-                            .ToList();
-                        double puntaje = CalcularPuntuacionMulticriterio(votosProyecto, mc);
-                        return new PosicionRankingResponse
-                        {
-                            NombreProyecto = p.Name,
-                            PuntosTotales = puntaje,
-                            FechaInscripcion = p.FechaRegistro
-                        };
-                    })
-                    .OrderByDescending(x => x.PuntosTotales)
-                    .ThenBy(x => x.FechaInscripcion)
-                    .ToList();
+                        NombreProyecto = p.Name,
+                        PuntosTotales = CalcularPuntuacionMulticriterio(votosProyecto, mc),
+                        FechaInscripcion = p.FechaRegistro
+                    };
+                }).ToList();
             }
             else if (votacion is Popular)
             {
-                proyectosPuntuados = votacion.Votos
-                    .Where(v => v.Proyecto != null)
-                    .GroupBy(v => v.Proyecto)
-                    .Select(g => new PosicionRankingResponse
-                    {
-                        NombreProyecto = g.Key!.Name,
-                        PuntosTotales = g.Count(),
-                        FechaInscripcion = g.Key.FechaRegistro
-                    })
-                    .OrderByDescending(x => x.PuntosTotales)
-                    .ThenBy(x => x.FechaInscripcion)
-                    .ToList();
+                // CORRECCIÓN: Iteramos sobre los Proyectos, no sobre los Votos.
+                // Así los que tienen 0 votos también aparecen.
+                proyectosPuntuados = categoria.Proyectos.Select(p => new PosicionRankingResponse
+                {
+                    NombreProyecto = p.Name,
+                    PuntosTotales = votacion.Votos.Count(v => v.ProyectoId == p.Id),
+                    FechaInscripcion = p.FechaRegistro
+                }).ToList();
             }
             else
             {
-                proyectosPuntuados = votacion.Votos
-                    .Where(v => v.Proyecto != null)
-                    .GroupBy(v => v.Proyecto)
-                    .Select(g => new PosicionRankingResponse
-                    {
-                        NombreProyecto = g.Key!.Name,
-                        PuntosTotales = g.Sum(v => v.PuntuacionBase),
-                        FechaInscripcion = g.Key.FechaRegistro
-                    })
-                    .OrderByDescending(x => x.PuntosTotales)
-                    .ThenBy(x => x.FechaInscripcion)
-                    .ToList();
+                // CORRECCIÓN: Iteramos sobre los Proyectos
+                proyectosPuntuados = categoria.Proyectos.Select(p => new PosicionRankingResponse
+                {
+                    NombreProyecto = p.Name,
+                    PuntosTotales = votacion.Votos.Where(v => v.ProyectoId == p.Id).Sum(v => v.PuntuacionBase),
+                    FechaInscripcion = p.FechaRegistro
+                }).ToList();
             }
+
+            // Ordenamos todo de mayor a menor puntuación (y desempatamos por fecha si aplica)
+            proyectosPuntuados = proyectosPuntuados
+                .OrderByDescending(x => x.PuntosTotales)
+                .ThenBy(x => x.FechaInscripcion)
+                .ToList();
 
             int posicionActual = 1;
             int contadorSaltos = 1;
@@ -231,9 +221,11 @@ namespace Votify.Services.Implementations
 
                 // Solo mostramos categorías con votación cerrada
                 var votacion = categoria.Votacion;
-                if (votacion.Estado != "Cerrada" && votacion.Estado != "CerradaManual"
-                    && !votacion.EstaCerrada && !votacion.ResultadosPublicados)
-                    continue;
+                bool permiteCalculo = votacion.Estado == "Cerrada"
+                                   || votacion.Estado == "CerradaManual"
+                                   || votacion.EstaCerrada
+                                   || votacion.ResultadosPublicados
+                                   || votacion.MostrarRanking; // <-- NUEVO FLAG
 
                 // Verificar si hay intervención guardada
                 var intervenidos = (await _unitOfWork.ResultadosIntervenidos.GetAllAsync())

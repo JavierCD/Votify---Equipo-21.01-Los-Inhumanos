@@ -10,5 +10,6 @@ namespace Votify.Services.Interfaces
     {
         Task ActualizarFechasVotacionAsync(int votacionId, DateTime nuevaApertura, DateTime nuevoCierre);
         Task<bool> CambiarEstadoVotacionManualAsync(int votacionId, string nuevoEstado);
+        Task<bool> ActualizarVisibilidadVotacionAsync(int votacionId, bool mostrarJueces, bool mostrarComentarios, bool mostrarRanking, bool mostrarDetalles);
     }
 }

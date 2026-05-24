@@ -110,7 +110,15 @@
                     <label class="form-label fw-bold">Descripción / Reglas</label>
                     <textarea class="form-control" rows="4" @bind="requestModel.Description"></textarea>
                 </div>
+                <div class="mb-4 p-3 bg-light rounded border d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong class="d-block">Publicar en el Dashboard Global</strong>
+                        <span class="text-muted small">Si se desactiva, el evento será privado y los participantes requerirán el código de acceso directo.</span>
+                    </div>
+                    <RadzenSwitch @bind-Value="requestModel.EsPublico" />
+                </div>
                 <button class="btn btn-primary" @onclick="GuardarDatosGenerales">Guardar Cambios</button>
+
             </div>
         }
 
@@ -174,7 +182,7 @@
                                         <!-- 2. SECCIÓN DE ESTADO ACTUAL -->
                                         <div class="bg-light p-3 rounded mb-3 border">
                                             <RadzenText TextStyle="TextStyle.Subtitle2" class="fw-bold mb-2">Control de Estado:</RadzenText>
-
+                                                                                                                              
                                             <div class="d-flex align-items-center justify-content-between mb-3">
                                                 <RadzenBadge BadgeStyle="GetBadgeStyle(categoria.Votacion.Estado)" Text="@categoria.Votacion.Estado" class="fs-6 px-3 py-2" />
                                                 <span class="badge bg-success fs-6">@(categoria.Votacion.Votos?.Count ?? 0) votos</span>
@@ -186,6 +194,10 @@
                                                             ValueChanged="@(args => OnEstadoCambiado(categoria, args.ToString()))"
                                                             Style="width: 100%;"
                                                             Disabled="@categoria.Votacion.ResultadosPublicados" />
+
+                                            <button class="btn btn-sm btn-outline-secondary w-100 mt-2 fw-bold" @onclick="() => PrepararModalVisibilidad(categoria)">
+                                                <RadzenIcon Icon="visibility" class="me-1" Style="font-size: 16px; vertical-align: middle;" /> Configurar Visibilidad
+                                            </button>
                                         </div>
 
                                         @if (categoria.Votacion.EstaCerrada || categoria.Votacion.Estado == "CerradaManual" || categoria.Votacion.Estado == "Cerrada")
@@ -878,13 +890,75 @@
                     </div>
                 }
             </div>
+
         }
+        
+       @* VENTANA MODAL FLOTANTE: PERMISOS DE VISIBILIDAD*@
+   
+        @if (mostrarModalVisibilidad && categoriaSeleccionada != null && categoriaSeleccionada.Votacion != null)
+        {
+            <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5); z-index: 1050;" role="dialog">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+                        <div class="modal-header bg-dark text-white rounded-top-4">
+                            <h5 class="modal-title fw-bold">
+                                <RadzenIcon Icon="lock_open" class="me-2" /> Visibilidad de Resultados
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalVisibilidad"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <h6 class="text-primary fw-bold mb-3">Categoría: @categoriaSeleccionada.Name</h6>
+                            <p class="text-muted small mb-4">Define qué información de las evaluaciones puede consultar el participante en tiempo real desde su panel.</p>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+                                <div>
+                                    <span class="fw-bold d-block small">Revelar identidad de jueces</span>
+                                    <span class="text-muted extra-small" style="font-size:0.75rem;">Muestra qué experto emitió cada comentario.</span>
+                                </div>
+                                <RadzenSwitch @bind-Value="tempMostrarJueces" />
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+                                <div>
+                                    <span class="fw-bold d-block small">Ver comentarios cualitativos</span>
+                                    <span class="text-muted extra-small" style="font-size:0.75rem;">Permite leer las anotaciones y feedback del jurado.</span>
+                                </div>
+                                <RadzenSwitch @bind-Value="tempMostrarComentarios" />
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+                                <div>
+                                    <span class="fw-bold d-block small">Ver posición en el Ranking</span>
+                                    <span class="text-muted extra-small" style="font-size:0.75rem;">Muestra el puesto actual ocupado en la tabla.</span>
+                                </div>
+                                <RadzenSwitch @bind-Value="tempMostrarRanking" />
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-4 p-2 bg-light rounded border">
+                                <div>
+                                    <span class="fw-bold d-block small">Ver desglose de puntuaciones</span>
+                                    <span class="text-muted extra-small" style="font-size:0.75rem;">Muestra los puntos obtenidos por criterio/baremo.</span>
+                                </div>
+                                <RadzenSwitch @bind-Value="tempMostrarDetalles" />
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light rounded-bottom-4 gap-2">
+                            <button class="btn btn-sm btn-outline-secondary px-3" @onclick="CerrarModalVisibilidad">Cancelar</button>
+                            <button class="btn btn-sm btn-success px-4 fw-bold shadow-sm" @onclick="GuardarConfiguracionVisibilidad">
+                                <RadzenIcon Icon="save" class="me-1" Style="font-size:14px; vertical-align:middle;" /> Guardar Permisos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
     }
 </div>
  
 
 @code {
-    
+
     [Parameter]
     public int EventoId { get; set; }
 
@@ -936,6 +1010,16 @@
     // Timer 
     private System.Timers.Timer _timer;
 
+    //Propiedades para la visivilidad de los participantes en votaciones
+    private bool mostrarModalVisibilidad = false;
+    private Categoria? categoriaSeleccionada;
+
+    // Variables temporales para el Modal 
+    private bool tempMostrarJueces;
+    private bool tempMostrarComentarios;
+    private bool tempMostrarRanking;
+    private bool tempMostrarDetalles;
+
     //fechas
     // --- ESTADO PARA EDICIÓN DE FECHAS ---
     // Controla qué categoría está en modo edición
@@ -945,7 +1029,7 @@
     // Supervisión de jueces
     private Dictionary<int, bool> supervisionAbierta = new();
     private Dictionary<int, List<JuezSupervisionDto>> juecesSupervision = new();
-    
+
     // Almacena las fechas temporales mientras el usuario edita (antes de guardar)
     public class FechasEdicionDto
     {
@@ -1041,6 +1125,7 @@
             requestModel.FechaInicio = evento.FechaInicio;
             requestModel.FechaFin = evento.FechaFin;
             requestModel.Description = evento.Description;
+            requestModel.EsPublico = evento.EsPublico;
 
             if (evento.CategoriasEvento != null)
             {
@@ -1541,6 +1626,73 @@
         {
             mensajeError = $"Error al guardar resultados: {ex.Message}";
         }
+    }
+
+    //Metodos para el modal de visibilidad de votaciones
+    private void PrepararModalVisibilidad(Categoria categoria)
+    {
+        if (categoria?.Votacion == null) return;
+
+        categoriaSeleccionada = categoria;
+
+        // Rellenamos los switches del modal con el valor real actual del dominio
+        tempMostrarJueces = categoria.Votacion.MostrarNombresJueces;
+        tempMostrarComentarios = categoria.Votacion.MostrarComentarios;
+        tempMostrarRanking = categoria.Votacion.MostrarRanking;
+        tempMostrarDetalles = categoria.Votacion.MostrarResultadosDetallados;
+
+        mostrarModalVisibilidad = true;
+    }
+    private void CerrarModalVisibilidad()
+    {
+        mostrarModalVisibilidad = false;
+        categoriaSeleccionada = null;
+    }
+
+    private async Task GuardarConfiguracionVisibilidad()
+    {
+        if (categoriaSeleccionada?.Votacion == null) return;
+
+        try
+        {
+            // 1. Invocamos el nuevo método del servicio del Paso 3
+            bool exito = await VotacionService.ActualizarVisibilidadVotacionAsync(
+                categoriaSeleccionada.Votacion.Id,
+                tempMostrarJueces,
+                tempMostrarComentarios,
+                tempMostrarRanking,
+                tempMostrarDetalles
+            );
+
+            if (exito)
+            {
+                // 2. Si el backend responde OK, actualizamos el modelo local en memoria para refrescar la UI
+                categoriaSeleccionada.Votacion.MostrarNombresJueces = tempMostrarJueces;
+                categoriaSeleccionada.Votacion.MostrarComentarios = tempMostrarComentarios;
+                categoriaSeleccionada.Votacion.MostrarRanking = tempMostrarRanking;
+                categoriaSeleccionada.Votacion.MostrarResultadosDetallados = tempMostrarDetalles;
+
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Permisos Guardados",
+                        Detail = $"Se actualizó la privacidad de '{categoriaSeleccionada.Name}'"
+                    });
+
+                CerrarModalVisibilidad();
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = $"No se pudo guardar la privacidad: {ex.Message}"
+                });
+        }
+    }
+}
     }
     private async Task CargarProyectosDisponibles()
     {
