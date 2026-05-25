@@ -1,16 +1,17 @@
 ﻿@page "/panel-evento/{EventoId:int}"
 @rendermode InteractiveServer
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using System.Text
 @using Votify.Core.Interfaces
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Services.Models.Responses
-@using Votify.Web.Services
 @inject NavigationManager NavigationManager
 @inject IEventoService EventoService
 @inject ISupervisionService SupervisionService
 @inject IResultadosService ResultadosService
-@inject UserSession Session
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -53,7 +54,7 @@
                     <RadzenIcon Icon="emoji_events" class="me-1" /> Resultados
                 </a>
             </li>
-            @if (Session.Usuario is Juez)
+            @if (user?.IsInRole("Juez") == true)
             {
                 <li class="nav-item">
                     <a class="nav-link text-success @(tabActivo == "Votar" ? "active fw-bold bg-success text-white" : "")" @onclick='() => tabActivo = "Votar"' style="cursor:pointer">
@@ -396,7 +397,7 @@
             </div>
         }
         @* --- PESTAÑA EXCLUSIVA: VOTACIÓN JURADO --- *@
-        else if (tabActivo == "Votar" && Session.Usuario is Juez)
+        else if (tabActivo == "Votar" && user?.IsInRole("Juez") == true)
         {
             <div class="d-flex justify-content-center align-items-center py-5">
                 <div class="card shadow-sm p-5 text-center border-0 rounded-4 w-100" style="max-width: 600px; background-color: #f8f9fa;">
@@ -418,6 +419,8 @@
 </div>
 
 @code {
+    private ClaimsPrincipal? user;
+
     [Parameter]
     public int EventoId { get; set; }
 
@@ -433,6 +436,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+
         try
         {
             // 1. Cargamos el agregado completo usando tu backend optimizado

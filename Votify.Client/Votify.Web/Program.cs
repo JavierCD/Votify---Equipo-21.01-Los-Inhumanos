@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Radzen;
@@ -31,7 +33,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
     
 builder.Services.AddRadzenComponents();
-builder.Services.AddSingleton<UserSession>();
+builder.Services.AddHttpContextAccessor();
 
 // --- API y Swagger ---
 builder.Services.AddControllers();
@@ -42,6 +44,18 @@ builder.Services.AddSwaggerGen();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<VotifyContext>(options =>
     options.UseNpgsql(connectionString));
+
+// --- Autenticación por Cookies ---
+builder.Services.AddAuthentication("Cookies")
+    .AddCookie("Cookies", options =>
+    {
+        options.LoginPath = "/login";
+        options.AccessDeniedPath = "/login";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    });
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<Miembro>, SessionClaimsPrincipalFactory>();
 
 // --- CORS (Para que UI y Web se comuniquen) ---
 builder.Services.AddCors(options =>
@@ -189,11 +203,12 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-// ¡CORS debe ir siempre antes de Antiforgery y Authorization!
+// ¡CORS debe ir siempre antes de Authentication y Authorization!
 app.UseCors("AllowBlazor");
 
-app.UseAntiforgery();
+app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
 // ==========================================
 // 3. MAPEO DE RUTAS (ENDPOINTS)

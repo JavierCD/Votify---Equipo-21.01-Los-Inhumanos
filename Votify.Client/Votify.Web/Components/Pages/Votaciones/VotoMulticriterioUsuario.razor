@@ -1,15 +1,16 @@
 ﻿@page "/voto-multicriterio-usuario/{VotacionId:int}"
 @rendermode InteractiveServer
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
 @using Votify.Services.Models.Responses
 @using Votify.Services.Models.Requests
-@using Votify.Web.Services
 
 @* CAMBIO AQUÍ: Usamos IVotoMulticriterioService *@
 @inject IVotoMulticriterioService MulticriterioService
-@inject UserSession Session
+@inject AuthenticationStateProvider AuthStateProvider
 @inject ILogger<VotoMulticriterioUsuario> Logger
 
 <div class="container py-4" style="max-width:720px">
@@ -205,6 +206,8 @@
 </div>
 
 @code {
+    private ClaimsPrincipal? user;
+
     [Parameter]
     public int VotacionId { get; set; }
 
@@ -213,7 +216,7 @@
     private bool identificado = false;
     private string errorEmail = "";
 
-    private bool esJuezLogueado => Session.Usuario is Juez;
+    private bool esJuezLogueado => user?.IsInRole("Juez") == true;
 
     // --- VARIABLES DE NEGOCIO ---
     private VotacionMulticriterioDetalleResponse? votacion;
@@ -229,20 +232,23 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (Session.Usuario is Juez juez && !string.IsNullOrWhiteSpace(juez.Email))
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+
+        if (user?.IsInRole("Juez") == true)
         {
-            emailVotante = juez.Email;
+            emailVotante = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
         }
 
         try
         {
             votacion = await MulticriterioService.ObtenerDetallePorIdAsync(VotacionId);
 
-            // Filtrar proyectos propios si no se permite autovoto
-            if (Session.Usuario is Participante participanteLogueado)
+            if (user?.IsInRole("Participante") == true)
             {
+                var participanteId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
                 votacion.Proyectos = votacion.Proyectos
-                    .Where(p => votacion.PermiteAutoVoto || p.ParticipanteId != participanteLogueado.Id)
+                    .Where(p => votacion.PermiteAutoVoto || p.ParticipanteId != participanteId)
                     .ToList();
             }
 
@@ -316,7 +322,7 @@
             {
                 VotacionId = VotacionId,
                 VotanteId = 0,
-                JuezId = Session.Usuario is Juez juez ? juez.Id : null,
+                JuezId = user?.IsInRole("Juez") == true ? int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value) : null,
                 Email = emailVotante,
                 Puntuaciones = puntuaciones,
                 Anonimo = true

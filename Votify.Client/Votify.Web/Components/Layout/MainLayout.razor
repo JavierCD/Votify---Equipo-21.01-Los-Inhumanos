@@ -1,9 +1,14 @@
 ﻿@inherits LayoutComponentBase
+@using System.Security.Claims
 @using System.Timers
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Http
 @using Votify.Core.Models
 @implements IDisposable
 
-@inject Votify.Web.Services.UserSession Session
+@inject AuthenticationStateProvider AuthStateProvider
+@inject Microsoft.AspNetCore.Authentication.IAuthenticationService Auth
+@inject IHttpContextAccessor HttpContextAccessor
 @using Microsoft.Extensions.DependencyInjection
 @inject IServiceScopeFactory ScopeFactory
 @inject NavigationManager Navigation
@@ -20,7 +25,7 @@
     <main>
         <div class="top-row px-4 d-flex justify-content-end align-items-center gap-3">
 
-            @if (Session.Usuario != null)
+            @if (user != null && user.Identity?.IsAuthenticated == true)
             {
                 @* --- INICIO DE LA CAMPANITA --- *@
                 <div class="d-flex align-items-center me-2" style="position: relative;">
@@ -78,11 +83,12 @@
                     @if (mostrarMenu)
                     {
                         <div class="dropdown-menu show position-absolute shadow-sm p-3" style="right: 0; top: 50px; min-width: 200px; z-index: 1000;">
-                            <p class="text-muted small mb-2 text-center">@Session.Usuario.Email</p>
+                            <p class="text-muted small mb-2 text-center">@user.FindFirst(ClaimTypes.Email)?.Value</p>
 
-                            @if (Session.Usuario is Participante p)
+                            @if (user.IsInRole("Participante"))
                             {
-                                <a class="btn btn-outline-primary btn-sm w-100 mb-2" href="/ficha-participante/@p.Id">
+                                var userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+                                <a class="btn btn-outline-primary btn-sm w-100 mb-2" href="/ficha-participante/@userId">
                                     <RadzenIcon Icon="manage_accounts" class="me-1" Style="font-size: 16px;" /> Mi Perfil
                                 </a>
                             }
@@ -116,6 +122,7 @@
 </div>
 
 @code {
+    private ClaimsPrincipal? user;
     private bool mostrarMenu = false;
     private bool mostrarNotificaciones = false;
 
@@ -123,21 +130,21 @@
     private List<Notificacion> misNotificaciones = new();
     private Timer? timerConsulta;
 
-    // CAMBIO 1: Usamos OnParametersSetAsync para que reaccione al hacer Login
     protected override async Task OnParametersSetAsync()
     {
-        // Si hay usuario y el reloj aún no está encendido, lo encendemos
-        if (Session.Usuario != null && timerConsulta == null)
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+
+        if (user?.Identity?.IsAuthenticated == true && timerConsulta == null)
         {
             await RevisarNotificacionesNuevas();
 
-            timerConsulta = new Timer(10000); // 10 segundos para pruebas (luego ponlo a 30000)
+            timerConsulta = new Timer(10000);
             timerConsulta.Elapsed += async (s, e) => await RevisarNotificacionesNuevas();
             timerConsulta.AutoReset = true;
             timerConsulta.Enabled = true;
         }
-        // Si el usuario cierra sesión, apagamos el reloj
-        else if (Session.Usuario == null && timerConsulta != null)
+        else if ((user?.Identity?.IsAuthenticated != true) && timerConsulta != null)
         {
             timerConsulta.Stop();
             timerConsulta.Dispose();
@@ -147,13 +154,14 @@
 
     private async Task RevisarNotificacionesNuevas()
     {
-        if (Session.Usuario == null) return;
+        if (user?.Identity?.IsAuthenticated != true) return;
 
-        // Creamos un "espacio temporal" seguro y fresco para pedir cosas a la BD
+        var userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
         using var scope = ScopeFactory.CreateScope();
         var notificacionService = scope.ServiceProvider.GetRequiredService<Votify.Services.Interfaces.INotificacionService>();
 
-        var nuevas = await notificacionService.ObtenerNotificacionesUsuarioAsync(Session.Usuario.Id);
+        var nuevas = await notificacionService.ObtenerNotificacionesUsuarioAsync(userId);
 
         if (nuevas.Count > misNotificaciones.Count)
         {
@@ -178,7 +186,6 @@
         });
     }
 
-    // ... (El resto de tus métodos ToggleMenu, ToggleNotificaciones, ClicarNotificacion, Logout, Dispose igual que antes) ...
     void ToggleNotificaciones()
     {
         mostrarNotificaciones = !mostrarNotificaciones;
@@ -193,7 +200,6 @@
 
     private async Task ClicarNotificacion(Notificacion n)
     {
-        // Abrimos otra conexión segura para actualizar el estado a "Leída"
         using var scope = ScopeFactory.CreateScope();
         var notificacionService = scope.ServiceProvider.GetRequiredService<Votify.Services.Interfaces.INotificacionService>();
 
@@ -206,7 +212,11 @@
 
     async Task Logout()
     {
-        await InvokeAsync(() => Session.Usuario = null);
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext != null)
+        {
+            await Auth.SignOutAsync(httpContext, "Cookies", new Microsoft.AspNetCore.Authentication.AuthenticationProperties());
+        }
         Navigation.NavigateTo("/", forceLoad: true);
     }
 

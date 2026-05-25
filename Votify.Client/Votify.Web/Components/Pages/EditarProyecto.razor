@@ -1,16 +1,17 @@
 ﻿@page "/participante/editar-proyecto/{ProyectoId:int}"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Votify.Services.Interfaces
 @using Votify.Services.Models.Requests
 @using Votify.Services.Models.Responses
-@using Votify.Web.Services
 @using Votify.Core.Models
 
 @inject IProyectoService ProyectoService
 @inject NavigationManager NavManager
 @inject NotificationService NotificationService
-@inject UserSession Session
+@inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JS
 
 <PageTitle>Ficha del Proyecto - Votify</PageTitle>
@@ -231,6 +232,8 @@ else if (vistaProyecto != null)
 }
 
 @code {
+    private ClaimsPrincipal? user;
+
     [Parameter]
     public int ProyectoId { get; set; }
 
@@ -247,6 +250,8 @@ else if (vistaProyecto != null)
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
         await CargarDatos();
     }
 
@@ -255,8 +260,7 @@ else if (vistaProyecto != null)
         cargando = true;
         try
         {
-            var usuarioActual = Session.Usuario;
-            if (usuarioActual == null)
+            if (user?.Identity?.IsAuthenticated != true)
             {
                 NavManager.NavigateTo("/login");
                 return;
@@ -275,13 +279,12 @@ else if (vistaProyecto != null)
             // LOGICA DE SEGURIDAD CORREGIDA
             // ==========================================
             // Solo puede editar si el usuario es un Participante Y su ID coincide con el del dueño del proyecto.
-            if (usuarioActual is Participante && vistaProyecto.ParticipanteId == usuarioActual.Id)
+            if (user?.IsInRole("Participante") == true && vistaProyecto.ParticipanteId == int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value))
             {
                 puedeEditar = true;
             }
             else
             {
-                // Si es un Organizador, Juez, u otro participante, NO puede editar.
                 puedeEditar = false;
             }
         }
@@ -321,8 +324,8 @@ else if (vistaProyecto != null)
         guardando = true;
         try
         {
-            string rolUsuario = Session.Usuario?.GetType().Name ?? "Participante";
-            int usuarioId = Session.Usuario?.Id ?? 0;
+            string rolUsuario = user?.IsInRole("Participante") == true ? "Participante" : user?.IsInRole("Juez") == true ? "Juez" : "Organizador";
+            int usuarioId = int.Parse(user?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
             // Pasamos el nuevo objeto limpio al Service
             bool exito = await ProyectoService.ActualizarProyectoAsync(editModel, usuarioId, rolUsuario);

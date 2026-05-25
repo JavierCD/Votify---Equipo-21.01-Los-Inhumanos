@@ -1,15 +1,16 @@
 ﻿@page "/juez/voto-multicriterio/{VotacionId:int}"
 @rendermode InteractiveServer
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
 @using Votify.Services.Models.Responses
 @using Votify.Services.Models.Requests
-@using Votify.Web.Services
 @inject IJSRuntime JSRuntime
 
 @inject IVotoMulticriterioService MulticriterioService
-@inject UserSession Session
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject ILogger<VotoMulticriterioJuez> Logger
 
@@ -39,8 +40,8 @@
                     <span class="badge bg-primary-subtle text-primary">@votacion.Criterios.Count Criterios de evaluación</span>
                 </div>
                 <div class="text-end">
-                    <span class="text-muted small d-block">Juez ID: @Session.Usuario?.Id</span>
-                    <span class="fw-bold">@Session.Usuario?.Name</span>
+                    <span class="text-muted small d-block">Juez ID: @juezId</span>
+                    <span class="fw-bold">@juezNombre</span>
                 </div>
             </div>
 
@@ -117,6 +118,10 @@
 </div>
 
 @code {
+    private ClaimsPrincipal? user;
+    private int juezId;
+    private string juezNombre = "";
+
     [Parameter]
     public int VotacionId { get; set; }
 
@@ -131,12 +136,17 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Seguridad: Verificar que realmente sea un juez
-        if (Session.Usuario is not Juez)
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+
+        if (user?.IsInRole("Juez") != true)
         {
             Nav.NavigateTo("/login");
             return;
         }
+
+        juezId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        juezNombre = user.FindFirst(ClaimTypes.Name)?.Value ?? "";
 
         try
         {
@@ -194,8 +204,6 @@
 
         try
         {
-            var juezId = Session.Usuario!.Id; // Ya sabemos que es juez por la validación inicial
-
             var request = new EmitirVotoMulticriterioRequest
             {
                 VotacionId = VotacionId,

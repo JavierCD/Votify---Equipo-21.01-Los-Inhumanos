@@ -1,6 +1,9 @@
 ﻿@page "/login"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Http
 @inject Votify.Services.Interfaces.IAuthService AuthService
-@inject Votify.Web.Services.UserSession Session
+@inject Microsoft.AspNetCore.Authentication.IAuthenticationService Auth
+@inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager Navigation
 
 <div class="d-flex justify-content-center align-items-center" style="height: 80vh;">
@@ -35,9 +38,9 @@
 </div>
 
 @code {
-    private string email;
-    private string password;
-    private string mensaje;
+    private string email = string.Empty;
+    private string password = string.Empty;
+    private string mensaje = string.Empty;
 
     private async Task HandleLogin()
     {
@@ -50,7 +53,26 @@
         try
         {
             var user = await AuthService.Login(email, password);
-            Session.Usuario = user;
+
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Name, user.Name),
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.Role, user.GetType().Name)
+            };
+            var identity = new ClaimsIdentity(claims, "Cookies");
+            var principal = new ClaimsPrincipal(identity);
+
+            var httpContext = HttpContextAccessor.HttpContext;
+            if (httpContext != null)
+            {
+                await Auth.SignInAsync(httpContext, "Cookies", principal, new Microsoft.AspNetCore.Authentication.AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+                });
+            }
 
             if (user is Votify.Core.Models.Participante p)
             {

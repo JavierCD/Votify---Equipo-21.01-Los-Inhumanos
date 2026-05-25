@@ -1,6 +1,8 @@
 ﻿@page "/ficha-participante/{Id:int}"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
 @using Votify.Services.Interfaces
@@ -8,7 +10,7 @@
 @inject IParticipanteService ParticipanteService
 @inject NavigationManager NavManager
 @inject IJSRuntime JSRuntime
-@inject Votify.Web.Services.UserSession Session
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Mi Perfil - Votify</PageTitle>
 
@@ -188,13 +190,17 @@ else
 }
 
 @code {
+    private ClaimsPrincipal? user;
+
     [Parameter] public int Id { get; set; }
     private Participante? participante;
     private bool cargando = true;
     private bool modoEdicion = false;
-    private bool esMiPropioPerfil => Session.Usuario != null && Session.Usuario.Id == Id;
+    private bool esMiPropioPerfil => user != null && user.Identity?.IsAuthenticated == true && int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0") == Id;
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
         await CargarDatos();
     }
 

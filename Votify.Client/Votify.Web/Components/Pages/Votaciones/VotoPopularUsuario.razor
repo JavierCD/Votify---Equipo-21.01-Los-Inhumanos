@@ -1,14 +1,15 @@
 ﻿@page "/voto-popular-usuario/{VotacionId:int}"
 @rendermode InteractiveServer
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Services.Models
 @using Votify.Services.Models.Responses
 @using Votify.Services.Models.Requests
-@using Votify.Web.Services
-                      
+                       
 @inject IPopularService PopularService          
-@inject UserSession Session                      
+@inject AuthenticationStateProvider AuthStateProvider                      
 @inject ILogger<VotoPopularUsuario> Logger
 @inject IVotoPopularService VotoPopularService
 
@@ -80,7 +81,7 @@
         </div>
 
         @* ← NUEVO: aviso informativo cuando la restricción de autovoto está activa y el usuario es Participante *@
-        @if (!votacionSeleccionada.PermiteAutoVoto && Session.Usuario is Participante)
+        @if (!votacionSeleccionada.PermiteAutoVoto && user?.IsInRole("Participante") == true)
         {
             <div class="alert alert-info rounded-3 small">
                 En esta votación no puedes votar tus propios proyectos.
@@ -256,6 +257,8 @@
 </div>
 
 @code {
+    private ClaimsPrincipal? user;
+
     [Parameter]
     public int VotacionId { get; set; }
 
@@ -264,7 +267,7 @@
     private bool identificado = false;
     private string errorEmail = "";
 
-    private bool esJuezLogueado => Session.Usuario is Juez;
+    private bool esJuezLogueado => user?.IsInRole("Juez") == true;
 
     // --- VARIABLES ORIGINALES DE TUS COMPAÑEROS ---
     private List<VotacionPopularDisponibleResponse> listaVotaciones = new();
@@ -280,11 +283,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        int votanteId = Session.Usuario is Participante p ? p.Id : 0;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
 
-        if (Session.Usuario is Juez juez && !string.IsNullOrWhiteSpace(juez.Email))
+        int votanteId = user?.IsInRole("Participante") == true ? int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value) : 0;
+
+        if (user?.IsInRole("Juez") == true)
         {
-            emailVotante = juez.Email;
+            emailVotante = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
         }
 
         try
@@ -299,11 +305,11 @@
         try
         {
             votacionSeleccionada = await PopularService.ObtenerProyectosParaVotarAsync(VotacionId, votanteId);
-            // Filtrar proyectos propios si no se permite autovoto
-            if (votacionSeleccionada != null && Session.Usuario is Participante participanteLogueado)
+            if (votacionSeleccionada != null && user?.IsInRole("Participante") == true)
             {
+                var participanteId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
                 votacionSeleccionada.Proyectos = votacionSeleccionada.Proyectos
-                    .Where(p => votacionSeleccionada.PermiteAutoVoto || p.ParticipanteId != participanteLogueado.Id)
+                    .Where(p => votacionSeleccionada.PermiteAutoVoto || p.ParticipanteId != participanteId)
                     .ToList();
             }
         }
@@ -340,7 +346,7 @@
         try
         {
             // ← CAMBIO: al seleccionar de la lista, también filtramos por autovoto
-            int votanteId = Session.Usuario is Participante p ? p.Id : 0;
+            int votanteId = user?.IsInRole("Participante") == true ? int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value) : 0;
             votacionSeleccionada = await PopularService.ObtenerProyectosParaVotarAsync(votacionId, votanteId);
 
             proyectosSeleccionados.Clear();
@@ -406,7 +412,7 @@
             {
                 VotacionId = votacionSeleccionada.VotacionId,
                 VotanteId = 0,
-                JuezId = Session.Usuario is Juez juez ? juez.Id : null,
+                JuezId = user?.IsInRole("Juez") == true ? int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value) : null,
                 Anonimo = true,
                 ProyectosSeleccionadosIds = proyectosSeleccionados.ToList(),
                 Email = emailVotante

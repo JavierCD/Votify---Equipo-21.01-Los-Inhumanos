@@ -1,6 +1,7 @@
 ﻿@page "/"
 @rendermode InteractiveServer
-
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Votify.Core.Factories
 @using Votify.Core.Models
 @using Votify.Core.Interfaces
@@ -11,7 +12,7 @@
 @inject NavigationManager NavigationManager
 @inject IEventoService EventoService
 @inject IProyectoService ProyectoService
-@inject Votify.Web.Services.UserSession Session
+@inject AuthenticationStateProvider AuthStateProvider
 @inject IVotoPopularService VotoPopularService
 @inject IVotoPuntuacionService VotoPuntuacionService
 @inject IVotoMulticriterioService VotoMulticriterioService
@@ -21,11 +22,11 @@
 @* ==========================================
    DASHBOARD PARTICIPANTE
    ========================================== *@
-@if (Session.Usuario is Participante)
+@if (user?.IsInRole("Participante") == true)
 {
     <div class="container-fluid mt-4 px-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Hola, @NombreUsuario <span class="text-muted fs-5">(Participante)</span></h2>
+            <h2>Hola, @user.Identity?.Name <span class="text-muted fs-5">(Participante)</span></h2>
         </div>
 
         <div class="row">
@@ -173,10 +174,10 @@
 @* ==========================================
                 DASHBOARD JURADO 
    ========================================== *@
-else if (Session.Usuario is Juez juez)
+else if (user?.IsInRole("Juez") == true)
 {
     <div class="container-fluid mt-4 px-4">
-        <h2 class="mb-4">Hola, @NombreUsuario <span class="text-muted fs-5">(Jurado)</span></h2>
+        <h2 class="mb-4">Hola, @user.Identity?.Name <span class="text-muted fs-5">(Jurado)</span></h2>
         <div class="row">
             <div class="col-12">
                 <h4 class="mb-3"><RadzenIcon Icon="gavel" class="me-2 text-warning" /> Mis Eventos a Evaluar (@eventosJuez.Count)</h4>
@@ -221,11 +222,11 @@ else if (Session.Usuario is Juez juez)
 @* ==========================================
    DASHBOARD ORGANIZADOR Y PÚBLICO (Se mantiene intacto)
    ========================================== *@
-else if (Session.Usuario is Organizador)
+else if (user?.IsInRole("Organizador") == true)
 {
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Hola, @NombreUsuario</h2>
+            <h2>Hola, @user.Identity?.Name</h2>
             <RadzenButton Text="+ Añadir Evento" Click="@(() => NavigationManager.NavigateTo("/eventos/crear"))" ButtonStyle="ButtonStyle.Primary" />
         </div>
 
@@ -288,6 +289,7 @@ else
 }
 
 @code {
+    private ClaimsPrincipal? user;
     private string codigoVotacion = "";
     private string? mensajeErrorVotante;
 
@@ -334,7 +336,6 @@ else
         mensajeErrorVotante = "No se encontró ninguna votación con ese código.";
     }
 
-    private string NombreUsuario = "Invitado";
     private IEnumerable<Evento> misEventos = new List<Evento>();
     private IEnumerable<Evento> eventosDisponibles = new List<Evento>();
     private List<Evento> eventosJuez = new();
@@ -353,31 +354,33 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
         await CargarDatosSegunRol();
     }
 
     private async Task CargarDatosSegunRol()
     {
-        if (Session.Usuario is Organizador org)
+        if (user == null || user.Identity?.IsAuthenticated != true) return;
+
+        var userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        if (user.IsInRole("Organizador"))
         {
-            NombreUsuario = Session.Usuario.Name;
-            misEventos = await EventoService.ObtenerEventosPorOrganizadorAsync(org.Id);
+            misEventos = await EventoService.ObtenerEventosPorOrganizadorAsync(userId);
         }
-        else if (Session.Usuario is Participante part)
+        else if (user.IsInRole("Participante"))
         {
-            NombreUsuario = Session.Usuario.Name;
-            misEventos = await EventoService.ObtenerEventosPorParticipanteAsync(part.Id);
+            misEventos = await EventoService.ObtenerEventosPorParticipanteAsync(userId);
             eventosDisponibles = await EventoService.ObtenerEventosDisponiblesAsync();
         }
-        else if (Session.Usuario is Juez juez)
+        else if (user.IsInRole("Juez"))
         {
-            NombreUsuario = Session.Usuario.Name;
-            eventosJuez = (await EventoService.ObtenerEventosPorJuezAsync(juez.Id)).ToList();
+            eventosJuez = (await EventoService.ObtenerEventosPorJuezAsync(userId)).ToList();
         }
         else
         {
             misEventos = new List<Evento>();
-            NombreUsuario = "Votante";
         }
     }
 
@@ -405,7 +408,7 @@ else
         mensajeErrorParticipante = null;
         mensajeExitoParticipante = null;
         eventoEncontrado = ev;
-        codigoBusqueda = ev.CodigoAcceso; // Autocompleta el código para la vista de usuario
+        codigoBusqueda = ev.CodigoAcceso;
     }
 
     private void CancelarInscripcion()
@@ -429,14 +432,14 @@ else
 
         try
         {
-            int participanteId = Session.Usuario.Id;
+            int participanteId = int.Parse(user!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
             ProyectoCreator creator = tipoProyectoSeleccionado switch
             {
                 "IA" => new AiProjectCreator(),
                 "Sostenibilidad" => new SustainabilityProjectCreator(),
                 "Ciberseguridad" => new CybersecurityProjectCreator(),
-                _ => new AiProjectCreator() // Fallback
+                _ => new AiProjectCreator()
             };
 
             Proyecto nuevoProyecto = creator.CrearProyecto(nombreProyecto, participanteId, default, default, descripcionProyecto);
@@ -445,7 +448,6 @@ else
 
             mensajeExitoParticipante = $"¡Tu proyecto '{nombreProyecto}' fue inscrito exitosamente!";
 
-            // Recargamos los eventos para que aparezca automáticamente a la izquierda
             await CargarDatosSegunRol();
 
             CancelarInscripcion();

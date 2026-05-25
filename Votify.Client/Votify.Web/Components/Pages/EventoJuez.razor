@@ -1,16 +1,17 @@
 ﻿@page "/juez/evento/{EventoId:int}"
 @rendermode InteractiveServer
-@implements IDisposable
-
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Votify.Core.Models
 @using Votify.Services.Implementations.Observers
 @using Votify.Services.Interfaces
 @using Votify.Core.Interfaces
+@implements IDisposable
 
 @inject IEventoService EventoService
 @inject IVotoExpertoServices VotoExpertoService
 @inject NavigationManager Nav
-@inject Votify.Web.Services.UserSession Session
+@inject AuthenticationStateProvider AuthStateProvider
 @inject RealTimeUINotificationObserver RealTimeNotifier
 
 <div class="container py-4" style="max-width: 900px;">
@@ -140,9 +141,11 @@
 </div>
 
 @code {
+    private ClaimsPrincipal? user;
+    private int JuezId => user != null && user.Identity?.IsAuthenticated == true ? int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0") : 0;
+
     [Parameter] public int EventoId { get; set; }
 
-    private int JuezId => Session.Usuario?.Id ?? 0;
     private Evento? evento;
     private List<Categoria> categorias = new();
     private Dictionary<int, List<Proyecto>> proyectosPorCategoria = new();
@@ -154,6 +157,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+
         RealTimeNotifier.OnVotacionCerrada += HandleVotacionCerrada;
         try
         {
