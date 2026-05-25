@@ -13,7 +13,7 @@ namespace Votify.Persistence.Context
     {
         public static void Initialize(VotifyContext context)
         {
-            context.Database.EnsureCreated();
+            context.Database.EnsureDeleted();
             context.Database.Migrate();
 
             if (context.Eventos.Any())
