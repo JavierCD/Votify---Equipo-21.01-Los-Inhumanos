@@ -101,16 +101,6 @@ namespace Votify.Services.Implementations
 
             var proyectosPuntuados = estrategia.CalcularRanking(categoria);
 
-                    {
-                        NombreProyecto = g.Key!.Name,
-                        PuntosTotales = g.Sum(v => v.PuntuacionBase),
-                        FechaInscripcion = g.Key.FechaRegistro
-                    })
-                    .OrderByDescending(x => x.PuntosTotales)
-                    .ThenBy(x => x.FechaInscripcion)
-                    .ToList();
-            }
-
             int posicionActual = 1;
             int contadorSaltos = 1;
             double puntosAnterior = double.MaxValue;
