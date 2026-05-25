@@ -126,7 +126,7 @@
         {
             await EventoService.CrearEventoDesdeFormularioAsync(modelo, Session.Usuario.Id);
 
-            NavigationManager.NavigateTo("/", forceLoad: true);
+            NavigationManager.NavigateTo("/");
         }
         catch (ArgumentException ex)
         {
