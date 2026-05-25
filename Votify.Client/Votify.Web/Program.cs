@@ -31,7 +31,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
     
 builder.Services.AddRadzenComponents();
-builder.Services.AddScoped<UserSession>();
+builder.Services.AddSingleton<UserSession>();
 
 // --- API y Swagger ---
 builder.Services.AddControllers();

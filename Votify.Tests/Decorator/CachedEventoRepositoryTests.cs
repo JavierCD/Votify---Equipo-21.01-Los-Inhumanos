@@ -151,7 +151,7 @@ namespace Votify.Tests.Decorator
         }
 
         [Fact]
-        public async Task AddAsync_NoInvalidaCacheAutomaticamente()
+        public async Task AddAsync_InvalidaCache()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
             var mockInner = CreateMockInner(evento);
@@ -162,11 +162,11 @@ namespace Votify.Tests.Decorator
             await cachedRepo.AddAsync(evento);
             await cachedRepo.GetAllAsync();
 
-            mockInner.Verify(r => r.GetAllAsync(), Times.Once);
+            mockInner.Verify(r => r.GetAllAsync(), Times.Exactly(2));
         }
 
         [Fact]
-        public async Task UpdateAsync_NoInvalidaCacheAutomaticamente()
+        public async Task UpdateAsync_InvalidaCache()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
             var mockInner = CreateMockInner(evento);
@@ -177,11 +177,11 @@ namespace Votify.Tests.Decorator
             await cachedRepo.UpdateAsync(evento);
             await cachedRepo.GetAllAsync();
 
-            mockInner.Verify(r => r.GetAllAsync(), Times.Once);
+            mockInner.Verify(r => r.GetAllAsync(), Times.Exactly(2));
         }
 
         [Fact]
-        public async Task DeleteAsync_NoInvalidaCacheAutomaticamente()
+        public async Task DeleteAsync_InvalidaCache()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
             var mockInner = CreateMockInner(evento);
@@ -192,7 +192,7 @@ namespace Votify.Tests.Decorator
             await cachedRepo.DeleteAsync(1);
             await cachedRepo.GetAllAsync();
 
-            mockInner.Verify(r => r.GetAllAsync(), Times.Once);
+            mockInner.Verify(r => r.GetAllAsync(), Times.Exactly(2));
         }
     }
 }

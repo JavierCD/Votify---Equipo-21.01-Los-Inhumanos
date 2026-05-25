@@ -159,36 +159,29 @@ namespace Votify.Services.Implementations
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task CrearEventoDesdeFormularioAsync(CrearEventoRequest modelo)
+        public async Task CrearEventoDesdeFormularioAsync(CrearEventoRequest modelo, int organizadorId)
         {
-            // 1. Resolvemos dependencias internas (como el organizador)
-            int organizadorRealId = await ObtenerOrganizadorMockIdAsync();
-
-            // 2. Usamos el Factory Pattern en la capa de Aplicación/Dominio, NO en la UI
             EventoCreator creator = modelo.TipoEvento switch
             {
                 "Hackathon" => new HackathonEventCreator(),
                 "Feria de Innovación" => new InnovationFairEventCreator(),
                 "E-Sports" => new ESportsEventCreator(),
-                _ => new HackathonEventCreator() // Fallback
+                _ => new HackathonEventCreator()
             };
 
-            // 3. Instanciamos la entidad de Dominio
             Evento nuevoEvento = creator.CrearEvento(
                 modelo.Nombre,
                 modelo.FechaInicio.ToUniversalTime(),
                 modelo.FechaFin.ToUniversalTime(),
-                organizadorRealId,
+                organizadorId,
                 modelo.Descripcion
             );
 
-            // 4. Delegamos al Aggregate Root la creación de sus hijos (Categorías)
             foreach (var cat in modelo.Categorias)
             {
                 nuevoEvento.AgregarCategoria(cat.Nombre, cat.Descripcion);
             }
 
-            // 5. Persistimos a través de Infraestructura
             await _unitOfWork.EventoRepository.AddAsync(nuevoEvento);
             await _unitOfWork.SaveChangesAsync();
         }

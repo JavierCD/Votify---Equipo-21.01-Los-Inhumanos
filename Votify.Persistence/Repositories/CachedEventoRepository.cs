@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Primitives;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 
@@ -13,12 +15,14 @@ namespace Votify.Persistence.Repositories
         private readonly IEventoRepository _inner;
         private readonly IMemoryCache _cache;
         private readonly TimeSpan _defaultExpiration;
+        private CancellationTokenSource _resetTokenSource;
 
         public CachedEventoRepository(IEventoRepository inner, IMemoryCache cache, TimeSpan? expiration = null)
         {
             _inner = inner;
             _cache = cache;
             _defaultExpiration = expiration ?? TimeSpan.FromMinutes(5);
+            _resetTokenSource = new CancellationTokenSource();
         }
 
         public async Task<Evento?> GetByIdAsync(int id)
@@ -31,7 +35,14 @@ namespace Votify.Persistence.Repositories
             var entity = await _inner.GetByIdAsync(id);
 
             if (entity != null)
-                _cache.Set(cacheKey, entity, _defaultExpiration);
+            {
+                var options = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = _defaultExpiration
+                };
+                options.AddExpirationToken(new CancellationChangeToken(_resetTokenSource.Token));
+                _cache.Set(cacheKey, entity, options);
+            }
 
             return entity;
         }
@@ -45,7 +56,12 @@ namespace Votify.Persistence.Repositories
 
             var entities = await _inner.GetAllAsync();
             var list = entities.ToList();
-            _cache.Set(cacheKey, list, _defaultExpiration);
+            var options = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = _defaultExpiration
+            };
+            options.AddExpirationToken(new CancellationChangeToken(_resetTokenSource.Token));
+            _cache.Set(cacheKey, list, options);
             return list;
         }
 
@@ -58,7 +74,14 @@ namespace Votify.Persistence.Repositories
 
             var entity = await _inner.GetWithIncludesAsync(predicate, includes);
             if (entity != null)
-                _cache.Set(cacheKey, entity, _defaultExpiration);
+            {
+                var options = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = _defaultExpiration
+                };
+                options.AddExpirationToken(new CancellationChangeToken(_resetTokenSource.Token));
+                _cache.Set(cacheKey, entity, options);
+            }
 
             return entity;
         }
@@ -72,7 +95,12 @@ namespace Votify.Persistence.Repositories
 
             var entities = await _inner.GetAllWithIncludesAsync(includes);
             var list = entities.ToList();
-            _cache.Set(cacheKey, list, _defaultExpiration);
+            var options = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = _defaultExpiration
+            };
+            options.AddExpirationToken(new CancellationChangeToken(_resetTokenSource.Token));
+            _cache.Set(cacheKey, list, options);
             return list;
         }
 
@@ -104,7 +132,14 @@ namespace Votify.Persistence.Repositories
 
             var entity = await _inner.ObtenerEventoConDetallesAsync(id);
             if (entity != null)
-                _cache.Set(cacheKey, entity, TimeSpan.FromMinutes(10));
+            {
+                var options = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+                };
+                options.AddExpirationToken(new CancellationChangeToken(_resetTokenSource.Token));
+                _cache.Set(cacheKey, entity, options);
+            }
 
             return entity;
         }
@@ -118,7 +153,12 @@ namespace Votify.Persistence.Repositories
 
             var entities = await _inner.ObtenerEventosPorJuezAsync(juezId);
             var list = entities.ToList();
-            _cache.Set(cacheKey, list, _defaultExpiration);
+            var options = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = _defaultExpiration
+            };
+            options.AddExpirationToken(new CancellationChangeToken(_resetTokenSource.Token));
+            _cache.Set(cacheKey, list, options);
             return list;
         }
 
@@ -131,7 +171,12 @@ namespace Votify.Persistence.Repositories
 
             var entities = await _inner.ObtenerEventosDisponiblesAsync();
             var list = entities.ToList();
-            _cache.Set(cacheKey, list, TimeSpan.FromMinutes(2));
+            var options = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2)
+            };
+            options.AddExpirationToken(new CancellationChangeToken(_resetTokenSource.Token));
+            _cache.Set(cacheKey, list, options);
             return list;
         }
 
@@ -144,12 +189,20 @@ namespace Votify.Persistence.Repositories
 
             var entities = await _inner.ObtenerEventosPorParticipanteAsync(participanteId);
             var list = entities.ToList();
-            _cache.Set(cacheKey, list, _defaultExpiration);
+            var options = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = _defaultExpiration
+            };
+            options.AddExpirationToken(new CancellationChangeToken(_resetTokenSource.Token));
+            _cache.Set(cacheKey, list, options);
             return list;
         }
 
         private void ClearCache()
         {
+            var oldTokenSource = Interlocked.Exchange(ref _resetTokenSource, new CancellationTokenSource());
+            oldTokenSource.Cancel();
+            oldTokenSource.Dispose();
         }
     }
 }
