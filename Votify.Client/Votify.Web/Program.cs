@@ -97,12 +97,35 @@ builder.Services.AddSingleton<IVotacionStateObserver, RealTimeUINotificationObse
 builder.Services.AddScoped<VotacionStateCronDetector>();
 builder.Services.AddSingleton<RealTimeUINotificationObserver>();
 
-// IA - Análisis de Mejora
-builder.Services.AddHttpClient<IIAProvider, OllamaProvider>(client =>
+// IA - Análisis de Mejora (Ollama local o Groq cloud)
+var iaConfig = builder.Configuration.GetSection("IA");
+var providerType = iaConfig["Provider"];
+
+if (providerType == "Groq")
 {
-    client.BaseAddress = new Uri("http://localhost:11434");
-    client.Timeout = TimeSpan.FromMinutes(2);
-});
+    var groqApiKey = iaConfig["Groq:ApiKey"];
+    var groqModel = iaConfig["Groq:Model"];
+    var groqBaseUrl = iaConfig["Groq:BaseUrl"];
+
+    builder.Services.AddHttpClient<IIAProvider, GroqProvider>(client =>
+    {
+        client.BaseAddress = new Uri(groqBaseUrl);
+        client.Timeout = TimeSpan.FromMinutes(2);
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", groqApiKey);
+    });
+}
+else
+{
+    var ollamaBaseUrl = iaConfig["Ollama:BaseUrl"];
+    var ollamaModel = iaConfig["Ollama:Model"];
+
+    builder.Services.AddHttpClient<IIAProvider, OllamaProvider>(client =>
+    {
+        client.BaseAddress = new Uri(ollamaBaseUrl);
+        client.Timeout = TimeSpan.FromMinutes(2);
+    });
+}
 builder.Services.AddScoped<IAnalisisMejoraService, AnalisisMejoraService>();
 builder.Services.AddScoped<IHojaRutaPdfService, HojaRutaPdfService>();
 builder.Services.AddScoped<ICriteriosSugeridosService, CriteriosSugeridosService>();
