@@ -17,6 +17,13 @@ namespace Votify.Core.Interfaces
         Task ActualizarFichaAsync(Participante participante);
         
         Task<Participante?> ObtenerDashboardAsync(int id);
+        Task AsignarProyectoACategoriaAsync(int proyectoId, int categoriaId);
+        Task ReasignarProyectoACategoriaAsync(int proyectoId, int categoriaOrigenId, int categoriaDestinoId);
+        Task ReasignarProyectoAOtroEventoAsync(int proyectoId, int eventoDestinoId, int categoriaDestinoId);
+        Task<IEnumerable<Participante>> ObtenerParticipantesNoEnCategoriaAsync(int eventoId, int categoriaId);
+        Task<IEnumerable<Proyecto>> ObtenerProyectosDisponiblesParaAsignarAsync(int participanteId, int eventoId, int categoriaId);
+        Task<IEnumerable<Evento>> ObtenerEventosDisponiblesParaReasignarAsync(int eventoActualId);
+        Task<IEnumerable<Categoria>> ObtenerCategoriasDeEventoAsync(int eventoId);
 
 
         // El futuro método para la IA (lo dejamos preparado)

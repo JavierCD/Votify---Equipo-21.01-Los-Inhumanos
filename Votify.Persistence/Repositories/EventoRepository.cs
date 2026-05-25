@@ -59,7 +59,7 @@ namespace Votify.Persistence.Repositories
             // Obtenemos eventos activos (FechaFin superior a hoy) para mostrarlos en el Dashboard
             return await _context.Eventos
                 .Include(e => e.CategoriasEvento)
-                .Where(e => e.FechaFin >= DateTime.UtcNow)
+                .Where(e => e.FechaFin >= DateTime.UtcNow && e.EsPublico == true)
                 .OrderBy(e => e.FechaInicio)
                 .ToListAsync();
         }

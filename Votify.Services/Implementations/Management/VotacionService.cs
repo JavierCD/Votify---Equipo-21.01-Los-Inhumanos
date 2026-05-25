@@ -87,5 +87,26 @@ namespace Votify.Services.Implementations
 
             return true;
         }
+
+        public async Task<bool> ActualizarVisibilidadVotacionAsync(int votacionId, bool mostrarJueces, bool mostrarComentarios, bool mostrarRanking, bool mostrarDetalles)
+        {
+            // Cargamos la categoría que incluye la votación para poder acceder a ella de forma segura
+            var categoria = await _unitOfWork.CategoriaRepository.GetWithIncludesAsync(
+                c => c.Votacion != null && c.Votacion.Id == votacionId,
+                c => c.Votacion
+            );
+
+            if (categoria == null || categoria.Votacion == null) return false;
+
+            // Asignamos los nuevos permisos al modelo de dominio
+            categoria.Votacion.MostrarNombresJueces = mostrarJueces;
+            categoria.Votacion.MostrarComentarios = mostrarComentarios;
+            categoria.Votacion.MostrarRanking = mostrarRanking;
+            categoria.Votacion.MostrarResultadosDetallados = mostrarDetalles;
+
+            // Persistimos en PostgreSQL
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
     }
 }

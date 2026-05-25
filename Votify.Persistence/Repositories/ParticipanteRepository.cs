@@ -29,6 +29,14 @@ namespace Votify.Persistence.Repositories
                         .ThenInclude(cat => cat.Evento)
                 .Include(p => p.Proyectos)
                     .ThenInclude(proy => proy.Categorias)
+                        .ThenInclude(cat => cat.Proyectos)  // ← NUEVO: Todos los proyectos de la categoría
+                .Include(p => p.Proyectos)
+                    .ThenInclude(proy => proy.Categorias)
+                        .ThenInclude(cat => cat.Votacion)
+                            .ThenInclude(v => v.Votos)
+                                .ThenInclude(v => v.Proyecto)  // ← NUEVO: Proyecto de cada voto
+                .Include(p => p.Proyectos)
+                    .ThenInclude(proy => proy.Categorias)
                         .ThenInclude(cat => cat.Votacion)
                             .ThenInclude(v => v.Votos)
                                 .ThenInclude(v => v.Detalles)

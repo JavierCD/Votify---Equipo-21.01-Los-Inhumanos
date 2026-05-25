@@ -101,6 +101,16 @@ namespace Votify.Services.Implementations
 
             var proyectosPuntuados = estrategia.CalcularRanking(categoria);
 
+                    {
+                        NombreProyecto = g.Key!.Name,
+                        PuntosTotales = g.Sum(v => v.PuntuacionBase),
+                        FechaInscripcion = g.Key.FechaRegistro
+                    })
+                    .OrderByDescending(x => x.PuntosTotales)
+                    .ThenBy(x => x.FechaInscripcion)
+                    .ToList();
+            }
+
             int posicionActual = 1;
             int contadorSaltos = 1;
             double puntosAnterior = double.MaxValue;
@@ -144,9 +154,11 @@ namespace Votify.Services.Implementations
 
                 // Solo mostramos categorías con votación cerrada
                 var votacion = categoria.Votacion;
-                if (votacion.Estado != "Cerrada" && votacion.Estado != "CerradaManual"
-                    && !votacion.EstaCerrada && !votacion.ResultadosPublicados)
-                    continue;
+                bool permiteCalculo = votacion.Estado == "Cerrada"
+                                   || votacion.Estado == "CerradaManual"
+                                   || votacion.EstaCerrada
+                                   || votacion.ResultadosPublicados
+                                   || votacion.MostrarRanking; // <-- NUEVO FLAG
 
                 // Verificar si hay intervención guardada
                 var intervenidos = (await _unitOfWork.ResultadosIntervenidos.GetAllAsync())

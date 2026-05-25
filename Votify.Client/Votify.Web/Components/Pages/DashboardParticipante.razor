@@ -11,7 +11,7 @@
 @inject IJSRuntime JS
 @inject UserSession UserSession
 
-<PageTitle>Mi Panel - Votify</PageTitle>
+<PageTitle>Mi Centro de Mando - Votify</PageTitle>
 
 @if (cargando)
 {
@@ -32,246 +32,150 @@ else
 {
     <div class="container rz-mt-4 rz-mb-5">
 
-        @* --- CABECERA SUPERIOR --- *@
+        @* --- CABECERA DE PERFIL --- *@
         <RadzenCard class="rz-mb-4 rz-shadow-2" Style="border-left: 4px solid var(--rz-primary);">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
                 <div>
                     <RadzenText TextStyle="TextStyle.H4" class="rz-m-0 fw-bold">Hola, @participante.Name 👋</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1" class="text-muted rz-m-0">@participante.Email</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" class="text-muted rz-m-0">Panel del Participante | @participante.Email</RadzenText>
                 </div>
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-                    <RadzenButton Icon="refresh" Text="Actualizar Panel" ButtonStyle="ButtonStyle.Light" Click="CargarDatos" />
+                    <RadzenButton Icon="travel_explore" Text="Explorar Hackathons" ButtonStyle="ButtonStyle.Secondary" Click="@(() => NavManager.NavigateTo("/"))" />
                     <RadzenButton Icon="manage_accounts" Text="Mi Perfil" ButtonStyle="ButtonStyle.Primary" Click="@(() => NavManager.NavigateTo($"/ficha-participante/{participante.Id}"))" />
                 </RadzenStack>
             </RadzenStack>
         </RadzenCard>
 
-        <RadzenText TextStyle="TextStyle.H5" class="rz-mb-4 fw-bold text-secondary">Tus Participaciones Activas</RadzenText>
-
-        @* --- ESTADO VACÍO (SIN PROYECTOS) --- *@
         @if (participante.Proyectos?.Any() != true)
         {
-            <div class="text-center rz-mt-5 rz-mb-5 p-5 bg-light rounded border border-dashed">
-                <RadzenIcon Icon="folder_open" Style="font-size: 4rem; color: var(--rz-text-disabled);" class="rz-mb-3" />
-                <RadzenText TextStyle="TextStyle.H5" class="fw-bold">Aún no tienes participaciones activas</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body1" class="text-muted rz-mb-4">Para empezar a competir y recibir votos, debes inscribir un proyecto en alguno de nuestros eventos disponibles.</RadzenText>
-                <RadzenButton Text="Explorar Eventos para Inscribirme" Icon="travel_explore" ButtonStyle="ButtonStyle.Secondary" Click="@(() => NavManager.NavigateTo("/"))" />
+            <div class="text-center rz-mt-5 rz-mb-5 p-5 bg-light rounded border border-dashed shadow-sm">
+                <RadzenIcon Icon="rocket_launch" Style="font-size: 4rem; color: #cbd5e1;" class="rz-mb-3" />
+                <RadzenText TextStyle="TextStyle.H5" class="fw-bold text-dark">Tu panel está en blanco</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" class="text-muted rz-mb-4" Style="max-width: 500px; margin: 0 auto;">Inscribe un proyecto en alguno de los eventos disponibles para empezar a competir y recibir feedback del jurado.</RadzenText>
+                <RadzenButton Text="Buscar Eventos" Icon="search" ButtonStyle="ButtonStyle.Primary" Click="@(() => NavManager.NavigateTo("/"))" />
             </div>
         }
         else
         {
-            @* --- LISTADO DE PROYECTOS --- *@
-            @foreach (var proyecto in participante.Proyectos)
+            @* ========================================================
+               SECCIÓN 1: PROYECTOS ACTIVOS / EN COMPETICIÓN
+               ======================================================== *@
+            var proyectosActivos = participante.Proyectos.Where(p => !TodosEventosCerrados(p)).ToList();
+
+            <h5 class="fw-bold text-secondary mb-3"><RadzenIcon Icon="bolt" class="text-warning me-1" /> Proyectos en Competición</h5>
+
+            @if (!proyectosActivos.Any())
             {
-                <RadzenCard class="rz-mb-5 rz-shadow-3 p-4" Style="border-top: 4px solid var(--rz-info);">
+                <div class="alert alert-light border shadow-sm text-muted fst-italic mb-5">No tienes proyectos en competiciones activas en este momento.</div>
+            }
+            else
+            {
+                <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+                    @foreach (var proyecto in proyectosActivos)
+                    {
+                        var categoriaPrincipal = proyecto.Categorias?.FirstOrDefault();
+                        var eventoPrincipal = categoriaPrincipal?.Evento;
 
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="border-bottom pb-3 rz-mb-3">
-                        <div>
-                            <RadzenText TextStyle="TextStyle.H5" class="rz-m-0 fw-bold">@proyecto.Name</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" class="text-muted">
-                                <RadzenIcon Icon="event" Style="font-size: 14px; vertical-align: text-bottom;" /> Inscrito el @proyecto.FechaRegistro.ToString("dd/MM/yyyy")
-                            </RadzenText>
-                        </div>
-                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Votación Activa" IsPill="true" class="px-3 py-2" />
-                    </RadzenStack>
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0 border-top border-4 border-info">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="fw-bold mb-0">@proyecto.Name</h5>
+                                        <span class="badge bg-success rounded-pill">En Curso</span>
+                                    </div>
+                                    <p class="text-muted small mb-3">
+                                        <RadzenIcon Icon="event" Style="font-size: 14px;" /> @(eventoPrincipal?.Name ?? "Evento Desconocido") <br />
+                                        <RadzenIcon Icon="category" Style="font-size: 14px;" /> @(categoriaPrincipal?.Name ?? "Categoría General")
+                                    </p>
 
-                    <RadzenRow Gap="2rem">
-                        @* MÉTRICAS Y COMENTARIOS *@
-                        <RadzenColumn Size="12" SizeLG="4">
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                        @foreach (var categoria in proyecto.Categorias ?? new List<Categoria>())
-                        {
-                            var votacion = categoria.Votacion;
-                            if (votacion == null) continue;
+                                    <div class="d-flex flex-column gap-2 mt-4">
+                                        <RadzenButton Text="Ver Competición (Ranking)" Icon="emoji_events" ButtonStyle="ButtonStyle.Light" class="w-100 text-start"
+                                                      Click="@(() => NavManager.NavigateTo($"/panel-evento/{eventoPrincipal?.Id}"))" Disabled="@(eventoPrincipal == null)" />
 
-                            var esMulticriterio = votacion is Multicriterio;
-                            var votosProyecto = proyecto.Votos?
-                                .Where(v => v.VotacionId == votacion.Id)
-                                .ToList() ?? new List<Voto>();
+                                        <RadzenButton Text="Ver Mi Feedback" Icon="assessment" ButtonStyle="ButtonStyle.Info" class="w-100 text-start text-white fw-bold"
+                                                      Click="@(() => NavManager.NavigateTo($"/evaluacion-proyecto/{proyecto.Id}"))" />
 
-                            string metricaLabel;
-                            string metricaValor;
+                                        <RadzenButton Text="Hoja de Ruta IA" Icon="psychology" ButtonStyle="ButtonStyle.Success" class="w-100 text-start"
+                                                      Click="@(() => NavManager.NavigateTo($"/hoja-ruta/{proyecto.Id}"))" />
 
-                            if (esMulticriterio)
-                            {
-                                var mc = votacion as Multicriterio;
-                                var puntuacionPonderada = CalcularPuntuacionMulticriterio(votosProyecto, mc);
-                                metricaLabel = "Puntuación Ponderada (0-10)";
-                                metricaValor = puntuacionPonderada.ToString("F2");
-                            }
-                            else
-                            {
-                                var total = votosProyecto.Sum(v => v.PuntuacionBase);
-                                var conteo = votosProyecto.Count;
-                                metricaLabel = votacion is Puntuacion ? "Puntuación Total" : "Votos Recibidos";
-                                metricaValor = votacion is Popular ? conteo.ToString() : total.ToString("F1");
-                            }
-
-                            <div class="bg-light p-3 rounded rz-mb-2 text-center border">
-                                <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mb-1">@metricaLabel</RadzenText>
-                                <RadzenText TextStyle="TextStyle.H2" class="fw-bold rz-color-info rz-m-0">@metricaValor</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" class="text-muted">@categoria.Name</RadzenText>
+                                        <RadzenButton Text="Editar Proyecto" Icon="edit_note" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" class="w-100 text-start"
+                                                      Click="@(() => NavManager.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}"))" />
+                                    </div>
+                                </div>
                             </div>
-                        }
-                    </RadzenStack>
+                        </div>
+                    }
+                </div>
+            }
 
-                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                                <RadzenButton Text="Editar Participación" Icon="edit_note" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" class="w-100" Click="@(() => NavManager.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}"))" />
+            @* ========================================================
+               SECCIÓN 2: HISTORIAL / PROYECTOS FINALIZADOS
+               ======================================================== *@
+            var proyectosFinalizados = participante.Proyectos.Where(p => TodosEventosCerrados(p)).ToList();
 
-                                <RadzenButton Text="Ver Evaluación"
-                                              Icon="assessment"
-                                              ButtonStyle="ButtonStyle.Info"
-                                              class="w-100"
+            <h5 class="fw-bold text-secondary mb-3 mt-5"><RadzenIcon Icon="inventory_2" class="text-muted me-1" /> Historial de Participaciones</h5>
+
+            @if (!proyectosFinalizados.Any())
+            {
+                <div class="alert alert-light border shadow-sm text-muted fst-italic">Tus proyectos completados aparecerán aquí.</div>
+            }
+            else
+            {
+                <div class="list-group shadow-sm border-0">
+                    @foreach (var proyecto in proyectosFinalizados)
+                    {
+                        var categoriasCerradas = proyecto.Categorias?.Where(c => c.Votacion?.ResultadosPublicados == true).ToList() ?? new List<Categoria>();
+                        // Usamos la categoría principal para sacar el evento, o la primera del proyecto si no hay cerradas
+                        var eventoPrincipal = categoriasCerradas.FirstOrDefault()?.Evento ?? proyecto.Categorias?.FirstOrDefault()?.Evento;
+
+                        <div class="list-group-item p-4 bg-white border mb-3 rounded shadow-sm">
+
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h6 class="fw-bold mb-1">@proyecto.Name</h6>
+                                    <span class="text-muted small d-block mb-3">Finalizado en @(eventoPrincipal?.Name ?? "Evento Desconocido")</span>
+
+                                    <RadzenButton Text="Ver Podio Final" Icon="emoji_events" ButtonStyle="ButtonStyle.Warning" class="text-dark fw-bold shadow-sm" Size="ButtonSize.Small"
+                                                  Click="@(() => NavManager.NavigateTo($"/panel-evento/{eventoPrincipal?.Id}"))" Disabled="@(eventoPrincipal == null)" />
+                                </div>
+
+                                <RadzenButton Text="Informe Final" Icon="analytics" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Size="ButtonSize.Small"
                                               Click="@(() => NavManager.NavigateTo($"/evaluacion-proyecto/{proyecto.Id}"))" />
+                            </div>
 
-                                <RadzenButton Text="Hoja de Ruta IA"
-                                              Icon="psychology"
-                                              ButtonStyle="ButtonStyle.Success"
-                                              class="w-100"
-                                              Click="@(() => NavManager.NavigateTo($"/hoja-ruta/{proyecto.Id}"))" />
-                            </RadzenStack>
-                        </RadzenColumn>
-
-                        @* GRÁFICA DE VOTOS *@
-                        <RadzenColumn Size="12" SizeLG="8">
-                            <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mb-2">Evolución de Votos</RadzenText>
-
-                            @if (proyecto.Votos?.Any() == true)
+                            @* CERTIFICADOS OFICIALES *@
+                            @if (categoriasCerradas.Any())
                             {
-                                var datosGraficoProyecto = proyecto.Votos
-                                .GroupBy(v => v.Fecha.ToString("dd MMM"))
-                                .Select(g => new { Fecha = g.Key, Puntos = g.Sum(v => v.PuntuacionBase) })
-                                .ToList();
+                                <div class="bg-light p-3 rounded border mt-2">
+                                    <span class="d-block small fw-bold text-muted border-bottom pb-2 mb-2">Tus Certificados Oficiales</span>
 
-                                <RadzenChart>
-                                    <RadzenColumnSeries Data="@datosGraficoProyecto" CategoryProperty="Fecha" Title="Puntos" ValueProperty="Puntos">
-                                        <RadzenSeriesDataLabels Visible="true" />
-                                    </RadzenColumnSeries>
-                                    <RadzenColumnOptions Radius="4" />
-                                    <RadzenLegend Visible="false" />
-                                    <RadzenValueAxis>
-                                        <RadzenGridLines Visible="true" />
-                                    </RadzenValueAxis>
-                                </RadzenChart>
-                            }
-                            else
-                            {
-                                <div class="d-flex flex-column align-items-center justify-content-center bg-light rounded border border-dashed" style="height: 200px;">
-                                    <RadzenIcon Icon="show_chart" Style="font-size: 2.5rem; opacity: 0.3;" />
-                                    <span class="text-muted mt-2">Aún no hay votos registrados</span>
+                                    @foreach (var cat in categoriasCerradas)
+                                    {
+                                        int miPosicion = ObtenerPosicionProyecto(proyecto, cat);
+
+                                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                                            <span class="small text-dark">
+                                                <RadzenIcon Icon="label" Style="font-size: 14px;" class="me-1 text-muted" /> @cat.Name
+                                                <strong class="ms-1 text-primary">@(miPosicion > 0 ? $"(Posición: {miPosicion}º)" : "")</strong>
+                                            </span>
+
+                                            <div class="d-flex gap-2">
+                                                <RadzenButton Text="Participación" Icon="verified" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined"
+                                                              Click="@(() => AbrirCertificadoParticipacion(proyecto, cat))" />
+
+                                                @if (miPosicion > 0 && miPosicion <= 3)
+                                                {
+                                                    <RadzenButton Text="Premio" Icon="emoji_events" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
+                                                                  Click="@(() => AbrirCertificado(proyecto, cat, miPosicion))" />
+                                                }
+                                            </div>
+                                        </div>
+                                    }
                                 </div>
                             }
-                        </RadzenColumn>
-                    </RadzenRow>
-
-                    @* --- RESULTADOS DE EVENTOS CERRADOS --- *@
-                    <RadzenText TextStyle="TextStyle.H5" class="rz-mt-5 rz-mb-3 fw-bold border-bottom pb-2">
-                        <RadzenIcon Icon="emoji_events" class="rz-mr-1" Style="color: gold;" /> Resultados Oficiales
-                    </RadzenText>
-
-                    @{
-                        var categoriasCerradas = proyecto.Categorias?
-                        .Where(c => c.Votacion?.ResultadosPublicados == true)
-                        .ToList() ?? new List<Categoria>();
+                        </div>
                     }
-
-                    @if (!categoriasCerradas.Any())
-                    {
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Size="AlertSize.Small">
-                            Aún no se han publicado los resultados finales de las categorías donde compites.
-                        </RadzenAlert>
-                    }
-                    else
-                    {
-                        <RadzenRow Gap="1.5rem">
-                            @foreach (var categoria in categoriasCerradas)
-                            {
-                                var esMulticriterio = categoria.Votacion is Multicriterio;
-                                var mc = categoria.Votacion as Multicriterio;
-
-                                List<dynamic> ranking;
-                                if (esMulticriterio)
-                                {
-                                    ranking = categoria.Proyectos
-                                        .Select(p => new
-                                        {
-                                            Proyecto = p,
-                                            Puntuacion = CalcularPuntuacionMulticriterio(
-                                                p.Votos?.Where(v => v.VotacionId == categoria.Votacion.Id).ToList() ?? new List<Voto>(),
-                                                mc)
-                                        })
-                                        .OrderByDescending(x => x.Puntuacion)
-                                        .Cast<dynamic>()
-                                        .ToList();
-                                }
-                                else
-                                {
-                                    ranking = categoria.Votacion!.Votos
-                                        .GroupBy(v => v.Proyecto)
-                                        .Select(g => new
-                                        {
-                                            Proyecto = g.Key,
-                                            Votos = categoria.Votacion is Popular ? g.Count() : (object)g.Sum(v => v.PuntuacionBase)
-                                        })
-                                        .OrderByDescending(x => x.Votos)
-                                        .Cast<dynamic>()
-                                        .ToList();
-                                }
-
-                                int miPosicion;
-                                if (esMulticriterio)
-                                {
-                                    miPosicion = ranking.FindIndex(r => ((dynamic)r).Proyecto?.Id == proyecto.Id) + 1;
-                                }
-                                else
-                                {
-                                    miPosicion = ranking.FindIndex(r => ((dynamic)r).Proyecto?.Id == proyecto.Id) + 1;
-                                }
-
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <div class="p-3 bg-light rounded border">
-                                        <h6 class="fw-bold mb-3 text-center text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;">Top 3 - @categoria.Name</h6>
-                                        <ul class="list-group list-group-flush mb-3 shadow-sm rounded">
-                                            @for (int i = 0; i < Math.Min(3, ranking.Count); i++)
-                                            {
-                                                var pos = (dynamic)ranking[i];
-                                                bool esMio = pos.Proyecto?.Id == proyecto.Id;
-                                                string badgeTexto;
-                                                if (esMulticriterio)
-                                                {
-                                                    badgeTexto = $"{((double)pos.Puntuacion):F2} pts";
-                                                }
-                                                else if (categoria.Votacion is Popular)
-                                                {
-                                                    badgeTexto = $"{(int)pos.Votos} votos";
-                                                }
-                                                else
-                                                {
-                                                    badgeTexto = $"{((double)pos.Votos):F1} pts";
-                                                }
-
-                                                <li class="list-group-item d-flex justify-content-between align-items-center @(esMio ? "bg-warning bg-opacity-25 fw-bold" : "")">
-                                                    <span>
-                                                        <strong class="me-2">@(i + 1)º</strong> @(pos.Proyecto?.Name ?? "Anónimo")
-                                                    </span>
-                                                    <span class="badge bg-primary rounded-pill">@badgeTexto</span>
-                                                </li>
-                                            }
-                                        </ul>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Tu posición: <strong class="fs-5 ms-1">@(miPosicion > 0 ? miPosicion + "º" : "-")</strong></span>
-                                           <RadzenButton Text="Certificado"
-              Size="ButtonSize.Small"
-              ButtonStyle="ButtonStyle.Secondary"
-              Icon="download"
-              Click="@(() => AbrirCertificado(proyecto, categoria, miPosicion))" />
-                                        </div>
-                                    </div>
-                                </RadzenColumn>
-                            }
-                        </RadzenRow>
-                    }
-                </RadzenCard>
+                </div>
             }
         }
     </div>
@@ -306,19 +210,20 @@ else
         }
     }
 
+    private bool TodosEventosCerrados(Proyecto proyecto)
+    {
+        if (proyecto.Categorias == null || !proyecto.Categorias.Any()) return false;
+        return proyecto.Categorias.All(c => c.Votacion != null && c.Votacion.ResultadosPublicados);
+    }
+
+    // ==========================================
+    // LÓGICA DE CERTIFICADOS (MANTENIDA ORIGINAL)
+    // ==========================================
     async Task AbrirCertificado(Proyecto proyecto, Categoria categoria, int posicion)
     {
         var nombreEquipo = proyecto.Name;
-
-        // 🔥 IMPORTANTE
-        var integrantes = new List<string>
-{
-    proyecto.Participante?.Name ?? participante!.Name
-};
-            
-
+        var integrantes = new List<string> { proyecto.Participante?.Name ?? participante!.Name };
         var integrantesString = string.Join(";", integrantes);
-
         var evento = categoria.Name;
 
         await JS.InvokeVoidAsync(
@@ -332,10 +237,82 @@ else
         );
     }
 
+    async Task AbrirCertificadoParticipacion(Proyecto proyecto, Categoria? categoria)
+    {
+        if (categoria == null) return;
+
+        var nombreParticipante = participante!.Name;
+        var nombreProyecto = proyecto.Name;
+        var nombreEvento = categoria.Evento?.Name ?? "Evento Votify";
+        var fechaParticipacion = proyecto.FechaRegistro;
+
+        await JS.InvokeVoidAsync(
+            "open",
+            $"/certificado-participacion?" +
+            $"nombreParticipante={Uri.EscapeDataString(nombreParticipante)}" +
+            $"&nombreProyecto={Uri.EscapeDataString(nombreProyecto)}" +
+            $"&nombreEvento={Uri.EscapeDataString(nombreEvento)}" +
+            $"&fechaParticipacion={fechaParticipacion:yyyy-MM-dd}",
+            "_blank"
+        );
+    }
+
+    // ==========================================
+    // LÓGICA DE CÁLCULO DE POSICIONES INTERNA
+    // ==========================================
+    private int ObtenerPosicionProyecto(Proyecto proyecto, Categoria categoria)
+    {
+        if (categoria.Votacion == null || categoria.Votacion.Votos == null || !categoria.Proyectos.Any()) return 0;
+
+        var votos = categoria.Votacion.Votos;
+        var esMulticriterio = categoria.Votacion is Multicriterio;
+        var mc = categoria.Votacion as Multicriterio;
+
+        List<dynamic> ranking;
+        if (esMulticriterio)
+        {
+            ranking = categoria.Proyectos
+                .Select(p => new
+                {
+                    ProyectoId = p.Id,
+                    Puntuacion = CalcularPuntuacionMulticriterio(votos.Where(v => v.ProyectoId == p.Id).ToList(), mc)
+                })
+                .OrderByDescending(x => x.Puntuacion)
+                .Cast<dynamic>()
+                .ToList();
+        }
+        else if (categoria.Votacion is Popular)
+        {
+            ranking = categoria.Proyectos
+                .Select(p => new
+                {
+                    ProyectoId = p.Id,
+                    Votos = votos.Count(v => v.ProyectoId == p.Id)
+                })
+                .OrderByDescending(x => x.Votos)
+                .Cast<dynamic>()
+                .ToList();
+        }
+        else
+        {
+            ranking = categoria.Proyectos
+                .Select(p => new
+                {
+                    ProyectoId = p.Id,
+                    Puntos = votos.Where(v => v.ProyectoId == p.Id).Sum(v => v.PuntuacionBase)
+                })
+                .OrderByDescending(x => x.Puntos)
+                .Cast<dynamic>()
+                .ToList();
+        }
+
+        int index = ranking.FindIndex(r => ((dynamic)r).ProyectoId == proyecto.Id);
+        return index >= 0 ? index + 1 : 0;
+    }
+
     private double CalcularPuntuacionMulticriterio(List<Voto> votos, Multicriterio? votacion)
     {
-        if (votacion == null || votacion.Criterios == null || !votacion.Criterios.Any())
-            return 0;
+        if (votacion == null || votacion.Criterios == null || !votacion.Criterios.Any()) return 0;
 
         double sumaPonderada = 0;
         int votosValidos = 0;
@@ -350,7 +327,6 @@ else
             foreach (var detalle in voto.Detalles)
             {
                 var criterio = votacion.Criterios.FirstOrDefault(c => c.Id == detalle.CriterioId);
-
                 if (criterio != null && criterio.Peso > 0)
                 {
                     puntajeVoto += detalle.Puntuacion * (criterio.Peso / 100.0);
@@ -367,8 +343,6 @@ else
             votosValidos++;
         }
 
-        return votosValidos > 0
-            ? sumaPonderada / votosValidos
-            : 0;
+        return votosValidos > 0 ? sumaPonderada / votosValidos : 0;
     }
 }

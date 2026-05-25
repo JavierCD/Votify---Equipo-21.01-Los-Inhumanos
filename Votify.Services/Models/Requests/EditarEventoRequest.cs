@@ -13,5 +13,6 @@ namespace Votify.Services.Models.Requests
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }
         public string Description { get; set; }
+        public bool EsPublico { get; set; }
     }
 }

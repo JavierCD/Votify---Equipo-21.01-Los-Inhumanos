@@ -460,8 +460,55 @@ namespace Votify.Persistence.Context
             context.Proyectos.AddRange(techCat1.Concat(techCat2));
             context.SaveChanges();
 
+            // 9.1 Votos para MULTICRITERIO (Proyecto PhishHunter - p6_0)
+            // Usamos tu constructor real: (votacionId, proyectoId, puntuacionBase, anonimo, hashAnonimo, comentario)
+            // La puntuación base la pasamos como la nota media calculada (ej: 7.6)
+            var votoMulti1 = new VotoExperto(votacionMulticriterioAbierta.Id, p6_0.Id, 7.6, false, null, "Excelente herramienta. La documentación es un poco escasa, pero el ataque es muy efectivo.");
+            votoMulti1.AsignarEmisorId(juez1.Id);
 
-           
+            var votoMulti2 = new VotoExperto(votacionMulticriterioAbierta.Id, p6_0.Id, 8.0, false, null, "Me encanta la creatividad de este framework. Gran trabajo del equipo.");
+            votoMulti2.AsignarEmisorId(juez4.Id);
+
+            // Añadimos los votos primero para que EF los reconozca en el contexto
+            context.Set<Voto>().AddRange(votoMulti1, votoMulti2);
+
+            // Creamos los DetallesVoto usando la entidad correcta, y le asignamos la instancia del Voto que acabamos de crear
+            var detallesMulti = new List<DetalleVoto>
+            {
+                new DetalleVoto { Voto = votoMulti1, ProyectoId = p6_0.Id, CriterioId = votacionMulticriterioAbierta.Criterios[0].Id, Puntuacion = 9 },
+                new DetalleVoto { Voto = votoMulti1, ProyectoId = p6_0.Id, CriterioId = votacionMulticriterioAbierta.Criterios[1].Id, Puntuacion = 6 },
+                new DetalleVoto { Voto = votoMulti1, ProyectoId = p6_0.Id, CriterioId = votacionMulticriterioAbierta.Criterios[2].Id, Puntuacion = 8 },
+
+                new DetalleVoto { Voto = votoMulti2, ProyectoId = p6_0.Id, CriterioId = votacionMulticriterioAbierta.Criterios[0].Id, Puntuacion = 8 },
+                new DetalleVoto { Voto = votoMulti2, ProyectoId = p6_0.Id, CriterioId = votacionMulticriterioAbierta.Criterios[1].Id, Puntuacion = 7 },
+                new DetalleVoto { Voto = votoMulti2, ProyectoId = p6_0.Id, CriterioId = votacionMulticriterioAbierta.Criterios[2].Id, Puntuacion = 9 }
+            };
+            context.Set<DetalleVoto>().AddRange(detallesMulti);
+
+            // 9.2 Votos para PUNTUACIÓN (Proyecto AirPure Monitor - p3_2)
+            // Aquí la puntuación total se pasa directamente al parámetro puntuacionBase
+            var votoPunt1 = new VotoExperto(votacionPuntuacionAbierta.Id, p3_2.Id, 85.0, false, null, "Solución IoT muy necesaria y escalable para ciudades modernas.");
+            votoPunt1.AsignarEmisorId(juez2.Id);
+
+            var votoPunt2 = new VotoExperto(votacionPuntuacionAbierta.Id, p3_2.Id, 92.0, false, null, "Me gusta el enfoque de hardware libre. La UI del dashboard es mejorable.");
+            votoPunt2.AsignarEmisorId(juez4.Id);
+
+            context.Set<Voto>().AddRange(votoPunt1, votoPunt2);
+
+            // 9.3 Votos para POPULAR (Proyecto EducaApp - p0_0)
+            // Como este no falló, mantenemos la asignación por propiedades (o puedes pasarlo a constructor si VotoPublico lo exige)
+            var votoPop1 = new VotoExperto(votacionPopularAbierta.Id, p0_0.Id, 1.0, false, null, "Mi voto directo para este proyecto, tiene un impacto social brutal y la presentación fue impecable.");
+            votoPop1.AsignarEmisorId(juez1.Id);
+
+            var votoPop2 = new VotoExperto(votacionPopularAbierta.Id, p0_0.Id, 1.0, false, null, "Totalmente de acuerdo. La viabilidad de implementar esto a gran escala es altísima.");
+            votoPop2.AsignarEmisorId(juez3.Id);
+
+            var votoPop3 = new VotoExperto(votacionPopularAbierta.Id, p0_0.Id, 1.0, false, null, "Un proyecto con muchísimo corazón y técnicamente muy bien resuelto.");
+            votoPop3.AsignarEmisorId(juez5.Id);
+
+            context.Set<Voto>().AddRange(votoPop1, votoPop2, votoPop3);
+            context.SaveChanges();
+
         }
 
 

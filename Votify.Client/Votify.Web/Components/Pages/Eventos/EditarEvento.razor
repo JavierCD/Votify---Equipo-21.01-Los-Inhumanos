@@ -21,6 +21,7 @@
 @inject IVotacionService VotacionService
 @inject ISupervisionService SupervisionService
 @inject IUnitOfWork _unitOfWork
+@inject IParticipanteService ParticipanteService
 
 
 <div class="container mt-4">
@@ -109,7 +110,15 @@
                     <label class="form-label fw-bold">Descripción / Reglas</label>
                     <textarea class="form-control" rows="4" @bind="requestModel.Description"></textarea>
                 </div>
+                <div class="mb-4 p-3 bg-light rounded border d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong class="d-block">Publicar en el Dashboard Global</strong>
+                        <span class="text-muted small">Si se desactiva, el evento será privado y los participantes requerirán el código de acceso directo.</span>
+                    </div>
+                    <RadzenSwitch @bind-Value="requestModel.EsPublico" />
+                </div>
                 <button class="btn btn-primary" @onclick="GuardarDatosGenerales">Guardar Cambios</button>
+
             </div>
         }
 
@@ -173,7 +182,7 @@
                                         <!-- 2. SECCIÓN DE ESTADO ACTUAL -->
                                         <div class="bg-light p-3 rounded mb-3 border">
                                             <RadzenText TextStyle="TextStyle.Subtitle2" class="fw-bold mb-2">Control de Estado:</RadzenText>
-
+                                                                                                                              
                                             <div class="d-flex align-items-center justify-content-between mb-3">
                                                 <RadzenBadge BadgeStyle="GetBadgeStyle(categoria.Votacion.Estado)" Text="@categoria.Votacion.Estado" class="fs-6 px-3 py-2" />
                                                 <span class="badge bg-success fs-6">@(categoria.Votacion.Votos?.Count ?? 0) votos</span>
@@ -185,6 +194,10 @@
                                                             ValueChanged="@(args => OnEstadoCambiado(categoria, args.ToString()))"
                                                             Style="width: 100%;"
                                                             Disabled="@categoria.Votacion.ResultadosPublicados" />
+
+                                            <button class="btn btn-sm btn-outline-secondary w-100 mt-2 fw-bold" @onclick="() => PrepararModalVisibilidad(categoria)">
+                                                <RadzenIcon Icon="visibility" class="me-1" Style="font-size: 16px; vertical-align: middle;" /> Configurar Visibilidad
+                                            </button>
                                         </div>
 
                                         @if (categoria.Votacion.EstaCerrada || categoria.Votacion.Estado == "CerradaManual" || categoria.Votacion.Estado == "Cerrada")
@@ -394,77 +407,230 @@
                                     </div>                            
                                 </div>
                             </div>
+                        </div>        
+                        }                            
+                      </div >                                      
+            </div >                                         
+        }
+
+        else if (tabActivo == "Participantes")
+{
+    <div class="card shadow-sm p-4">
+        <h4 class="mb-4">Participantes y Proyectos</h4>
+
+        @* --- SECCIÓN AÑADIR PARTICIPANTE --- *@
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><RadzenIcon Icon="person_add" class="me-2" /> Añadir Participante a Categoría</h5>
             </div>
-                                }                            
-                            </div >                                      
-                         </div >                                         
-                    }
-
-                    else if (tabActivo == "Participantes")
-        {
-            <div class="card shadow-sm p-4">
-                <h4 class="mb-4">Participantes y Proyectos</h4>
-
-                @foreach (var categoria in evento.CategoriasEvento.ToList())
-                {
-                    <div class="mb-5">
-                        <h5 class="text-primary border-bottom pb-2 mb-3">
-                            <RadzenIcon Icon="label" class="fs-5 me-1" /> @categoria.Name
-                            <span class="badge bg-secondary ms-2 fs-6">@categoria.Proyectos.Count inscritos</span>
-                        </h5>
-
-                        @if (!categoria.Proyectos.Any())
-                        {
-                            <p class="text-muted fst-italic">Aún no hay proyectos inscritos en esta categoría.</p>
-                        }
-                        else
-                        {
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Nombre del Proyecto</th>
-                                        <th>Creador</th>
-                                        <th>Tipo de Proyecto</th>
-                                        <th>Fecha Inscripción</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var proyecto in categoria.Proyectos.ToList())
-                                    {
-                                        <tr>
-                                            <td class="fw-bold">@proyecto.Name</td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <RadzenIcon Icon="person" class="me-1 text-secondary" />
-                                                    @(proyecto.Participante?.Name ?? "Desconocido")
-                                                </div>
-                                            </td>
-                                            <td><span class="badge bg-info text-dark">@proyecto.CategoriaEspecialidad()</span></td>
-                                            <td>@proyecto.FechaRegistro.ToShortDateString()</td>
-                                            <td>
-                                                @if (proyecto.Participante != null)
-                                                {
-                                                    <button class="btn btn-sm btn-outline-info me-1" title="Ver ficha del participante"
-                                                            @onclick='() => NavigationManager.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
-                                                        <RadzenIcon Icon="visibility" Style="font-size: 16px;" /> Ver Ficha
-                                                    </button>
-                                                }
-                                                <button class="btn btn-sm btn-outline-primary me-1 mb-1" title="Editar ficha del proyecto"
-                                                        @onclick='() => NavigationManager.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}")'>
-                                                    <RadzenIcon Icon="description" Style="font-size: 16px;" /> Proyecto
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-danger">Descalificar</button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        }
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Categoría destino:</label>
+                                <select class="form-select" @bind-value="categoriaSeleccionadaId" @bind-value:event="oninput" @onchange="CargarParticipantesDisponibles">
+                            <option value="0">-- Seleccionar categoría --</option>
+                            @foreach (var cat in evento.CategoriasEvento)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        </select>
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Participante:</label>
+                                <select class="form-select" @bind-value="participanteSeleccionadoId" @bind-value:event="oninput" @onchange="CargarProyectosDisponibles">
+                            <option value="0">-- Seleccionar participante --</option>
+                            @if (participantesDisponibles != null)
+                            {
+                                @foreach (var part in participantesDisponibles)
+                                {
+                                    <option value="@part.Id">@part.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Proyecto a asignar:</label>
+                        <select class="form-select" @bind="proyectoSeleccionadoId">
+                            <option value="0">-- Seleccionar proyecto --</option>
+                            @if (proyectosDisponibles != null)
+                            {
+                                @foreach (var proy in proyectosDisponibles)
+                                {
+                                    <option value="@proy.Id">@proy.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button class="btn btn-primary"
+                                @onclick="AsignarProyectoACategoria"
+                                disabled="@(categoriaSeleccionadaId == 0 || participanteSeleccionadoId == 0 || proyectoSeleccionadoId == 0)">
+                            <RadzenIcon Icon="add" class="me-1" /> Añadir a Categoría
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* --- LISTADO DE PARTICIPANTES POR CATEGORÍA --- *@
+        @foreach (var categoria in evento.CategoriasEvento.ToList())
+        {
+            <div class="mb-5">
+                <h5 class="text-primary border-bottom pb-2 mb-3">
+                    <RadzenIcon Icon="label" class="fs-5 me-1" /> @categoria.Name
+                    <span class="badge bg-secondary ms-2 fs-6">@categoria.Proyectos.Count inscritos</span>
+                </h5>
+
+                @if (!categoria.Proyectos.Any())
+                {
+                    <p class="text-muted fst-italic">Aún no hay proyectos inscritos en esta categoría.</p>
+                }
+                else
+                {
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre del Proyecto</th>
+                                <th>Creador</th>
+                                <th>Tipo de Proyecto</th>
+                                <th>Fecha Inscripción</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var proyecto in categoria.Proyectos.ToList())
+                            {
+                                <tr>
+                                    <td class="fw-bold">@proyecto.Name</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <RadzenIcon Icon="person" class="me-1 text-secondary" />
+                                            @(proyecto.Participante?.Name ?? "Desconocido")
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-info text-dark">@proyecto.CategoriaEspecialidad()</span></td>
+                                    <td>@proyecto.FechaRegistro.ToShortDateString()</td>
+                                    <td>
+                                        @if (proyecto.Participante != null)
+                                        {
+                                            <button class="btn btn-sm btn-outline-info me-1" title="Ver ficha del participante"
+                                                    @onclick='() => NavigationManager.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
+                                                <RadzenIcon Icon="visibility" Style="font-size: 16px;" /> Ver Ficha
+                                            </button>
+                                        }
+                                        <button class="btn btn-sm btn-outline-primary me-1 mb-1" title="Editar ficha del proyecto"
+                                                @onclick='() => NavigationManager.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}")'>
+                                            <RadzenIcon Icon="description" Style="font-size: 16px;" /> Proyecto
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning me-1 mb-1" title="Reasignar a otra categoría"
+                                                @onclick="() => AbrirModalReasignar(proyecto, categoria)">
+                                            <RadzenIcon Icon="swap_horiz" Style="font-size: 16px;" /> Reasignar
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger">Descalificar</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 }
             </div>
         }
+    </div>
+
+    @* --- MODAL DE REASIGNACIÓN --- *@
+    @if (mostrarModalReasignar)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title"><RadzenIcon Icon="swap_horiz" class="me-2" /> Reasignar Proyecto</h5>
+                        <button type="button" class="btn-close" @onclick="CerrarModalReasignar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="fw-bold">Proyecto: @proyectoAReasignar?.Name</p>
+                        <p class="text-muted">Categoría actual: @categoriaOrigenReasignar?.Name</p>
+
+                        <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="tipoReasignacion" id="mismaEvento" @onclick="SeleccionarMisma" checked="@(tipoReasignacion == "misma")" />
+                            <label class="form-check-label fw-bold" for="mismaEvento">
+                                Mover a otra categoría del mismo evento
+                            </label>
+                        </div>
+
+                        @if (tipoReasignacion == "misma")
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Categoría destino:</label>
+                                        <select class="form-select" @bind-value="categoriaDestinoId" @bind-value:event="oninput">
+                                    <option value="0">-- Seleccionar categoría --</option>
+                                    @foreach (var cat in evento.CategoriasEvento.Where(c => c.Id != categoriaOrigenReasignar?.Id))
+                                    {
+                                        <option value="@cat.Id">@cat.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+
+                        <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="tipoReasignacion" id="otroEvento" @onclick="SeleccionarOtro" checked="@(tipoReasignacion == "otro")" />
+                            <label class="form-check-label fw-bold" for="otroEvento">
+                                Mover a otro evento
+                            </label>
+                        </div>
+
+                        @if (tipoReasignacion == "otro")
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Evento destino:</label>
+                                    <select class="form-select" @bind-value="eventoDestinoId" @bind-value:event="oninput" @onchange="CargarCategoriasEventoDestino">
+                                    <option value="0">-- Seleccionar evento --</option>
+                                    @if (eventosDisponibles != null)
+                                    {
+                                        @foreach (var ev in eventosDisponibles)
+                                        {
+                                            <option value="@ev.Id">@ev.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            @if (eventoDestinoId > 0 && categoriasEventoDestino != null)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label">Categoría destino:</label>
+                                    <select class="form-select" @bind="categoriaDestinoId">
+                                        <option value="0">-- Seleccionar categoría --</option>
+                                        @foreach (var cat in categoriasEventoDestino)
+                                        {
+                                            <option value="@cat.Id">@cat.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CerrarModalReasignar">Cancelar</button>
+                        <button type="button" class="btn btn-warning"
+                                @onclick="ConfirmarReasignacion"
+                                disabled="@(categoriaDestinoId == 0)">
+                            <RadzenIcon Icon="check" class="me-1" /> Confirmar Reasignación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+                   
+        
+
+        
+
+
+
+
 
         @* ---------------------------------------------------- *@
         @* NUEVA SECCIÓN COMPLETA DE ASIGNACIÓN DE JURADO       *@
@@ -522,6 +688,7 @@
                 </div>
             </div>
         }
+
 
         @* NUEVA SECCIÓN COMPLETA DE AUDITORIAS *@
 
@@ -723,13 +890,75 @@
                     </div>
                 }
             </div>
+
         }
+        
+       @* VENTANA MODAL FLOTANTE: PERMISOS DE VISIBILIDAD*@
+   
+        @if (mostrarModalVisibilidad && categoriaSeleccionada != null && categoriaSeleccionada.Votacion != null)
+        {
+            <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5); z-index: 1050;" role="dialog">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+                        <div class="modal-header bg-dark text-white rounded-top-4">
+                            <h5 class="modal-title fw-bold">
+                                <RadzenIcon Icon="lock_open" class="me-2" /> Visibilidad de Resultados
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalVisibilidad"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <h6 class="text-primary fw-bold mb-3">Categoría: @categoriaSeleccionada.Name</h6>
+                            <p class="text-muted small mb-4">Define qué información de las evaluaciones puede consultar el participante en tiempo real desde su panel.</p>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+                                <div>
+                                    <span class="fw-bold d-block small">Revelar identidad de jueces</span>
+                                    <span class="text-muted extra-small" style="font-size:0.75rem;">Muestra qué experto emitió cada comentario.</span>
+                                </div>
+                                <RadzenSwitch @bind-Value="tempMostrarJueces" />
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+                                <div>
+                                    <span class="fw-bold d-block small">Ver comentarios cualitativos</span>
+                                    <span class="text-muted extra-small" style="font-size:0.75rem;">Permite leer las anotaciones y feedback del jurado.</span>
+                                </div>
+                                <RadzenSwitch @bind-Value="tempMostrarComentarios" />
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+                                <div>
+                                    <span class="fw-bold d-block small">Ver posición en el Ranking</span>
+                                    <span class="text-muted extra-small" style="font-size:0.75rem;">Muestra el puesto actual ocupado en la tabla.</span>
+                                </div>
+                                <RadzenSwitch @bind-Value="tempMostrarRanking" />
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-4 p-2 bg-light rounded border">
+                                <div>
+                                    <span class="fw-bold d-block small">Ver desglose de puntuaciones</span>
+                                    <span class="text-muted extra-small" style="font-size:0.75rem;">Muestra los puntos obtenidos por criterio/baremo.</span>
+                                </div>
+                                <RadzenSwitch @bind-Value="tempMostrarDetalles" />
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light rounded-bottom-4 gap-2">
+                            <button class="btn btn-sm btn-outline-secondary px-3" @onclick="CerrarModalVisibilidad">Cancelar</button>
+                            <button class="btn btn-sm btn-success px-4 fw-bold shadow-sm" @onclick="GuardarConfiguracionVisibilidad">
+                                <RadzenIcon Icon="save" class="me-1" Style="font-size:14px; vertical-align:middle;" /> Guardar Permisos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
     }
 </div>
  
 
 @code {
-    
+
     [Parameter]
     public int EventoId { get; set; }
 
@@ -754,6 +983,23 @@
     private string? mensajeExito;
     private string? mensajeError;
 
+    // Gestión de participantes
+    private int categoriaSeleccionadaId = 0;
+    private int participanteSeleccionadoId = 0;
+    private int proyectoSeleccionadoId = 0;
+    private IEnumerable<Participante>? participantesDisponibles;
+    private IEnumerable<Proyecto>? proyectosDisponibles;
+
+    // Modal de reasignación
+    private bool mostrarModalReasignar = false;
+    private Proyecto? proyectoAReasignar;
+    private Categoria? categoriaOrigenReasignar;
+    private string tipoReasignacion = "misma";
+    private int categoriaDestinoId = 0;
+    private int eventoDestinoId = 0;
+    private IEnumerable<Evento>? eventosDisponibles;
+    private IEnumerable<Categoria>? categoriasEventoDestino;
+
     private EditarEventoRequest requestModel = new EditarEventoRequest();
     private AgregarPremioRequest requestPremio = new AgregarPremioRequest();
 
@@ -764,6 +1010,16 @@
     // Timer 
     private System.Timers.Timer _timer;
 
+    //Propiedades para la visivilidad de los participantes en votaciones
+    private bool mostrarModalVisibilidad = false;
+    private Categoria? categoriaSeleccionada;
+
+    // Variables temporales para el Modal 
+    private bool tempMostrarJueces;
+    private bool tempMostrarComentarios;
+    private bool tempMostrarRanking;
+    private bool tempMostrarDetalles;
+
     //fechas
     // --- ESTADO PARA EDICIÓN DE FECHAS ---
     // Controla qué categoría está en modo edición
@@ -773,7 +1029,7 @@
     // Supervisión de jueces
     private Dictionary<int, bool> supervisionAbierta = new();
     private Dictionary<int, List<JuezSupervisionDto>> juecesSupervision = new();
-    
+
     // Almacena las fechas temporales mientras el usuario edita (antes de guardar)
     public class FechasEdicionDto
     {
@@ -842,6 +1098,7 @@
             _timer = new System.Timers.Timer(10000);
             _timer.Elapsed += async (sender, e) => await ReevaluarEstadosEnVivo();
             _timer.Start();
+            await CargarEventosDisponibles();
         }
         catch (Exception ex)
         {
@@ -868,6 +1125,7 @@
             requestModel.FechaInicio = evento.FechaInicio;
             requestModel.FechaFin = evento.FechaFin;
             requestModel.Description = evento.Description;
+            requestModel.EsPublico = evento.EsPublico;
 
             if (evento.CategoriasEvento != null)
             {
@@ -1369,4 +1627,228 @@
             mensajeError = $"Error al guardar resultados: {ex.Message}";
         }
     }
+
+    //Metodos para el modal de visibilidad de votaciones
+    private void PrepararModalVisibilidad(Categoria categoria)
+    {
+        if (categoria?.Votacion == null) return;
+
+        categoriaSeleccionada = categoria;
+
+        // Rellenamos los switches del modal con el valor real actual del dominio
+        tempMostrarJueces = categoria.Votacion.MostrarNombresJueces;
+        tempMostrarComentarios = categoria.Votacion.MostrarComentarios;
+        tempMostrarRanking = categoria.Votacion.MostrarRanking;
+        tempMostrarDetalles = categoria.Votacion.MostrarResultadosDetallados;
+
+        mostrarModalVisibilidad = true;
+    }
+    private void CerrarModalVisibilidad()
+    {
+        mostrarModalVisibilidad = false;
+        categoriaSeleccionada = null;
+    }
+
+    private async Task GuardarConfiguracionVisibilidad()
+    {
+        if (categoriaSeleccionada?.Votacion == null) return;
+
+        try
+        {
+            // 1. Invocamos el nuevo método del servicio del Paso 3
+            bool exito = await VotacionService.ActualizarVisibilidadVotacionAsync(
+                categoriaSeleccionada.Votacion.Id,
+                tempMostrarJueces,
+                tempMostrarComentarios,
+                tempMostrarRanking,
+                tempMostrarDetalles
+            );
+
+            if (exito)
+            {
+                // 2. Si el backend responde OK, actualizamos el modelo local en memoria para refrescar la UI
+                categoriaSeleccionada.Votacion.MostrarNombresJueces = tempMostrarJueces;
+                categoriaSeleccionada.Votacion.MostrarComentarios = tempMostrarComentarios;
+                categoriaSeleccionada.Votacion.MostrarRanking = tempMostrarRanking;
+                categoriaSeleccionada.Votacion.MostrarResultadosDetallados = tempMostrarDetalles;
+
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Permisos Guardados",
+                        Detail = $"Se actualizó la privacidad de '{categoriaSeleccionada.Name}'"
+                    });
+
+                CerrarModalVisibilidad();
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = $"No se pudo guardar la privacidad: {ex.Message}"
+                });
+        }
+    }
+
+    private async Task CargarProyectosDisponibles()
+    {
+        if (categoriaSeleccionadaId == 0 || participanteSeleccionadoId == 0)
+        {
+            proyectosDisponibles = null;
+            return;
+        }
+
+        try
+        {
+            proyectosDisponibles = await ParticipanteService.ObtenerProyectosDisponiblesParaAsignarAsync(
+                participanteSeleccionadoId, EventoId, categoriaSeleccionadaId);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar proyectos: {ex.Message}";
+        }
+    }
+
+    private async Task AsignarProyectoACategoria()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+
+        try
+        {
+            await ParticipanteService.AsignarProyectoACategoriaAsync(proyectoSeleccionadoId, categoriaSeleccionadaId);
+
+            mensajeExito = "Proyecto asignado a la categoría correctamente.";
+
+            // Recargar evento para actualizar la UI
+            await CargarEventoYJueces();
+
+            // Resetear selección
+            categoriaSeleccionadaId = 0;
+            participanteSeleccionadoId = 0;
+            proyectoSeleccionadoId = 0;
+            proyectosDisponibles = null;
+            participantesDisponibles = null;
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al asignar proyecto: {ex.Message}";
+        }
+    }
+
+    private void AbrirModalReasignar(Proyecto proyecto, Categoria categoriaOrigen)
+    {
+        proyectoAReasignar = proyecto;
+        categoriaOrigenReasignar = categoriaOrigen;
+        tipoReasignacion = "misma";
+        categoriaDestinoId = 0;
+        eventoDestinoId = 0;
+        categoriasEventoDestino = null;
+        mostrarModalReasignar = true;
+    }
+
+    private void CerrarModalReasignar()
+    {
+        mostrarModalReasignar = false;
+        proyectoAReasignar = null;
+        categoriaOrigenReasignar = null;
+        tipoReasignacion = "misma";
+        categoriaDestinoId = 0;
+        eventoDestinoId = 0;
+        categoriasEventoDestino = null;
+    }
+
+    private async Task CargarCategoriasEventoDestino()
+    {
+        if (eventoDestinoId == 0)
+        {
+            categoriasEventoDestino = null;
+            return;
+        }
+
+        try
+        {
+            categoriasEventoDestino = await ParticipanteService.ObtenerCategoriasDeEventoAsync(eventoDestinoId);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar categorías: {ex.Message}";
+        }
+    }
+
+    private async Task ConfirmarReasignacion()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+
+        try
+        {
+            if (proyectoAReasignar == null || categoriaOrigenReasignar == null)
+                return;
+
+            if (tipoReasignacion == "misma")
+            {
+                await ParticipanteService.ReasignarProyectoACategoriaAsync(
+                    proyectoAReasignar.Id,
+                    categoriaOrigenReasignar.Id,
+                    categoriaDestinoId);
+
+                mensajeExito = "Proyecto reasignado a otra categoría del mismo evento.";
+            }
+            else
+            {
+                await ParticipanteService.ReasignarProyectoAOtroEventoAsync(
+                    proyectoAReasignar.Id,
+                    eventoDestinoId,
+                    categoriaDestinoId);
+
+                mensajeExito = "Proyecto reasignado a otro evento.";
+            }
+
+            // Recargar evento para actualizar la UI
+            await CargarEventoYJueces();
+
+            // Cerrar modal
+            CerrarModalReasignar();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al reasignar proyecto: {ex.Message}";
+        }
+    }
+
+    private async Task CargarParticipantesDisponibles()
+    {
+        if (categoriaSeleccionadaId == 0)
+        {
+            participantesDisponibles = null;
+            return;
+        }
+
+        try
+        {
+            participantesDisponibles = await ParticipanteService.ObtenerParticipantesNoEnCategoriaAsync(EventoId, categoriaSeleccionadaId);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar participantes: {ex.Message}";
+        }
+    }
+
+    private async Task CargarEventosDisponibles()
+    {
+        try
+        {
+            eventosDisponibles = await ParticipanteService.ObtenerEventosDisponiblesParaReasignarAsync(EventoId);
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar eventos: {ex.Message}";
+        }
+    }
+    private void SeleccionarMisma() => tipoReasignacion = "misma";
+    private void SeleccionarOtro() => tipoReasignacion = "otro";
 }
