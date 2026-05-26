@@ -89,13 +89,12 @@ builder.Services.AddHostedService<NotificacionBackgroundService>();
 builder.Services.AddScoped<NotificationService>();
 
 // Observer Pattern - Votacion State Notifications
+builder.Services.AddSingleton<RealTimeUINotificationObserver>();
 builder.Services.AddSingleton<IVotacionStateSubject, VotacionStateSubject>();
 builder.Services.AddScoped<IVotacionStateObserver, AperturaNotificationObserver>();
 builder.Services.AddScoped<IVotacionStateObserver, CierreNotificationObserver>();
 builder.Services.AddScoped<IVotacionStateObserver, RecordatorioObserver>();
-builder.Services.AddSingleton<IVotacionStateObserver, RealTimeUINotificationObserver>();
 builder.Services.AddScoped<VotacionStateCronDetector>();
-builder.Services.AddSingleton<RealTimeUINotificationObserver>();
 
 // IA - Análisis de Mejora (Ollama local o Groq cloud)
 var iaConfig = builder.Configuration.GetSection("IA");

@@ -3,16 +3,19 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
+using Votify.Services.Implementations.Observers;
 
 namespace Votify.Services.Implementations
 {
     public class VotacionStateSubject : IVotacionStateSubject
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly RealTimeUINotificationObserver _uiObserver;
 
-        public VotacionStateSubject(IServiceProvider serviceProvider)
+        public VotacionStateSubject(IServiceProvider serviceProvider, RealTimeUINotificationObserver uiObserver)
         {
             _serviceProvider = serviceProvider;
+            _uiObserver = uiObserver;
         }
 
         public void Subscribe(IVotacionStateObserver observer)
@@ -25,9 +28,12 @@ namespace Votify.Services.Implementations
 
         public async Task NotifyAsync(VotacionStateChangedArgs args)
         {
+            await _uiObserver.HandleAsync(args);
+
             using var scope = _serviceProvider.CreateScope();
-            var observers = scope.ServiceProvider.GetRequiredService<IEnumerable<IVotacionStateObserver>>();
-            var tasks = observers.Select(o => o.HandleAsync(args));
+            var scopedObservers = scope.ServiceProvider.GetRequiredService<IEnumerable<IVotacionStateObserver>>()
+                .Where(o => o != _uiObserver);
+            var tasks = scopedObservers.Select(o => o.HandleAsync(args));
             await Task.WhenAll(tasks);
         }
     }

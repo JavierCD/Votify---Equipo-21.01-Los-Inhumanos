@@ -6,10 +6,13 @@ namespace Votify.Core.Models
 
         public override void CerrarManual(Votacion context)
         {
-            context.Estado = "CerradaManual";
-            context.EstaCerrada = true;
-            context.FechaCierre = DateTime.UtcNow;
-            context.SetState(new CerradaManualState());
+            // Ya está cerrada, no hacer nada (idempotente)
+        }
+
+        public override void Pausar(Votacion context)
+        {
+            context.Estado = "Pausada";
+            context.SetState(new PausadaState());
         }
 
         public override void Abrir(Votacion context)

@@ -1367,7 +1367,6 @@
 
         if(categoria.Votacion.Estado == "ResultadosPublicados")
         {
-
             return;
         }
 
@@ -1375,16 +1374,21 @@
 
         if (exito)
         {
-            // Actualizamos la entidad en la UI localmente para que se reflejen los cambios sin recargar
-            switch (nuevoEstado)
+            try
             {
-                case "Abierta": await CategoriaService.ForzarApertura(categoria); break;
-                case "Cerrada": await CategoriaService.ForzarCierre(categoria); break;
-                case "Pausada": await CategoriaService.PausarVotacion(categoria); break;
-                case "Programada": await CategoriaService.ForzarProgramada(categoria); break;
+                switch (nuevoEstado)
+                {
+                    case "Abierta": await CategoriaService.ForzarApertura(categoria); break;
+                    case "Cerrada": await CategoriaService.ForzarCierre(categoria); break;
+                    case "Pausada": await CategoriaService.PausarVotacion(categoria); break;
+                    case "Programada": await CategoriaService.ForzarProgramada(categoria); break;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // La transición ya se aplicó en BD, error local de UI ignorado
             }
 
-            // Actualizamos las fechas del modal de edición en la UI por si se expande
             if (fechasEdicion.ContainsKey(categoria.Id))
             {
                 fechasEdicion[categoria.Id].Apertura = categoria.Votacion.FechaApertura.ToLocalTime();
@@ -1395,7 +1399,7 @@
         }
         else
         {
-            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = "No se pudo actualizar el estado en el servidor." });
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Transición no válida", Detail = $"No se puede cambiar de '{categoria.Votacion.Estado}' a '{nuevoEstado}'." });
         }
     }
 

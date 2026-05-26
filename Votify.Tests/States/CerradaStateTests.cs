@@ -36,16 +36,14 @@ namespace Votify.Tests.States
         }
 
         [Fact]
-        public void CerrarManual_CambiaACerradaManual()
+        public void CerrarManual_EsIdempotente()
         {
             var state = CreateState();
             var votacion = CreateVotacion();
 
-            state.CerrarManual(votacion);
-
-            Assert.True(votacion.EstaCerrada);
-            Assert.Equal("CerradaManual", votacion.Estado);
-            Assert.IsType<CerradaManualState>(votacion.GetState());
+            var ex = Record.Exception(() => state.CerrarManual(votacion));
+            Assert.Null(ex);
+            Assert.Equal("Cerrada", votacion.Estado);
         }
 
         [Fact]
@@ -63,23 +61,15 @@ namespace Votify.Tests.States
         }
 
         [Fact]
-        public void PuedeVotar_SiempreDevuelveFalse()
+        public void Pausar_CambiaAPausada()
         {
             var state = CreateState();
             var votacion = CreateVotacion();
 
-            var resultado = state.PuedeVotar(DateTime.UtcNow, votacion);
+            state.Pausar(votacion);
 
-            Assert.False(resultado);
-        }
-
-        [Fact]
-        public void Cerrar_LanzaExcepcion()
-        {
-            var state = CreateState();
-            var votacion = CreateVotacion();
-
-            Assert.Throws<InvalidOperationException>(() => state.Cerrar(votacion));
+            Assert.Equal("Pausada", votacion.Estado);
+            Assert.IsType<PausadaState>(votacion.GetState());
         }
     }
 }

@@ -45,45 +45,51 @@ namespace Votify.Services.Implementations
 
             var evento = votacion.Categoria?.Evento;
 
-            switch (nuevoEstado)
+            try
             {
-                case "Abierta":
-                    votacion.ForzarApertura();
-                    if (evento != null)
-                    {
-                        await _subject.NotifyAsync(new VotacionStateChangedArgs
+                switch (nuevoEstado)
+                {
+                    case "Abierta":
+                        votacion.ForzarApertura();
+                        if (evento != null)
                         {
-                            Votacion = votacion,
-                            Evento = evento,
-                            EventType = VotacionStateEventType.Apertura,
-                            TriggeredAt = DateTime.UtcNow
-                        });
-                    }
-                    break;
+                            await _subject.NotifyAsync(new VotacionStateChangedArgs
+                            {
+                                Votacion = votacion,
+                                Evento = evento,
+                                EventType = VotacionStateEventType.Apertura,
+                                TriggeredAt = DateTime.UtcNow
+                            });
+                        }
+                        break;
 
-                case "Cerrada":
-                    votacion.ForzarCierre();
-                    if (evento != null)
-                    {
-                        await _subject.NotifyAsync(new VotacionStateChangedArgs
+                    case "Cerrada":
+                        votacion.ForzarCierre();
+                        if (evento != null)
                         {
-                            Votacion = votacion,
-                            Evento = evento,
-                            EventType = VotacionStateEventType.Cierre,
-                            TriggeredAt = DateTime.UtcNow
-                        });
-                    }
-                    break;
+                            await _subject.NotifyAsync(new VotacionStateChangedArgs
+                            {
+                                Votacion = votacion,
+                                Evento = evento,
+                                EventType = VotacionStateEventType.Cierre,
+                                TriggeredAt = DateTime.UtcNow
+                            });
+                        }
+                        break;
 
-                case "Pausada":
-                    votacion.PausarVotacion();
-                    break;
+                    case "Pausada":
+                        votacion.PausarVotacion();
+                        break;
 
-                case "Programada":
-                    votacion.ForzarProgramada();
-                    break;
+                    case "Programada":
+                        votacion.ForzarProgramada();
+                        break;
+                }
             }
-
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
 
             return true;
         }

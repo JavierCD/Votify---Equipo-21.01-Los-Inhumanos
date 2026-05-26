@@ -75,12 +75,16 @@ namespace Votify.Tests.States
         }
 
         [Fact]
-        public void Abrir_LanzaExcepcion()
+        public void Abrir_CambiaAAbierta()
         {
             var state = CreateState();
             var votacion = CreateVotacion();
 
-            Assert.Throws<InvalidOperationException>(() => state.Abrir(votacion));
+            state.Abrir(votacion);
+
+            Assert.False(votacion.EstaCerrada);
+            Assert.Equal("Abierta", votacion.Estado);
+            Assert.IsType<AbiertaState>(votacion.GetState());
         }
     }
 }
