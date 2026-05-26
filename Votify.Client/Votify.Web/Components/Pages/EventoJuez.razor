@@ -58,90 +58,98 @@
             </div>
         </div>
 
-        @* --- LISTADO DE CATEGORÍAS --- *@
-        @foreach (var categoria in categorias)
-        {
-            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-                @* CABECERA DE CATEGORÍA CON CALL TO ACTION *@
-                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="fw-bold mb-1 text-primary">📂 @categoria.Name</h5>
-                        <span class="text-muted small">
-                            @(proyectosPorCategoria.GetValueOrDefault(categoria.Id, new()).Count) Proyectos asignados
-                        </span>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-light btn-sm fw-semibold" @onclick='() => Nav.NavigateTo($"/juez/puesta-en-comun/{categoria.Id}")'>
-                            👥 Puesta en común
-                        </button>
-                        @RenderBotonVotacion(categoria)
-                    </div>
-                </div>
+        @* --- ACORDEÓN DE CATEGORÍAS (CON MEMORIA DE SELECCIÓN) --- *@
+        <RadzenAccordion SelectedIndex="@selectedIndex" SelectedIndexChanged="OnAccordionIndexChanged">
+            <Items>
+                @for (int idx = 0; idx < categorias.Count; idx++)
+                {
+                    var categoria = categorias[idx];
+                    var proyectos = proyectosPorCategoria.GetValueOrDefault(categoria.Id, new());
 
-                @* LISTADO DE PROYECTOS *@
-                <div class="card-body bg-light p-4">
-                    <div class="row g-4">
-                        @foreach (var proyecto in proyectosPorCategoria.GetValueOrDefault(categoria.Id, new()))
-                        {
-                            <div class="col-12">
-                                <div class="card border border-light shadow-sm rounded-3 h-100">
-                                    <div class="card-body p-3">
-                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <div>
-                                                <h6 class="fw-bold mb-1 text-dark">📁 @proyecto.Name</h6>
-                                                <span class="text-muted small">Por: @(proyecto.Participante?.Name ?? "Anónimo")</span>
-                                            </div>
-                                            @if (proyecto.Participante != null)
-                                            {
-                                                <button class="btn btn-outline-info btn-sm rounded-pill px-3" style="font-size: 0.75rem;"
-                                                        @onclick='() => Nav.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
-                                                    Ver Ficha
-                                                </button>
-                                            }
-                                        </div>
-
-                                        <div class="bg-light p-3 rounded-3 border">
-                                            <label class="form-label text-muted small fw-bold text-uppercase mb-2">Notas Privadas (Borrador)</label>
-                                            <div class="d-flex gap-2">
-                                                <textarea class="form-control form-control-sm border-0 shadow-none"
-                                                          style="resize: none;"
-                                                          rows="2"
-                                                          placeholder="Anotaciones cualitativas rápidas..."
-                                                          @bind="comentarios[proyecto.Id]"></textarea>
-
-                                                <button class="btn @(guardados.Contains(proyecto.Id) ? "btn-success" : "btn-primary") d-flex flex-column align-items-center justify-content-center px-3 transition-all"
-                                                        @onclick="() => GuardarComentario(proyecto.Id, categoria.Id)">
-                                                    @if (guardados.Contains(proyecto.Id))
-                                                    {
-                                                        <span class="fs-6">✅</span>
-                                                        <span style="font-size: 0.7rem;">Guardado</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="fs-6">💾</span>
-                                                        <span style="font-size: 0.7rem;">Guardar</span>
-                                                    }
-                                                </button>
-                                            </div>
-                                            @if (erroresPorProyecto.ContainsKey(proyecto.Id))
-                                            {
-                                                <div class="text-danger small mt-2 fw-semibold">@erroresPorProyecto[proyecto.Id]</div>
-                                            }
-                                        </div>
-                                    </div>
+                    <RadzenAccordionItem Text="@($"📂 {categoria.Name} ({proyectos.Count} Proyectos)")">
+                        <ChildContent>
+                            <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-light rounded border">
+                                <div>
+                                    <span class="fw-bold text-dark d-block">Acciones de Categoría</span>
+                                    <span class="text-muted small">Visualiza el consenso o emite tu voto oficial.</span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary btn-sm fw-semibold" @onclick='() => Nav.NavigateTo($"/juez/puesta-en-comun/{categoria.Id}/{EventoId}")'>
+                                        👥 Puesta en común
+                                    </button>
+                                    @RenderBotonVotacion(categoria)
                                 </div>
                             </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
+
+                            <div class="row g-4">
+                                @foreach (var proyecto in proyectos)
+                                {
+                                    <div class="col-12 col-md-6">
+                                        <div class="card border border-light shadow-sm rounded-3 h-100">
+                                            <div class="card-body p-3">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div>
+                                                        <h6 class="fw-bold mb-1 text-dark text-truncate" style="max-width: 200px;" title="@proyecto.Name">📁 @proyecto.Name</h6>
+                                                        <span class="text-muted small">Por: @(proyecto.Participante?.Name ?? "Anónimo")</span>
+                                                    </div>
+                                                    @if (proyecto.Participante != null)
+                                                    {
+                                                        <button class="btn btn-outline-info btn-sm rounded-pill px-3" style="font-size: 0.75rem;"
+                                                                @onclick='() => Nav.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
+                                                            Ver Ficha
+                                                        </button>
+                                                    }
+                                                </div>
+
+                                                <div class="bg-light p-3 rounded-3 border">
+                                                    <label class="form-label text-muted small fw-bold text-uppercase mb-2">Notas Privadas</label>
+                                                    <div class="d-flex gap-2">
+                                                        <textarea class="form-control form-control-sm border-0 shadow-none"
+                                                                  style="resize: none;" rows="2" placeholder="Anotaciones cualitativas..."
+                                                                  @bind="comentarios[proyecto.Id]"></textarea>
+
+                                                        <button class="btn @(guardados.Contains(proyecto.Id) ? "btn-success" : "btn-primary") d-flex flex-column align-items-center justify-content-center px-3 transition-all"
+                                                                @onclick="() => GuardarComentario(proyecto.Id, categoria.Id)">
+                                                            @if (guardados.Contains(proyecto.Id))
+                                                            {
+                                                                <span class="fs-6">✅</span>
+                                                
+                                                                <span style="font-size: 0.7rem;">OK</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="fs-6">💾</span>
+                                                
+                                                                <span style="font-size: 0.7rem;">Guardar</span>
+                                                            }
+                                                        </button>
+                                                    </div>
+                                                    @if (erroresPorProyecto.ContainsKey(proyecto.Id))
+                                                    {
+                                                        <div class="text-danger small mt-2 fw-semibold">@erroresPorProyecto[proyecto.Id]</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </ChildContent>
+                    </RadzenAccordionItem>
+                }
+            </Items>
+        </RadzenAccordion>
     }
 </div>
 
 @code {
     [Parameter] public int EventoId { get; set; }
 
+    // Capturamos el índice del acordeón desde la barra de direcciones
+    [SupplyParameterFromQuery(Name = "catIndex")]
+    public int? CatIndex { get; set; }
+
+    private int selectedIndex = 0;
     private int JuezId => Session.Usuario?.Id ?? 0;
     private Evento? evento;
     private List<Categoria> categorias = new();
@@ -154,6 +162,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Si venimos de otra página con el parámetro, abrimos ese acordeón automáticamente
+        if (CatIndex.HasValue) selectedIndex = CatIndex.Value;
+
         RealTimeNotifier.OnVotacionCerrada += HandleVotacionCerrada;
         try
         {
@@ -184,18 +195,20 @@
         }
     }
 
+    private void OnAccordionIndexChanged(int index)
+    {
+        selectedIndex = index;
+        // Guardamos el índice actual en la URL de forma silenciosa
+        Nav.NavigateTo(Nav.GetUriWithQueryParameter("catIndex", index), replace: true);
+    }
+
     private void HandleVotacionCerrada(int votacionId)
     {
-        // Buscamos si la votación que acaba de cerrar está en la pantalla actual
         var categoria = categorias.FirstOrDefault(c => c.Votacion?.Id == votacionId);
-
         if (categoria?.Votacion != null)
         {
-            // Cambiamos el estado en memoria para que el HTML reaccione
             categoria.Votacion.EstaCerrada = true;
             categoria.Votacion.Estado = "Cerrada";
-
-            // Forzamos el repintado de la UI inmediatamente
             InvokeAsync(StateHasChanged);
         }
     }
@@ -221,7 +234,6 @@
             );
 
             guardados.Add(proyectoId);
-            // Efecto visual: Quitamos el check a los 2.5s
             _ = Task.Delay(2500).ContinueWith(t => { guardados.Remove(proyectoId); InvokeAsync(StateHasChanged); });
         }
         catch (Exception ex)
@@ -234,12 +246,9 @@
     {
         if (categoria.Votacion != null)
         {
-            // AÑADIMOS LA RESTRICCIÓN VISUAL
             if (categoria.Votacion.EstaCerrada || categoria.Votacion.Estado == "Cerrada")
             {
-                <button class="btn btn-secondary btn-sm fw-bold shadow-sm px-3" disabled>
-                    🔒 Votación Cerrada
-                </button>
+                <button class="btn btn-secondary btn-sm fw-bold shadow-sm px-3" disabled>🔒 Votación Cerrada</button>
             }
             else
             {
