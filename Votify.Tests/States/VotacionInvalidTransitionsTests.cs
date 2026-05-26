@@ -21,38 +21,44 @@ namespace Votify.Tests.States
         }
 
         [Fact]
-        public void Cerrada_Pausar_LanzaExcepcion()
+        public void Cerrada_Pausar_CambiaAPausada()
         {
             var votacion = new Popular { Id = 1, Estado = "Cerrada" };
-            Assert.Throws<InvalidOperationException>(() => votacion.PausarVotacion());
+            votacion.PausarVotacion();
+            Assert.Equal("Pausada", votacion.Estado);
         }
 
         [Fact]
-        public void CerradaManual_Cerrar_LanzaExcepcion()
+        public void CerradaManual_Cerrar_CambiaACerrada()
         {
             var votacion = new Popular { Id = 1, Estado = "CerradaManual" };
-            Assert.Throws<InvalidOperationException>(() => votacion.CerrarVotacion());
+            votacion.CerrarVotacion();
+            Assert.Equal("Cerrada", votacion.Estado);
         }
 
         [Fact]
-        public void CerradaManual_Pausar_LanzaExcepcion()
+        public void CerradaManual_Pausar_CambiaAPausada()
         {
             var votacion = new Popular { Id = 1, Estado = "CerradaManual" };
-            Assert.Throws<InvalidOperationException>(() => votacion.PausarVotacion());
+            votacion.PausarVotacion();
+            Assert.Equal("Pausada", votacion.Estado);
         }
 
         [Fact]
-        public void Pausada_Abrir_LanzaExcepcion()
+        public void Pausada_Abrir_CambiaAAbierta()
         {
             var votacion = new Popular { Id = 1, Estado = "Pausada" };
-            Assert.Throws<InvalidOperationException>(() => votacion.ForzarApertura());
+            votacion.ForzarApertura();
+            Assert.Equal("Abierta", votacion.Estado);
         }
 
         [Fact]
-        public void Pausada_Cerrar_LanzaExcepcion()
+        public void Pausada_Cerrar_CambiaACerrada()
         {
             var votacion = new Popular { Id = 1, Estado = "Pausada" };
-            Assert.Throws<InvalidOperationException>(() => votacion.CerrarVotacion());
+            votacion.CerrarVotacion();
+            Assert.True(votacion.EstaCerrada);
+            Assert.Equal("Cerrada", votacion.Estado);
         }
 
         [Fact]
@@ -131,10 +137,11 @@ namespace Votify.Tests.States
         }
 
         [Fact]
-        public void Abierta_Programar_LanzaExcepcion()
+        public void Abierta_Programar_CambiaAProgramada()
         {
             var votacion = new Popular { Id = 1, Estado = "Abierta" };
-            Assert.Throws<InvalidOperationException>(() => votacion.ForzarProgramada());
+            votacion.ForzarProgramada();
+            Assert.Equal("Programada", votacion.Estado);
         }
 
         [Fact]

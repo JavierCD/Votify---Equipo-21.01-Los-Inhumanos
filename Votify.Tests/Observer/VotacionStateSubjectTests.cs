@@ -4,13 +4,14 @@ using Votify.Core.Enums;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Implementations;
+using Votify.Services.Implementations.Observers;
 using Xunit;
 
 namespace Votify.Tests.Observer
 {
     public class VotacionStateSubjectTests
     {
-        private static IServiceProvider CreateMockServiceProvider(IEnumerable<IVotacionStateObserver> observers)
+        private static IServiceProvider CreateMockServiceProvider(IEnumerable<IVotacionStateObserver> observers, RealTimeUINotificationObserver? uiObserver = null)
         {
             var mockScope = new Mock<IServiceScope>();
             mockScope.Setup(s => s.ServiceProvider.GetService(It.IsAny<Type>()))
@@ -22,7 +23,12 @@ namespace Votify.Tests.Observer
 
             var mockServiceProvider = new Mock<IServiceProvider>();
             mockServiceProvider.Setup(sp => sp.GetService(It.IsAny<Type>()))
-                               .Returns((Type t) => t == typeof(IServiceScopeFactory) ? mockScopeFactory.Object : null);
+                               .Returns((Type t) =>
+                               {
+                                   if (t == typeof(IServiceScopeFactory)) return mockScopeFactory.Object;
+                                   if (t == typeof(RealTimeUINotificationObserver)) return uiObserver ?? new RealTimeUINotificationObserver();
+                                   return null;
+                               });
 
             return mockServiceProvider.Object;
         }
@@ -42,8 +48,9 @@ namespace Votify.Tests.Observer
                 mockObserver3.Object
             };
 
-            var serviceProvider = CreateMockServiceProvider(observers);
-            var subject = new VotacionStateSubject(serviceProvider);
+            var uiObserver = new RealTimeUINotificationObserver();
+            var serviceProvider = CreateMockServiceProvider(observers, uiObserver);
+            var subject = new VotacionStateSubject(serviceProvider, uiObserver);
 
             var args = new VotacionStateChangedArgs
             {
@@ -80,8 +87,9 @@ namespace Votify.Tests.Observer
                 mockObserverOk2.Object
             };
 
-            var serviceProvider = CreateMockServiceProvider(observers);
-            var subject = new VotacionStateSubject(serviceProvider);
+            var uiObserver = new RealTimeUINotificationObserver();
+            var serviceProvider = CreateMockServiceProvider(observers, uiObserver);
+            var subject = new VotacionStateSubject(serviceProvider, uiObserver);
 
             var args = new VotacionStateChangedArgs
             {
@@ -102,8 +110,11 @@ namespace Votify.Tests.Observer
         public void Subscribe_YUnsubscribe_SonNoOp_NoLanzanExcepcion()
         {
             // ARRANGE
+            var uiObserver = new RealTimeUINotificationObserver();
             var mockServiceProvider = new Mock<IServiceProvider>();
-            var subject = new VotacionStateSubject(mockServiceProvider.Object);
+            mockServiceProvider.Setup(sp => sp.GetService(typeof(RealTimeUINotificationObserver)))
+                               .Returns(uiObserver);
+            var subject = new VotacionStateSubject(mockServiceProvider.Object, uiObserver);
             var mockObserver = new Mock<IVotacionStateObserver>();
 
             // ACT & ASSERT

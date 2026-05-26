@@ -13,7 +13,7 @@ namespace Votify.Persistence.Context
     {
         public static void Initialize(VotifyContext context)
         {
-            context.Database.EnsureDeleted();
+            //context.Database.EnsureDeleted();
             context.Database.Migrate();
 
             if (context.Eventos.Any())
@@ -268,7 +268,7 @@ namespace Votify.Persistence.Context
                 CategoriaId = categorias[1].Id, // IA Aplicada
                 FechaApertura = DateTime.UtcNow.AddMinutes(1),
                 FechaCierre = DateTime.UtcNow.AddDays(3),
-                Estado = "Pendiente",
+                Estado = "Programada",
                 MaxSelection = 3,
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = false,
@@ -298,7 +298,7 @@ namespace Votify.Persistence.Context
                 CategoriaId = categorias[2].Id, // FinTech
                 FechaApertura = DateTime.UtcNow.AddMinutes(2),
                 FechaCierre = DateTime.UtcNow.AddDays(4),
-                Estado = "Pendiente",
+                Estado = "Programada",
                 ValorMax = 10,
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = false,
@@ -328,7 +328,7 @@ namespace Votify.Persistence.Context
                 CategoriaId = categorias[4].Id, // Mejor Videojuego Indie
                 FechaApertura = DateTime.UtcNow.AddMinutes(3),
                 FechaCierre = DateTime.UtcNow.AddDays(6),
-                Estado = "Pendiente",
+                Estado = "Programada",
                 UsaPesos = true,
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = false,
