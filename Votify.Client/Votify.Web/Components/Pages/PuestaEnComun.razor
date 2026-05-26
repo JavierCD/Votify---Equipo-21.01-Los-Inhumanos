@@ -1,55 +1,67 @@
-﻿@page "/juez/puesta-en-comun/{CategoriaId:int}"
+﻿@page "/juez/puesta-en-comun/{CategoriaId:int}/{EventoId:int}"
 @rendermode InteractiveServer
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
 @using Votify.Core.Interfaces
 
-@inject IEventoService EventoService
 @inject IVotoExpertoServices VotoExpertoService
 @inject NavigationManager Nav
 
-<h3>Puesta en Común — Comentarios del Jurado</h3>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Puesta en Común</h3>
+            <p class="text-muted mb-0">Comentarios y notas cualitativas del Jurado</p>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm shadow-sm" @onclick='() => Nav.NavigateTo($"/juez/evento/{EventoId}")'>
+            ← Volver al Panel de Evaluación
+        </button>
+    </div>
 
-@if (cargando)
-{
-    <p>Cargando comentarios...</p>
-}
-else if (!string.IsNullOrEmpty(error))
-{
-    <div class="alert alert-danger">@error</div>
-}
-else if (!comentariosPorProyecto.Any())
-{
-    <div class="alert alert-info">Aún no hay comentarios registrados para esta categoría.</div>
-}
-else
-{
-    @foreach (var grupo in comentariosPorProyecto)
+    @if (cargando)
     {
-        <div class="card mb-4">
-            <div class="card-header fw-bold">
-                📁 @grupo.Key
-            </div>
-            <ul class="list-group list-group-flush">
-                @foreach (var voto in grupo.Value)
-                {
-                    <li class="list-group-item">
-                        <div class="text-muted small mb-1">
-                            @(voto.Anonimo ? "Juez anónimo" : $"👤Juez ID: {voto.ObtenerIdentificadorAuditoria()}") — @voto.Fecha.ToString("dd/MM/yyyy HH:mm")
-                        </div>
-                        <p class="mb-0">@voto.Comentario</p>
-                    </li>
-                }
-            </ul>
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Cargando comentarios...</p>
         </div>
     }
-}
-
-<button class="btn btn-secondary mt-2" @onclick='() => Nav.NavigateTo($"/panel-evento/{EventoId}")'>Volver</button>
+    else if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+    else if (!comentariosPorProyecto.Any())
+    {
+        <div class="alert alert-info border-0 shadow-sm">
+            <RadzenIcon Icon="info" class="me-1" /> Aún no hay comentarios registrados para los proyectos de esta categoría.
+        </div>
+    }
+    else
+    {
+        @foreach (var grupo in comentariosPorProyecto)
+        {
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="card-header fw-bold bg-light">
+                    📁 @grupo.Key
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var voto in grupo.Value)
+                    {
+                        <li class="list-group-item p-3">
+                            <div class="text-muted small mb-2 fw-bold">
+                                @(voto.Anonimo ? "Juez anónimo" : $"👤 Juez: {voto.ObtenerIdentificadorAuditoria()}") — <span class="fw-normal">@voto.Fecha.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            <p class="mb-0 text-dark" style="white-space: pre-wrap;">@voto.Comentario</p>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    }
+</div>
 
 @code {
     [Parameter] public int CategoriaId { get; set; }
-    [Parameter] public int EventoId { get; set; }
+    [Parameter] public int EventoId { get; set; } // Recibido de forma 100% segura por URL
 
     private Dictionary<string, List<Voto>> comentariosPorProyecto = new();
     private bool cargando = true;
