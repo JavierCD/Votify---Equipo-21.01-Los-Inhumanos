@@ -29,34 +29,34 @@
     {
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Resumen" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Resumen"' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Resumen" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Resumen")' style="cursor:pointer">
                     <RadzenIcon Icon="info" class="me-1" /> Resumen Evento
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Categorias" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Categorias"' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Categorias" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Categorias")' style="cursor:pointer">
                     <RadzenIcon Icon="category" class="me-1" /> Categorías y Premios
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Participantes" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Participantes"' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Participantes" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Participantes")' style="cursor:pointer">
                     <RadzenIcon Icon="groups" class="me-1" /> Participantes
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Jurado" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Jurado"' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Jurado" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Jurado")' style="cursor:pointer">
                     <RadzenIcon Icon="gavel" class="me-1" /> Jurado y Votos
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Resultados" ? "active fw-bold" : "")" @onclick='() => CambiarTab("Resultados")' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Resultados" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Resultados")' style="cursor:pointer">
                     <RadzenIcon Icon="emoji_events" class="me-1" /> Resultados
                 </a>
             </li>
             @if (Session.Usuario is Juez)
             {
                 <li class="nav-item">
-                    <a class="nav-link text-success @(tabActivo == "Votar" ? "active fw-bold bg-success text-white" : "")" @onclick='() => tabActivo = "Votar"' style="cursor:pointer">
+                    <a class="nav-link text-success @(tabActivo == "Votar" ? "active fw-bold bg-success text-white" : "")" @onclick='() => CambiarTabUIAsync("Votar")' style="cursor:pointer">
                         <RadzenIcon Icon="how_to_vote" class="me-1" /> Panel de Votación
                     </a>
                 </li>
@@ -421,6 +421,9 @@
     [Parameter]
     public int EventoId { get; set; }
 
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? TabFromUrl { get; set; }
+
     private string tabActivo = "Resumen";
     private Evento? evento;
 
@@ -435,6 +438,9 @@
     {
         try
         {
+            // Leemos la URL. Si hay un tab guardado, lo usamos. Si no, por defecto a "Resumen"
+            tabActivo = !string.IsNullOrEmpty(TabFromUrl) ? TabFromUrl : "Resumen";
+
             // 1. Cargamos el agregado completo usando tu backend optimizado
             evento = await EventoService.ObtenerEventoConDetallesAsync(EventoId);
 
@@ -450,6 +456,12 @@
                     }
                 }
             }
+
+            // 3. (Magia) Si alguien entra directamente copiando el enlace del tab de Resultados, lo cargamos
+            if (tabActivo == "Resultados")
+            {
+                await CargarResultadosDesdeBackend();
+            }
         }
         catch (Exception ex)
         {
@@ -457,25 +469,18 @@
         }
     }
 
-    private async Task CambiarTab(string nuevoTab)
+    private async Task CambiarTabUIAsync(string nuevoTab)
     {
+        // 1. Cambiamos visualmente el tab activo
         tabActivo = nuevoTab;
 
-        if (tabActivo == "Resultados")
+        // 2. Modificamos la URL en la barra superior (sin recargar la página)
+        NavigationManager.NavigateTo(NavigationManager.GetUriWithQueryParameter("tab", nuevoTab), replace: true);
+
+        // 3. Si el usuario hizo clic en "Resultados", vamos al backend a traer los datos
+        if (nuevoTab == "Resultados")
         {
-            cargandoResultados = true;
-            try
-            {
-                resultadosPorCategoria = await ResultadosService.ObtenerResultadosPorEventoAsync(EventoId);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al consultar resultados: {ex.Message}");
-            }
-            finally
-            {
-                cargandoResultados = false;
-            }
+            await CargarResultadosDesdeBackend();
         }
     }
 
@@ -496,4 +501,23 @@
         "ResultadosPublicados" => "bg-dark",
         _ => "bg-secondary"
     };
+
+    private async Task CargarResultadosDesdeBackend()
+    {
+        if (cargandoResultados) return; // Previene doble clic
+
+        cargandoResultados = true;
+        try
+        {
+            resultadosPorCategoria = await ResultadosService.ObtenerResultadosPorEventoAsync(EventoId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al consultar resultados: {ex.Message}");
+        }
+        finally
+        {
+            cargandoResultados = false;
+        }
+    }
 }

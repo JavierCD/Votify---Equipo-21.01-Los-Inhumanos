@@ -29,7 +29,15 @@ else
 {
     <div class="container rz-mt-4 rz-mb-5">
 
-        <RadzenButton Text="Volver" Icon="arrow_back" ButtonStyle="ButtonStyle.Dark" class="rz-mb-4 rz-shadow-2" Click="VolverAtras" />
+        @* CABECERA DEL PERFIL CON BOTÓN ARRIBA A LA DERECHA *@
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+            <div>
+                <h3 class="fw-bold mb-0 text-dark">Ficha del Participante</h3>
+                <p class="text-muted small mb-0">Detalles de la trayectoria y vitrina pública</p>
+            </div>
+            <RadzenButton Text="Volver" Icon="arrow_back" ButtonStyle="ButtonStyle.Dark" class="rz-shadow-2" Click="VolverAtras" />
+        </div>
+
         <RadzenRow Gap="2rem">
             @* COLUMNA IZQUIERDA: TARJETA DE IDENTIDAD *@
             <RadzenColumn Size="12" SizeMD="4">
@@ -76,7 +84,6 @@ else
 
             @* COLUMNA DERECHA *@
             <RadzenColumn Size="12" SizeMD="8">
-
                 @if (modoEdicion && esMiPropioPerfil)
                 {
                     @* --- MODO EDICIÓN --- *@
@@ -88,12 +95,10 @@ else
                                 <RadzenText TextStyle="TextStyle.Subtitle2">Nombre Público</RadzenText>
                                 <RadzenTextBox @bind-Value="participante.Name" class="w-100" />
                             </div>
-
                             <div>
                                 <RadzenText TextStyle="TextStyle.Subtitle2">Sobre Mí (Biografía)</RadzenText>
                                 <RadzenTextArea @bind-Value="participante.Descripcion" class="w-100" Rows="4" />
                             </div>
-
                             <RadzenRow>
                                 <RadzenColumn Size="12" SizeSM="6">
                                     <RadzenText TextStyle="TextStyle.Subtitle2">Estudios / Institución</RadzenText>
@@ -104,7 +109,6 @@ else
                                     <RadzenTextBox @bind-Value="participante.Intereses" class="w-100" Placeholder="Ej: IA, C#, Diseño UX" />
                                 </RadzenColumn>
                             </RadzenRow>
-
                             <div>
                                 <RadzenText TextStyle="TextStyle.Subtitle2">Color de Fondo (Hexadecimal)</RadzenText>
                                 <RadzenColorPicker @bind-Value="participante.ColorFondo" ShowHSV="true" ShowRGBA="false" ShowColors="true" class="w-100" />
@@ -137,7 +141,6 @@ else
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeSM="6">
                                 <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-mb-2"><RadzenIcon Icon="local_offer" class="rz-mr-1" Style="font-size: 16px;" /> Áreas de Interés</RadzenText>
-
                                 @if (string.IsNullOrWhiteSpace(participante.Intereses))
                                 {
                                     <RadzenText TextStyle="TextStyle.Body2" class="text-muted">Ningún interés añadido.</RadzenText>
@@ -156,7 +159,7 @@ else
                     </RadzenCard>
                 }
 
-                @* Vitrina de Proyectos (Siempre visible) *@
+                @* Vitrina de Proyectos *@
                 <RadzenCard class="rz-shadow-2">
                     <RadzenText TextStyle="TextStyle.H6" class="fw-bold rz-mb-3 text-secondary"><RadzenIcon Icon="emoji_events" class="rz-mr-1" /> Vitrina de Proyectos</RadzenText>
                     @if (participante.Proyectos != null && participante.Proyectos.Any())
@@ -165,12 +168,25 @@ else
                             @foreach (var proyecto in participante.Proyectos)
                             {
                                 <div class="col-12 col-md-6">
-                                    <div class="p-3 border rounded h-100 bg-light">
-                                        <RadzenText TextStyle="TextStyle.Subtitle1" class="fw-bold rz-m-0 rz-color-primary">@proyecto.Name</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Caption" class="text-muted d-block rz-mb-2">Inscrito en @proyecto.FechaRegistro.Year</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" class="text-truncate">
-                                            @(string.IsNullOrWhiteSpace(proyecto.Description) ? "Sin descripción" : proyecto.Description)
-                                        </RadzenText>
+                                    <div class="p-3 border rounded h-100 bg-light d-flex flex-column justify-content-between">
+                                        <div>
+                                            <RadzenText TextStyle="TextStyle.Subtitle1" class="fw-bold rz-m-0 rz-color-primary">@proyecto.Name</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" class="text-muted d-block rz-mb-2" Style="font-size:0.75rem;">Inscrito en @proyecto.FechaRegistro.Year</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" class="text-truncate">
+                                                @(string.IsNullOrWhiteSpace(proyecto.Description) ? "Sin descripción" : proyecto.Description)
+                                            </RadzenText>
+                                        </div>
+
+                                        @* ACCESO CONDICIONAL EXCLUSIVO SI ERES EL PROPIETARIO DE LA FICHA *@
+                                        @if (esMiPropioPerfil)
+                                        {
+                                            <div class="mt-3 text-end">
+                                                <button class="btn btn-primary btn-sm fw-bold rounded-pill shadow-sm px-3" style="font-size:0.75rem;"
+                                                        @onclick='() => NavManager.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}")'>
+                                                    ⚙️ Gestionar Proyecto
+                                                </button>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             }
@@ -193,6 +209,7 @@ else
     private bool cargando = true;
     private bool modoEdicion = false;
     private bool esMiPropioPerfil => Session.Usuario != null && Session.Usuario.Id == Id;
+
     protected override async Task OnInitializedAsync()
     {
         await CargarDatos();
@@ -205,14 +222,11 @@ else
         cargando = false;
     }
 
-    
     private async Task VolverAtras()
     {
-       
         await JSRuntime.InvokeVoidAsync("history.back");
     }
 
-   
     private void ActivarEdicion()
     {
         modoEdicion = true;

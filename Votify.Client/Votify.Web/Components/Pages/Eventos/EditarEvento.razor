@@ -38,33 +38,32 @@
     {
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Generales" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Generales"' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Generales" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Generales")' style="cursor:pointer">
                     <RadzenIcon Icon="edit_note" class="me-1" /> Datos Generales
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Categorias" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Categorias"' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Categorias" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Categorias")' style="cursor:pointer">
                     <RadzenIcon Icon="category" class="me-1" /> Categorías y Votaciones
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Participantes" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Participantes"' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Participantes" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Participantes")' style="cursor:pointer">
                     <RadzenIcon Icon="groups" class="me-1" /> Participantes
                 </a>
             </li>
-            @* NUEVA PESTAÑA DE JURADO *@
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Jurado" ? "active fw-bold" : "")" @onclick='() => tabActivo = "Jurado"' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Jurado" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Jurado")' style="cursor:pointer">
                     <RadzenIcon Icon="gavel" class="me-1" /> Jurado
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Auditoria" ? "active fw-bold" : "")" @onclick='() => CambiarTab("Auditoria")' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Auditoria" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Auditoria")' style="cursor:pointer">
                     <RadzenIcon Icon="verified_user" class="me-1" /> Auditoría
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(tabActivo == "Resultados" ? "active fw-bold" : "")" @onclick='() => CambiarTab("Resultados")' style="cursor:pointer">
+                <a class="nav-link @(tabActivo == "Resultados" ? "active fw-bold" : "")" @onclick='() => CambiarTabUIAsync("Resultados")' style="cursor:pointer">
                     <RadzenIcon Icon="emoji_events" class="me-1" /> Resultados
                 </a>
             </li>
@@ -961,6 +960,8 @@
 
     [Parameter]
     public int EventoId { get; set; }
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? TabFromUrl { get; set; }
 
     private string tabActivo = "Generales";
     private Evento? evento;
@@ -1092,6 +1093,9 @@
     {
         try
         {
+            // Leemos la URL
+            tabActivo = !string.IsNullOrEmpty(TabFromUrl) ? TabFromUrl : "Generales";
+
             await CargarEventoYJueces();
 
             // Configuramos un timer para que revise el estado cada 10 segundos
@@ -1099,11 +1103,39 @@
             _timer.Elapsed += async (sender, e) => await ReevaluarEstadosEnVivo();
             _timer.Start();
             await CargarEventosDisponibles();
+
+            // Si el usuario recargó o volvió a una pestaña que requiere llamadas extra al backend
+            if (tabActivo == "Auditoria")
+            {
+                await CargarAuditoria();
+            }
+            else if (tabActivo == "Resultados")
+            {
+                await CargarResultados();
+            }
         }
         catch (Exception ex)
         {
             mensajeError = $"Error crítico al cargar el evento: {ex.Message}";
             Console.WriteLine(ex.ToString());
+        }
+    }
+
+    private async Task CambiarTabUIAsync(string nuevoTab)
+    {
+        tabActivo = nuevoTab;
+
+        // Actualizamos la URL silenciosamente
+        NavigationManager.NavigateTo(NavigationManager.GetUriWithQueryParameter("tab", nuevoTab), replace: true);
+
+        // Disparamos la carga asíncrona solo si la pestaña lo requiere
+        if (nuevoTab == "Auditoria")
+        {
+            await CargarAuditoria();
+        }
+        else if (nuevoTab == "Resultados")
+        {
+            await CargarResultados();
         }
     }
 

@@ -3,28 +3,32 @@
 
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
+@* INYECCIÓN AÑADIDA PARA QUE FUNCIONE LA SESIÓN *@
+@using Votify.Web.Services
 
 @inject IAnalisisMejoraService AnalisisMejoraService
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
+@* INYECCIÓN AÑADIDA PARA QUE FUNCIONE LA SESIÓN *@
+@inject UserSession Session
 
 <PageTitle>Hoja de Ruta de Mejora - Votify</PageTitle>
 
 <div class="container rz-mt-4 rz-mb-5">
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
 
-        @* CABECERA *@
+        @* CABECERA UNIFICADA ARRIBA A LA DERECHA *@
         <RadzenCard class="rz-shadow-2" Style="border-left: 4px solid var(--rz-success);">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <RadzenButton Icon="arrow_back" Text="Volver al Dashboard" ButtonStyle="ButtonStyle.Light" class="rz-mb-2" Click="@Volver" />
                     <RadzenText TextStyle="TextStyle.H4" class="rz-m-0 fw-bold">Hoja de Ruta de Mejora</RadzenText>
                     @if (hojaRuta != null)
                     {
                         <RadzenText TextStyle="TextStyle.Body1" class="text-muted rz-m-0">Proyecto: @hojaRuta.ProyectoNombre</RadzenText>
                     }
                 </div>
-            </RadzenStack>
+                <RadzenButton Icon="arrow_back" Text="Volver al Dashboard" ButtonStyle="ButtonStyle.Light" Click="@Volver" />
+            </div>
         </RadzenCard>
 
         @* ESTADO: CARGANDO *@
@@ -49,17 +53,16 @@
             </RadzenAlert>
         }
 
-        @* ESTADO: SIN COMENTARIOS *@
+        @* ESTADO: SIN COMENTARIOS (BOTÓN REPETIDO ELIMINADO) *@
         else if (hojaRuta != null && hojaRuta.TotalComentariosAnalizados == 0)
         {
             <div class="text-center rz-mt-5 rz-mb-5 p-5 bg-light rounded border border-dashed">
                 <RadzenIcon Icon="comment" Style="font-size: 4rem; color: var(--rz-text-disabled);" class="rz-mb-3" />
                 <RadzenText TextStyle="TextStyle.H5" class="fw-bold">No hay comentarios de jueces</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body1" class="text-muted rz-mb-4">
+                <RadzenText TextStyle="TextStyle.Body1" class="text-muted m-0">
                     Aún no hay comentarios escritos por los jueces sobre este proyecto.
-                    Cuando los jueces dejen feedback, podrás generar una hoja de ruta personalizada con IA.
+                    Cuando los jueces dejen feedback, podrás generar una hoja de ruta personalizada con IA desde este panel.
                 </RadzenText>
-                <RadzenButton Text="Volver al Dashboard" Icon="arrow_back" ButtonStyle="ButtonStyle.Secondary" Click="@Volver" />
             </div>
         }
 
@@ -83,7 +86,7 @@
                 <RadzenColumn Size="12" SizeMD="4">
                     <RadzenCard class="rz-text-center rz-shadow-1">
                         <RadzenText TextStyle="TextStyle.Caption" class="text-muted">Generado el</RadzenText>
-                        <RadzenText TextStyle="TextStyle.H6" class="fw-bold">@hojaRuta.FechaGeneracion.ToString("dd/MM/yyyy HH:mm")</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6" class="fw-bold">@hojaRuta.FechaGeneracion.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</RadzenText>
                     </RadzenCard>
                 </RadzenColumn>
             </RadzenRow>
@@ -113,11 +116,8 @@
                     <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenBadge BadgeStyle="@(sugerencia.Prioridad <= 2 ? BadgeStyle.Danger : BadgeStyle.Info)"
-                                         Text="@etiquetaPrioridad"
-                                         IsPill="true" />
-                            <RadzenBadge BadgeStyle="BadgeStyle.Light"
-                                         Text="@sugerencia.Categoria"
-                                         IsPill="true" />
+                                         Text="@etiquetaPrioridad" IsPill="true" />
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@sugerencia.Categoria" IsPill="true" class="border" />
                             <RadzenText TextStyle="TextStyle.H6" class="rz-m-0 fw-bold">@sugerencia.Descripcion</RadzenText>
                         </RadzenStack>
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
@@ -131,7 +131,7 @@
                 </RadzenCard>
             }
 
-            @* BOTONES *@
+            @* BOTONES DE ACCIÓN *@
             <div class="rz-text-center rz-mt-4">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Center">
                     <RadzenButton Text="Regenerar con IA" Icon="autorenew" ButtonStyle="ButtonStyle.Primary" Click="GenerarHojaRuta" />
@@ -143,8 +143,7 @@
 </div>
 
 @code {
-    [Parameter]
-    public int ProyectoId { get; set; }
+    [Parameter] public int ProyectoId { get; set; }
 
     private HojaRutaMejora? hojaRuta;
     private bool cargando = true;
@@ -177,7 +176,7 @@
 
     private void Volver()
     {
-        NavManager.NavigateTo("/dashboard-participante/1");
+        NavManager.NavigateTo($"/dashboard-participante/{Session.Usuario?.Id ?? 1}");
     }
 
     private async Task DescargarPdf()
