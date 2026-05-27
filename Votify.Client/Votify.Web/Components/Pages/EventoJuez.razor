@@ -93,13 +93,12 @@
                                                         <h6 class="fw-bold mb-1 text-dark text-truncate" style="max-width: 200px;" title="@proyecto.Name">📁 @proyecto.Name</h6>
                                                         <span class="text-muted small">Por: @(proyecto.Participante?.Name ?? "Anónimo")</span>
                                                     </div>
-                                                    @if (proyecto.Participante != null)
-                                                    {
-                                                        <button class="btn btn-outline-info btn-sm rounded-pill px-3" style="font-size: 0.75rem;"
-                                                                @onclick='() => Nav.NavigateTo($"/ficha-participante/{proyecto.Participante.Id}")'>
-                                                            Ver Ficha
-                                                        </button>
-                                                    }
+
+                                                    @* CAMBIO AQUÍ: Ahora dirige a la ficha del PROYECTO *@
+                                                    <button class="btn btn-outline-info btn-sm rounded-pill px-3 fw-bold" style="font-size: 0.75rem;"
+                                                            @onclick='() => Nav.NavigateTo($"/participante/editar-proyecto/{proyecto.Id}")'>
+                                                        <RadzenIcon Icon="description" Style="font-size: 14px; vertical-align: middle;" /> Ver Proyecto
+                                                    </button>
                                                 </div>
 
                                                 <div class="bg-light p-3 rounded-3 border">
@@ -114,13 +113,11 @@
                                                             @if (guardados.Contains(proyecto.Id))
                                                             {
                                                                 <span class="fs-6">✅</span>
-                                                
                                                                 <span style="font-size: 0.7rem;">OK</span>
                                                             }
                                                             else
                                                             {
                                                                 <span class="fs-6">💾</span>
-                                                
                                                                 <span style="font-size: 0.7rem;">Guardar</span>
                                                             }
                                                         </button>
@@ -146,7 +143,6 @@
 @code {
     [Parameter] public int EventoId { get; set; }
 
-    // Capturamos el índice del acordeón desde la barra de direcciones
     [SupplyParameterFromQuery(Name = "catIndex")]
     public int? CatIndex { get; set; }
 
@@ -163,7 +159,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Si venimos de otra página con el parámetro, abrimos ese acordeón automáticamente
         if (CatIndex.HasValue) selectedIndex = CatIndex.Value;
 
         RealTimeNotifier.OnVotacionCerrada += HandleVotacionCerrada;
@@ -199,7 +194,6 @@
     private void OnAccordionIndexChanged(int index)
     {
         selectedIndex = index;
-        // Guardamos el índice actual en la URL de forma silenciosa
         Nav.NavigateTo(Nav.GetUriWithQueryParameter("catIndex", index), replace: true);
     }
 
