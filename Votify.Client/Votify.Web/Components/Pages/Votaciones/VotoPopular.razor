@@ -1,5 +1,6 @@
 ﻿@page "/voto-popular/{EventoId:int}/{CategoriaId:int}"
 @rendermode InteractiveServer
+@using Votify.Core.Enums
 @using Votify.Core.Interfaces
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
@@ -76,10 +77,10 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Estado</label>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn flex-fill @(request.Estado == "Abierta" ? "btn-success" : "btn-outline-success")" @onclick='() => request.Estado = "Abierta"'>● Abierta</button>
-                        <button type="button" class="btn flex-fill @(request.Estado == "Cerrada" ? "btn-danger" : "btn-outline-danger")" @onclick='() => request.Estado = "Cerrada"'>● Cerrada</button>
-                        <button type="button" class="btn flex-fill @(request.Estado == "Pausada" ? "btn-warning" : "btn-outline-warning")" @onclick='() => request.Estado = "Pausada"'>● Pausada</button>
-                        <button type="button" class="btn flex-fill @(request.Estado == "Programada" ? "btn-info" : "btn-outline-info")" @onclick='() => request.Estado = "Programada"'>● Programada</button>
+                        <button type="button" class="btn flex-fill @(request.Estado == EstadoVotacion.Abierta ? "btn-success" : "btn-outline-success")" @onclick='() => request.Estado = EstadoVotacion.Abierta'>● Abierta</button>
+                        <button type="button" class="btn flex-fill @(request.Estado == EstadoVotacion.Cerrada ? "btn-danger" : "btn-outline-danger")" @onclick='() => request.Estado = EstadoVotacion.Cerrada'>● Cerrada</button>
+                        <button type="button" class="btn flex-fill @(request.Estado == EstadoVotacion.Pausada ? "btn-warning" : "btn-outline-warning")" @onclick='() => request.Estado = EstadoVotacion.Pausada'>● Pausada</button>
+                        <button type="button" class="btn flex-fill @(request.Estado == EstadoVotacion.Programada ? "btn-info" : "btn-outline-info")" @onclick='() => request.Estado = EstadoVotacion.Programada'>● Programada</button>
                     </div>
                 </div>
 
@@ -180,9 +181,9 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold small text-uppercase text-muted">Estado</label>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn flex-fill @(requestPuntuacion.Estado == "Abierta" ? "btn-success" : "btn-outline-success")" @onclick='() => requestPuntuacion.Estado = "Abierta"'>● Abierta</button>
-                        <button type="button" class="btn flex-fill @(requestPuntuacion.Estado == "Cerrada" ? "btn-danger" : "btn-outline-danger")" @onclick='() => requestPuntuacion.Estado = "Cerrada"'>● Cerrada</button>
-                        <button type="button" class="btn flex-fill @(requestPuntuacion.Estado == "Pausada" ? "btn-warning" : "btn-outline-warning")" @onclick='() => requestPuntuacion.Estado = "Pausada"'>● Pausada</button>
+                        <button type="button" class="btn flex-fill @(requestPuntuacion.Estado == EstadoVotacion.Abierta ? "btn-success" : "btn-outline-success")" @onclick='() => requestPuntuacion.Estado = EstadoVotacion.Abierta'>● Abierta</button>
+                        <button type="button" class="btn flex-fill @(requestPuntuacion.Estado == EstadoVotacion.Cerrada ? "btn-danger" : "btn-outline-danger")" @onclick='() => requestPuntuacion.Estado = EstadoVotacion.Cerrada'>● Cerrada</button>
+                        <button type="button" class="btn flex-fill @(requestPuntuacion.Estado == EstadoVotacion.Pausada ? "btn-warning" : "btn-outline-warning")" @onclick='() => requestPuntuacion.Estado = EstadoVotacion.Pausada'>● Pausada</button>
                     </div>
                 </div>
 
@@ -297,9 +298,9 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold small text-uppercase text-muted">Estado</label>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn flex-fill @(requestMulticriterio.Estado == "Abierta" ? "btn-success" : "btn-outline-success")" @onclick='() => requestMulticriterio.Estado = "Abierta"'>● Abierta</button>
-                            <button type="button" class="btn flex-fill @(requestMulticriterio.Estado == "Cerrada" ? "btn-danger" : "btn-outline-danger")" @onclick='() => requestMulticriterio.Estado = "Cerrada"'>● Cerrada</button>
-                            <button type="button" class="btn flex-fill @(requestMulticriterio.Estado == "Pausada" ? "btn-warning" : "btn-outline-warning")" @onclick='() => requestMulticriterio.Estado = "Pausada"'>● Pausada</button>
+                            <button type="button" class="btn flex-fill @(requestMulticriterio.Estado == EstadoVotacion.Abierta ? "btn-success" : "btn-outline-success")" @onclick='() => requestMulticriterio.Estado = EstadoVotacion.Abierta'>● Abierta</button>
+                            <button type="button" class="btn flex-fill @(requestMulticriterio.Estado == EstadoVotacion.Cerrada ? "btn-danger" : "btn-outline-danger")" @onclick='() => requestMulticriterio.Estado = EstadoVotacion.Cerrada'>● Cerrada</button>
+                            <button type="button" class="btn flex-fill @(requestMulticriterio.Estado == EstadoVotacion.Pausada ? "btn-warning" : "btn-outline-warning")" @onclick='() => requestMulticriterio.Estado = EstadoVotacion.Pausada'>● Pausada</button>
                         </div>
                     </div>
 
@@ -472,21 +473,21 @@
         request.CategoriaId = CategoriaId;
         request.FechaApertura = DateTime.Today;
         request.FechaCierre = DateTime.Today.AddDays(1);
-        request.Estado = "Abierta";
+        request.Estado = EstadoVotacion.Abierta;
         request.MaxSelection = 1;
 
         // Inicializar Puntuacion
         requestPuntuacion.CategoriaId = CategoriaId;
         requestPuntuacion.FechaApertura = DateTime.Today;
         requestPuntuacion.FechaCierre = DateTime.Today.AddDays(1);
-        requestPuntuacion.Estado = "Abierta";
+        requestPuntuacion.Estado = EstadoVotacion.Abierta;
         requestPuntuacion.ValorMax = 10;
 
         // Inicializar Multicriterio
         requestMulticriterio.CategoriaId = CategoriaId;
         requestMulticriterio.FechaApertura = DateTime.Today;
         requestMulticriterio.FechaCierre = DateTime.Today.AddDays(1);
-        requestMulticriterio.Estado = "Abierta";
+        requestMulticriterio.Estado = EstadoVotacion.Abierta;
     }
 
     private void CambiarTipoVotacion(string tipo)
@@ -548,7 +549,7 @@
             CategoriaId = CategoriaId,
             FechaApertura = DateTime.Today,
             FechaCierre = DateTime.Today.AddDays(1),
-            Estado = "Abierta",
+            Estado = EstadoVotacion.Abierta,
             MaxSelection = 1
         };
     }
@@ -577,7 +578,7 @@
                 CategoriaId = CategoriaId,
                 FechaApertura = DateTime.Today,
                 FechaCierre = DateTime.Today.AddDays(1),
-                Estado = "Abierta",
+                Estado = EstadoVotacion.Abierta,
                 ValorMax = 10
             };
             await Task.Delay(1500);

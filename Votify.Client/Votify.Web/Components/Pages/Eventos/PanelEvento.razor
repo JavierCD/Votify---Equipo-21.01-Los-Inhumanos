@@ -1,6 +1,7 @@
 ﻿@page "/panel-evento/{EventoId:int}"
 @rendermode InteractiveServer
 @using System.Text
+@using Votify.Core.Enums
 @using Votify.Core.Interfaces
 @using Votify.Core.Models
 @using Votify.Services.Interfaces
@@ -492,13 +493,13 @@
         return "Estándar";
     }
 
-    private string GetBadgeStyle(string estado) => estado switch
+    private string GetBadgeStyle(EstadoVotacion estado) => estado switch
     {
-        "Programada" => "bg-info text-dark",
-        "Abierta" => "bg-success",
-        "Pausada" => "bg-warning text-dark",
-        "Cerrada" or "CerradaManual" => "bg-danger",
-        "ResultadosPublicados" => "bg-dark",
+        EstadoVotacion.Programada => "bg-info text-dark",
+        EstadoVotacion.Abierta => "bg-success",
+        EstadoVotacion.Pausada => "bg-warning text-dark",
+        EstadoVotacion.Cerrada => "bg-danger",
+        EstadoVotacion.ResultadosPublicados => "bg-dark",
         _ => "bg-secondary"
     };
 

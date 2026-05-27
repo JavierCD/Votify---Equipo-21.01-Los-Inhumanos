@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Moq;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
+using Votify.Core.Enums;
 using Xunit;
 
 namespace Votify.Tests.ChainOfResponsibility
@@ -45,7 +46,7 @@ namespace Votify.Tests.ChainOfResponsibility
         [Fact]
         public async Task VotacionAbiertaHandler_CuandoPuedeVotar_PasaSiguiente()
         {
-            var votacion = new Popular { Id = 1, Estado = "Abierta" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Abierta };
             votacion.FechaApertura = DateTime.UtcNow.AddMinutes(-10);
             votacion.FechaCierre = DateTime.UtcNow.AddMinutes(10);
 
@@ -62,7 +63,7 @@ namespace Votify.Tests.ChainOfResponsibility
         [Fact]
         public async Task VotacionAbiertaHandler_CuandoNoPuedeVotar_LanzaExcepcion()
         {
-            var votacion = new Popular { Id = 1, Estado = "Abierta" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Abierta };
             votacion.FechaApertura = DateTime.UtcNow.AddMinutes(10);
             votacion.FechaCierre = DateTime.UtcNow.AddMinutes(20);
 

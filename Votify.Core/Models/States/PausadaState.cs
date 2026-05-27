@@ -1,8 +1,10 @@
+using Votify.Core.Enums;
+
 namespace Votify.Core.Models
 {
     public class PausadaState : IVotacionState
     {
-        public override string Nombre => "Pausada";
+        public override EstadoVotacion Tipo => EstadoVotacion.Pausada;
 
         public override void Reanudar(Votacion context)
         {
@@ -11,15 +13,15 @@ namespace Votify.Core.Models
 
         public override void CerrarManual(Votacion context)
         {
-            context.Estado = "CerradaManual";
+            context.Estado = EstadoVotacion.Cerrada;
             context.EstaCerrada = true;
             context.FechaCierre = DateTime.UtcNow;
-            context.SetState(new CerradaManualState());
+            context.SetState(new CerradaState());
         }
 
         public override void Programar(Votacion context)
         {
-            context.Estado = "Programada";
+            context.Estado = EstadoVotacion.Programada;
             context.EstaCerrada = false;
             if (context.FechaApertura <= DateTime.UtcNow)
                 context.FechaApertura = DateTime.UtcNow.AddDays(1);
@@ -35,7 +37,7 @@ namespace Votify.Core.Models
 
         public override void Abrir(Votacion context)
         {
-            context.Estado = "Abierta";
+            context.Estado = EstadoVotacion.Abierta;
             context.EstaCerrada = false;
             context.FechaApertura = DateTime.UtcNow;
             if (context.FechaCierre <= context.FechaApertura)
@@ -46,7 +48,7 @@ namespace Votify.Core.Models
         public override void Cerrar(Votacion context)
         {
             context.EstaCerrada = true;
-            context.Estado = "Cerrada";
+            context.Estado = EstadoVotacion.Cerrada;
             context.SetState(new CerradaState());
         }
 

@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @using System.Text
+@using Votify.Core.Enums
 @using Votify.Core.Factories
 @using Votify.Core.Interfaces
 @using Votify.Core.Models
@@ -183,14 +184,14 @@
                                             <RadzenText TextStyle="TextStyle.Subtitle2" class="fw-bold mb-2">Control de Estado:</RadzenText>
                                                                                                                               
                                             <div class="d-flex align-items-center justify-content-between mb-3">
-                                                <RadzenBadge BadgeStyle="GetBadgeStyle(categoria.Votacion.Estado)" Text="@categoria.Votacion.Estado" class="fs-6 px-3 py-2" />
+                                                <RadzenBadge BadgeStyle="GetBadgeStyle(categoria.Votacion.Estado)" Text="@categoria.Votacion.Estado.ToString()" class="fs-6 px-3 py-2" />
                                                 <span class="badge bg-success fs-6">@(categoria.Votacion.Votos?.Count ?? 0) votos</span>
                                             </div>
 
-                                            <RadzenDropDown TValue="string"
+                                            <RadzenDropDown TValue="EstadoVotacion"
                                                             Data="@estadosPosibles"
                                                             Value="@categoria.Votacion.Estado"
-                                                            ValueChanged="@(args => OnEstadoCambiado(categoria, args.ToString()))"
+                                                            ValueChanged="@(args => OnEstadoCambiado(categoria, args))"
                                                             Style="width: 100%;"
                                                             Disabled="@categoria.Votacion.ResultadosPublicados" />
 
@@ -199,7 +200,7 @@
                                             </button>
                                         </div>
 
-                                        @if (categoria.Votacion.EstaCerrada || categoria.Votacion.Estado == "CerradaManual" || categoria.Votacion.Estado == "Cerrada")
+                                        @if (categoria.Votacion.EstaCerrada || categoria.Votacion.Estado == EstadoVotacion.Cerrada)
                                         {
                                             @*
                                             <div class="alert alert-success p-2 small d-flex justify-content-between align-items-center">
@@ -1025,7 +1026,7 @@
     // --- ESTADO PARA EDICIÓN DE FECHAS ---
     // Controla qué categoría está en modo edición
     private Dictionary<int, bool> editandoFechas = new();
-    private List<string> estadosPosibles = new List<string> { "Programada", "Abierta", "Pausada", "Cerrada" };
+    private List<EstadoVotacion> estadosPosibles = new List<EstadoVotacion> { EstadoVotacion.Programada, EstadoVotacion.Abierta, EstadoVotacion.Pausada, EstadoVotacion.Cerrada };
 
     // Supervisión de jueces
     private Dictionary<int, bool> supervisionAbierta = new();
@@ -1338,7 +1339,7 @@
         try
         {
             await CategoriaService.CerrarVotacionAsync(categoriaId);
-            await OnEstadoCambiado(evento!.CategoriasEvento.First(c => c.Id == categoriaId), "Cerrada");
+            await OnEstadoCambiado(evento!.CategoriasEvento.First(c => c.Id == categoriaId), EstadoVotacion.Cerrada);
             await CategoriaService.ConfigurarFechas(evento.CategoriasEvento.First(c => c.Id == categoriaId), DateTime.UtcNow, DateTime.UtcNow); // Para actualizar las fechas en la UI si se expande el modal
 
         }
@@ -1393,11 +1394,11 @@
         }
     }
 
-    private async Task OnEstadoCambiado(Categoria categoria, string nuevoEstado)
+    private async Task OnEstadoCambiado(Categoria categoria, EstadoVotacion nuevoEstado)
     {
         if (categoria.Votacion.Estado == nuevoEstado) return;
 
-        if(categoria.Votacion.Estado == "ResultadosPublicados")
+        if(categoria.Votacion.Estado == EstadoVotacion.ResultadosPublicados)
         {
             return;
         }
@@ -1410,10 +1411,10 @@
             {
                 switch (nuevoEstado)
                 {
-                    case "Abierta": await CategoriaService.ForzarApertura(categoria); break;
-                    case "Cerrada": await CategoriaService.ForzarCierre(categoria); break;
-                    case "Pausada": await CategoriaService.PausarVotacion(categoria); break;
-                    case "Programada": await CategoriaService.ForzarProgramada(categoria); break;
+                    case EstadoVotacion.Abierta: await CategoriaService.ForzarApertura(categoria); break;
+                    case EstadoVotacion.Cerrada: await CategoriaService.ForzarCierre(categoria); break;
+                    case EstadoVotacion.Pausada: await CategoriaService.PausarVotacion(categoria); break;
+                    case EstadoVotacion.Programada: await CategoriaService.ForzarProgramada(categoria); break;
                 }
             }
             catch (InvalidOperationException)
@@ -1435,15 +1436,15 @@
         }
     }
 
-    private BadgeStyle GetBadgeStyle(string estado)
+    private BadgeStyle GetBadgeStyle(EstadoVotacion estado)
     {
         return estado switch
         {
-            "Programada" => BadgeStyle.Info,
-            "Abierta" => BadgeStyle.Success,
-            "Pausada" => BadgeStyle.Warning,
-            "Cerrada" or "CerradaManual" => BadgeStyle.Danger,
-            "ResultadosPublicados" => BadgeStyle.Dark,
+            EstadoVotacion.Programada => BadgeStyle.Info,
+            EstadoVotacion.Abierta => BadgeStyle.Success,
+            EstadoVotacion.Pausada => BadgeStyle.Warning,
+            EstadoVotacion.Cerrada => BadgeStyle.Danger,
+            EstadoVotacion.ResultadosPublicados => BadgeStyle.Dark,
             _ => BadgeStyle.Light
         };
     }

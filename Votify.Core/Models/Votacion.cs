@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Votify.Core.Enums;
 
 namespace Votify.Core.Models
 {
@@ -12,7 +13,7 @@ namespace Votify.Core.Models
         public int EventoId { get; set; }
         public DateTime FechaApertura { get; set; }
         public DateTime FechaCierre { get; set; }
-        public string Estado { get; set; } = "Programada";
+        public EstadoVotacion Estado { get; set; } = EstadoVotacion.Programada;
         public List<Voto> Votos { get; set; } = new List<Voto>();
         public Categoria Categoria { get; set; }
         public virtual ICollection<Juez> JuecesAutorizados { get; set; } = new List<Juez>();
@@ -47,19 +48,18 @@ namespace Votify.Core.Models
         internal void SetState(IVotacionState state)
         {
             _state = state;
-            Estado = state.Nombre;
+            Estado = state.Tipo;
         }
 
         private void SincronizarEstado()
         {
             _state = Estado switch
             {
-                "Programada" => new ProgramadaState(),
-                "Abierta" => new AbiertaState(),
-                "Cerrada" => new CerradaState(),
-                "CerradaManual" => new CerradaManualState(),
-                "Pausada" => new PausadaState(),
-                "ResultadosPublicados" => new ResultadosPublicadosState(),
+                EstadoVotacion.Programada => new ProgramadaState(),
+                EstadoVotacion.Abierta => new AbiertaState(),
+                EstadoVotacion.Cerrada => new CerradaState(),
+                EstadoVotacion.Pausada => new PausadaState(),
+                EstadoVotacion.ResultadosPublicados => new ResultadosPublicadosState(),
                 _ => new ProgramadaState()
             };
         }

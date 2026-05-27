@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Votify.Core.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace Votify.Services.Models.Requests
         public int CategoriaId { get; set; }
         public DateTime FechaApertura { get; set; }
         public DateTime FechaCierre { get; set; }
-        public string Estado { get; set; } = "Abierta";
+        public EstadoVotacion Estado { get; set; } = EstadoVotacion.Abierta;
         public bool EnviarNotificacionApertura { get; set; }
         public List<CriterioRequest> Criterios { get; set; } = new();
         public bool PermiteAutoVoto { get; set; } = false;

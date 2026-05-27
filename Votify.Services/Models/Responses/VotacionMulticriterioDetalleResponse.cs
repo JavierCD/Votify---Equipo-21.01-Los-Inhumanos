@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Votify.Core.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace Votify.Services.Models.Responses
     {
         public int VotacionId { get; set; }
         public string CategoriaNombre { get; set; } = string.Empty;
-        public string Estado { get; set; } = string.Empty;
+        public EstadoVotacion Estado { get; set; }
         public List<ProyectoDto> Proyectos { get; set; } = new();
         public List<CriterioBaremoDto> Criterios { get; set; } = new();
         public bool PermiteAutoVoto { get; set; }

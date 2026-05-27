@@ -1,4 +1,5 @@
 using Moq;
+using Votify.Core.Enums;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Implementations;
@@ -35,7 +36,7 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(1),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 MaxSelection = 3
             };
 
@@ -68,7 +69,7 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(1),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 MaxSelection = 3
             };
 
@@ -86,7 +87,7 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(2),
                 FechaCierre = DateTime.UtcNow.AddDays(1),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 MaxSelection = 3
             };
 
@@ -104,7 +105,7 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(1),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 MaxSelection = 0
             };
 
@@ -112,9 +113,9 @@ namespace Votify.Tests.Services
         }
 
         [Fact]
-        public async Task CrearVotacionPopularAsync_CuandoEstadoVacio_LanzaArgumentException()
+        public async Task CrearVotacionPopularAsync_CuandoEstadoDefault_CreaConProgramada()
         {
-            var mockUoW = CreateUnitOfWorkMock();
+            var mockUoW = CreateUnitOfWorkMock(categoriaExiste: true, yaExisteVotacion: false);
             var service = new PopularService(mockUoW.Object);
 
             var request = new CrearVotacionPopularRequest
@@ -122,11 +123,14 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(1),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "",
+                Estado = default,
                 MaxSelection = 3
             };
 
-            await Assert.ThrowsAsync<ArgumentException>(() => service.CrearVotacionPopularAsync(request));
+            var resultado = await service.CrearVotacionPopularAsync(request);
+
+            Assert.NotNull(resultado);
+            Assert.Equal(EstadoVotacion.Programada, resultado.Estado);
         }
 
         [Fact]
@@ -140,7 +144,7 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(1),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 MaxSelection = 3
             };
 

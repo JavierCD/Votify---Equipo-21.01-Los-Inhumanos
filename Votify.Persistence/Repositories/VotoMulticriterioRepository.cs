@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Votify.Core.Enums;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Persistence.Context;
@@ -37,7 +38,7 @@ namespace Votify.Persistence.Repositories
             return await _context.Votaciones
                 .OfType<Multicriterio>()
                 .Include(v => v.Categoria)
-                .Where(v => v.Estado == "Abierta")
+                .Where(v => v.Estado == EstadoVotacion.Abierta)
                 .ToListAsync();
         }
 

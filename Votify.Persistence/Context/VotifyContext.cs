@@ -111,9 +111,10 @@ namespace Votify.Persistence.Context
                 entity.HasKey(v => v.Id);
 
                 entity.Property(v => v.Estado)
+                      .HasConversion<string>()
                       .IsRequired()
                       .HasMaxLength(50)
-                      .HasDefaultValue("Cerrada");
+                      .HasDefaultValue(EstadoVotacion.Cerrada);
 
                 entity.HasDiscriminator<string>("TipoVotacion")
                       .HasValue<Multicriterio>("Multicriterio")

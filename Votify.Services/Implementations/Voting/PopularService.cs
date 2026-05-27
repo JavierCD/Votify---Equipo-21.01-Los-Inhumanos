@@ -29,9 +29,6 @@ namespace Votify.Services.Implementations
             if (request.MaxSelection <= 0)
                 throw new ArgumentException("MaxSelection debe ser mayor que 0.");
 
-            if (string.IsNullOrWhiteSpace(request.Estado))
-                throw new ArgumentException("El estado es obligatorio.");
-
             if (await _unitOfWork.PopularRepository.YaExisteVotacionParaCategoriaAsync(request.CategoriaId))
                 throw new InvalidOperationException("Ya existe una votacion asociada a esta categoria");
 

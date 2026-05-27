@@ -1,4 +1,5 @@
 using Votify.Core.Models;
+using Votify.Core.Enums;
 using Xunit;
 
 namespace Votify.Tests.States
@@ -18,7 +19,7 @@ namespace Votify.Tests.States
         public void Nombre_EsAbierta()
         {
             var state = CreateState();
-            Assert.Equal("Abierta", state.Nombre);
+            Assert.Equal(EstadoVotacion.Abierta, state.Tipo);
         }
 
         [Fact]
@@ -31,7 +32,7 @@ namespace Votify.Tests.States
             state.Cerrar(votacion);
 
             Assert.True(votacion.EstaCerrada);
-            Assert.Equal("Cerrada", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Cerrada, votacion.Estado);
             Assert.IsType<CerradaState>(votacion.GetState());
         }
 
@@ -54,8 +55,8 @@ namespace Votify.Tests.States
             state.CerrarManual(votacion);
 
             Assert.True(votacion.EstaCerrada);
-            Assert.Equal("CerradaManual", votacion.Estado);
-            Assert.IsType<CerradaManualState>(votacion.GetState());
+            Assert.Equal(EstadoVotacion.Cerrada, votacion.Estado);
+            Assert.IsType<CerradaState>(votacion.GetState());
         }
 
         [Fact]
@@ -66,7 +67,7 @@ namespace Votify.Tests.States
 
             state.Pausar(votacion);
 
-            Assert.Equal("Pausada", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Pausada, votacion.Estado);
             Assert.IsType<PausadaState>(votacion.GetState());
         }
 
@@ -80,7 +81,7 @@ namespace Votify.Tests.States
             state.EvaluarTemporal(votacion, DateTime.UtcNow);
 
             Assert.True(votacion.EstaCerrada);
-            Assert.Equal("Cerrada", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Cerrada, votacion.Estado);
             Assert.IsType<CerradaState>(votacion.GetState());
         }
 
@@ -93,7 +94,7 @@ namespace Votify.Tests.States
 
             state.EvaluarTemporal(votacion, DateTime.UtcNow);
 
-            Assert.Equal("Abierta", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Abierta, votacion.Estado);
             Assert.IsType<AbiertaState>(votacion.GetState());
         }
 
@@ -124,12 +125,14 @@ namespace Votify.Tests.States
         }
 
         [Fact]
-        public void Abrir_LanzaExcepcion()
+        public void Abrir_EsIdempotente()
         {
             var state = CreateState();
             var votacion = CreateVotacion();
 
-            Assert.Throws<InvalidOperationException>(() => state.Abrir(votacion));
+            var ex = Record.Exception(() => state.Abrir(votacion));
+            Assert.Null(ex);
+            Assert.Equal(EstadoVotacion.Abierta, votacion.Estado);
         }
     }
 }

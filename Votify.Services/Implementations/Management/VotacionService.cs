@@ -32,7 +32,7 @@ namespace Votify.Services.Implementations
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<bool> CambiarEstadoVotacionManualAsync(int votacionId, string nuevoEstado)
+        public async Task<bool> CambiarEstadoVotacionManualAsync(int votacionId, EstadoVotacion nuevoEstado)
         {
             var votacion = await _unitOfWork.Votaciones.GetWithIncludesAsync(
                 v => v.Id == votacionId,
@@ -49,7 +49,7 @@ namespace Votify.Services.Implementations
             {
                 switch (nuevoEstado)
                 {
-                    case "Abierta":
+                    case EstadoVotacion.Abierta:
                         votacion.ForzarApertura();
                         if (evento != null)
                         {
@@ -63,7 +63,7 @@ namespace Votify.Services.Implementations
                         }
                         break;
 
-                    case "Cerrada":
+                    case EstadoVotacion.Cerrada:
                         votacion.ForzarCierre();
                         if (evento != null)
                         {
@@ -77,11 +77,11 @@ namespace Votify.Services.Implementations
                         }
                         break;
 
-                    case "Pausada":
+                    case EstadoVotacion.Pausada:
                         votacion.PausarVotacion();
                         break;
 
-                    case "Programada":
+                    case EstadoVotacion.Programada:
                         votacion.ForzarProgramada();
                         break;
                 }
@@ -96,7 +96,6 @@ namespace Votify.Services.Implementations
 
         public async Task<bool> ActualizarVisibilidadVotacionAsync(int votacionId, bool mostrarJueces, bool mostrarComentarios, bool mostrarRanking, bool mostrarDetalles)
         {
-            // Cargamos la categoría que incluye la votación para poder acceder a ella de forma segura
             var categoria = await _unitOfWork.CategoriaRepository.GetWithIncludesAsync(
                 c => c.Votacion != null && c.Votacion.Id == votacionId,
                 c => c.Votacion
@@ -104,13 +103,11 @@ namespace Votify.Services.Implementations
 
             if (categoria == null || categoria.Votacion == null) return false;
 
-            // Asignamos los nuevos permisos al modelo de dominio
             categoria.Votacion.MostrarNombresJueces = mostrarJueces;
             categoria.Votacion.MostrarComentarios = mostrarComentarios;
             categoria.Votacion.MostrarRanking = mostrarRanking;
             categoria.Votacion.MostrarResultadosDetallados = mostrarDetalles;
 
-            // Persistimos en PostgreSQL
             await _unitOfWork.SaveChangesAsync();
             return true;
         }

@@ -1,3 +1,4 @@
+using Votify.Core.Enums;
 using Votify.Core.Models;
 using Xunit;
 
@@ -18,7 +19,7 @@ namespace Votify.Tests.States
         public void Nombre_EsResultadosPublicados()
         {
             var state = CreateState();
-            Assert.Equal("ResultadosPublicados", state.Nombre);
+            Assert.Equal(EstadoVotacion.ResultadosPublicados, state.Tipo);
         }
 
         [Fact]

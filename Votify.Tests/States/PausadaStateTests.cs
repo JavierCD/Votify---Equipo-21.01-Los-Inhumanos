@@ -1,4 +1,5 @@
 using Votify.Core.Models;
+using Votify.Core.Enums;
 using Xunit;
 
 namespace Votify.Tests.States
@@ -18,14 +19,14 @@ namespace Votify.Tests.States
         public void Nombre_EsPausada()
         {
             var state = CreateState();
-            Assert.Equal("Pausada", state.Nombre);
+            Assert.Equal(EstadoVotacion.Pausada, state.Tipo);
         }
 
         [Fact]
         public void Reanudar_EvaluaEstadoTemporal()
         {
             var state = CreateState();
-            var votacion = new Popular { Id = 1, Estado = "Pausada" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Pausada };
             votacion.FechaApertura = DateTime.UtcNow.AddMinutes(-10);
             votacion.FechaCierre = DateTime.UtcNow.AddMinutes(10);
             votacion.SetState(new PausadaState());
@@ -34,7 +35,7 @@ namespace Votify.Tests.States
 
             // PausadaState no tiene EvaluarTemporal, así que se queda en Pausada
             // El comportamiento real es que no cambia automáticamente
-            Assert.Equal("Pausada", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Pausada, votacion.Estado);
         }
 
         [Fact]
@@ -46,8 +47,8 @@ namespace Votify.Tests.States
             state.CerrarManual(votacion);
 
             Assert.True(votacion.EstaCerrada);
-            Assert.Equal("CerradaManual", votacion.Estado);
-            Assert.IsType<CerradaManualState>(votacion.GetState());
+            Assert.Equal(EstadoVotacion.Cerrada, votacion.Estado);
+            Assert.IsType<CerradaState>(votacion.GetState());
         }
 
         [Fact]
@@ -59,7 +60,7 @@ namespace Votify.Tests.States
             state.Programar(votacion);
 
             Assert.False(votacion.EstaCerrada);
-            Assert.Equal("Programada", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Programada, votacion.Estado);
             Assert.IsType<ProgramadaState>(votacion.GetState());
         }
 
@@ -83,7 +84,7 @@ namespace Votify.Tests.States
             state.Abrir(votacion);
 
             Assert.False(votacion.EstaCerrada);
-            Assert.Equal("Abierta", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Abierta, votacion.Estado);
             Assert.IsType<AbiertaState>(votacion.GetState());
         }
     }

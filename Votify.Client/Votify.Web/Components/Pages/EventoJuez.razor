@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @implements IDisposable
 
+@using Votify.Core.Enums
 @using Votify.Core.Models
 @using Votify.Services.Implementations.Observers
 @using Votify.Services.Interfaces
@@ -208,7 +209,7 @@
         if (categoria?.Votacion != null)
         {
             categoria.Votacion.EstaCerrada = true;
-            categoria.Votacion.Estado = "Cerrada";
+            categoria.Votacion.Estado = EstadoVotacion.Cerrada;
             InvokeAsync(StateHasChanged);
         }
     }
@@ -246,7 +247,7 @@
     {
         if (categoria.Votacion != null)
         {
-            if (categoria.Votacion.EstaCerrada || categoria.Votacion.Estado == "Cerrada")
+            if (categoria.Votacion.EstaCerrada || categoria.Votacion.Estado == EstadoVotacion.Cerrada)
             {
                 <button class="btn btn-secondary btn-sm fw-bold shadow-sm px-3" disabled>🔒 Votación Cerrada</button>
             }

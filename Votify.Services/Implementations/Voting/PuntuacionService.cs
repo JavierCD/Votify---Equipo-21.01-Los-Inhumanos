@@ -32,10 +32,7 @@ namespace Votify.Services.Implementations
                 throw new ArgumentException("La fecha de apertura debe ser anterior a la fecha de cierre.");
 
             if (request.ValorMax <= 0)
-                throw new ArgumentException("El valor máximo de puntuación debe ser mayor que 0.");
-
-            if (string.IsNullOrWhiteSpace(request.Estado))
-                throw new ArgumentException("El estado de la votación no puede estar vacío.");
+                throw new ArgumentException("ValorMax debe ser mayor que 0.");
 
             if (await _unitOfWork.PuntuacionRepository.YaExisteVotacionParaCategoriaAsync(request.CategoriaId))
                 throw new InvalidOperationException("Ya existe una votación de puntuación para esta categoría.");

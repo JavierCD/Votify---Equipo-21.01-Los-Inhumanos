@@ -1,6 +1,7 @@
 using Moq;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
+using Votify.Core.Enums;
 using Votify.Services.Implementations;
 using Votify.Services.Models.Requests;
 using Xunit;
@@ -168,7 +169,7 @@ namespace Votify.Tests.Services
         public async Task CerrarVotacionAsync_CuandoVotacionExiste_CierraVotacion()
         {
             var categoria = new Categoria { Id = 1, Name = "Test" };
-            var votacion = new Popular { Id = 1, Estado = "Abierta" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Abierta };
             categoria.Votacion = votacion;
 
             var mockUoW = CreateUnitOfWorkMock(categoria);
@@ -177,7 +178,7 @@ namespace Votify.Tests.Services
             await service.CerrarVotacionAsync(1);
 
             Assert.True(votacion.EstaCerrada);
-            Assert.Equal("Cerrada", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Cerrada, votacion.Estado);
             mockUoW.Verify(u => u.Categorias.UpdateAsync(categoria), Times.Once);
             mockUoW.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
@@ -186,7 +187,7 @@ namespace Votify.Tests.Services
         public async Task ForzarApertura_CuandoVotacionExiste_AbreVotacion()
         {
             var categoria = new Categoria { Id = 1, Name = "Test" };
-            var votacion = new Popular { Id = 1, Estado = "Programada" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Programada };
             categoria.Votacion = votacion;
 
             var mockUoW = CreateUnitOfWorkMock(categoria);
@@ -194,7 +195,7 @@ namespace Votify.Tests.Services
 
             await service.ForzarApertura(categoria);
 
-            Assert.Equal("Abierta", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Abierta, votacion.Estado);
             mockUoW.Verify(u => u.Categorias.UpdateAsync(categoria), Times.Once);
             mockUoW.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
@@ -203,7 +204,7 @@ namespace Votify.Tests.Services
         public async Task ForzarCierre_CuandoVotacionExiste_CierraVotacion()
         {
             var categoria = new Categoria { Id = 1, Name = "Test" };
-            var votacion = new Popular { Id = 1, Estado = "Abierta" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Abierta };
             categoria.Votacion = votacion;
 
             var mockUoW = CreateUnitOfWorkMock(categoria);
@@ -212,7 +213,7 @@ namespace Votify.Tests.Services
             await service.ForzarCierre(categoria);
 
             Assert.True(votacion.EstaCerrada);
-            Assert.Equal("CerradaManual", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Cerrada, votacion.Estado);
             mockUoW.Verify(u => u.Categorias.UpdateAsync(categoria), Times.Once);
             mockUoW.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
@@ -221,7 +222,7 @@ namespace Votify.Tests.Services
         public async Task PausarVotacion_CuandoVotacionExiste_PausaVotacion()
         {
             var categoria = new Categoria { Id = 1, Name = "Test" };
-            var votacion = new Popular { Id = 1, Estado = "Abierta" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Abierta };
             categoria.Votacion = votacion;
 
             var mockUoW = CreateUnitOfWorkMock(categoria);
@@ -229,7 +230,7 @@ namespace Votify.Tests.Services
 
             await service.PausarVotacion(categoria);
 
-            Assert.Equal("Pausada", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Pausada, votacion.Estado);
             mockUoW.Verify(u => u.Categorias.UpdateAsync(categoria), Times.Once);
             mockUoW.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
@@ -238,7 +239,7 @@ namespace Votify.Tests.Services
         public async Task ForzarProgramada_CuandoVotacionExiste_ProgramaVotacion()
         {
             var categoria = new Categoria { Id = 1, Name = "Test" };
-            var votacion = new Popular { Id = 1, Estado = "Pausada" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Pausada };
             categoria.Votacion = votacion;
 
             var mockUoW = CreateUnitOfWorkMock(categoria);
@@ -246,7 +247,7 @@ namespace Votify.Tests.Services
 
             await service.ForzarProgramada(categoria);
 
-            Assert.Equal("Programada", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Programada, votacion.Estado);
             mockUoW.Verify(u => u.Categorias.UpdateAsync(categoria), Times.Once);
             mockUoW.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }

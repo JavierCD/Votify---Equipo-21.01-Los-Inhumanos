@@ -1,4 +1,5 @@
 using Moq;
+using Votify.Core.Enums;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Implementations;
@@ -35,7 +36,7 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(1),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 ValorMax = 10
             };
 
@@ -68,7 +69,7 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(1),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 ValorMax = 10
             };
 
@@ -86,7 +87,7 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(2),
                 FechaCierre = DateTime.UtcNow.AddDays(1),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 ValorMax = 10
             };
 
@@ -104,7 +105,7 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(1),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 ValorMax = 0
             };
 
@@ -112,9 +113,9 @@ namespace Votify.Tests.Services
         }
 
         [Fact]
-        public async Task CrearVotacionPuntuacionAsync_CuandoEstadoVacio_LanzaArgumentException()
+        public async Task CrearVotacionPuntuacionAsync_CuandoEstadoDefault_CreaConProgramada()
         {
-            var mockUoW = CreateUnitOfWorkMock();
+            var mockUoW = CreateUnitOfWorkMock(categoriaExiste: true, yaExisteVotacion: false);
             var service = new PuntuacionService(mockUoW.Object);
 
             var request = new CrearVotacionPuntuacionRequest
@@ -122,11 +123,14 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(1),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "",
+                Estado = default,
                 ValorMax = 10
             };
 
-            await Assert.ThrowsAsync<ArgumentException>(() => service.CrearVotacionPuntuacionAsync(request));
+            var resultado = await service.CrearVotacionPuntuacionAsync(request);
+
+            Assert.NotNull(resultado);
+            Assert.Equal(EstadoVotacion.Programada, resultado.Estado);
         }
 
         [Fact]
@@ -140,7 +144,7 @@ namespace Votify.Tests.Services
                 CategoriaId = 1,
                 FechaApertura = DateTime.UtcNow.AddDays(1),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 ValorMax = 10
             };
 

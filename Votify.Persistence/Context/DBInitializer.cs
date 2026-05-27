@@ -268,7 +268,7 @@ namespace Votify.Persistence.Context
                 CategoriaId = categorias[1].Id, // IA Aplicada
                 FechaApertura = DateTime.UtcNow.AddMinutes(1),
                 FechaCierre = DateTime.UtcNow.AddDays(3),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 MaxSelection = 3,
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = false,
@@ -283,7 +283,7 @@ namespace Votify.Persistence.Context
                 CategoriaId = categorias[0].Id, // Impacto Social
                 FechaApertura = DateTime.UtcNow.AddDays(-1),
                 FechaCierre = DateTime.UtcNow.AddDays(5),
-                Estado = "Abierta",
+                Estado = EstadoVotacion.Abierta,
                 MaxSelection = 2,
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = true,
@@ -298,7 +298,7 @@ namespace Votify.Persistence.Context
                 CategoriaId = categorias[2].Id, // FinTech
                 FechaApertura = DateTime.UtcNow.AddMinutes(2),
                 FechaCierre = DateTime.UtcNow.AddDays(4),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 ValorMax = 10,
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = false,
@@ -313,7 +313,7 @@ namespace Votify.Persistence.Context
                 CategoriaId = categorias[3].Id, // GreenTech
                 FechaApertura = DateTime.UtcNow.AddDays(-2),
                 FechaCierre = DateTime.UtcNow.AddDays(2),
-                Estado = "Abierta",
+                Estado = EstadoVotacion.Abierta,
                 ValorMax = 100,
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = true,
@@ -328,7 +328,7 @@ namespace Votify.Persistence.Context
                 CategoriaId = categorias[4].Id, // Mejor Videojuego Indie
                 FechaApertura = DateTime.UtcNow.AddMinutes(3),
                 FechaCierre = DateTime.UtcNow.AddDays(6),
-                Estado = "Programada",
+                Estado = EstadoVotacion.Programada,
                 UsaPesos = true,
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = false,
@@ -350,7 +350,7 @@ namespace Votify.Persistence.Context
                 CategoriaId = categorias[6].Id, // Red Team
                 FechaApertura = DateTime.UtcNow.AddDays(-1),
                 FechaCierre = DateTime.UtcNow.AddDays(4),
-                Estado = "Abierta",
+                Estado = EstadoVotacion.Abierta,
                 UsaPesos = true,
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = true,

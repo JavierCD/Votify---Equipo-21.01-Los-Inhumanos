@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Votify.Core.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace Votify.Services.Models.Responses
         public int CategoriaId { get; set; }
         public DateTime FechaApertura { get; set; }
         public DateTime FechaCierre { get; set; }
-        public string Estado { get; set; } = string.Empty;
+        public EstadoVotacion Estado { get; set; }
         public int ValorMax { get; set; }
     }
 }

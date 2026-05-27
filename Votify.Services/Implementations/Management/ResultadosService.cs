@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Votify.Core.Enums;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
 using Votify.Services.Implementations.Strategies;
@@ -144,11 +145,10 @@ namespace Votify.Services.Implementations
 
                 // Solo mostramos categorías con votación cerrada
                 var votacion = categoria.Votacion;
-                bool permiteCalculo = votacion.Estado == "Cerrada"
-                                   || votacion.Estado == "CerradaManual"
-                                   || votacion.EstaCerrada
-                                   || votacion.ResultadosPublicados
-                                   || votacion.MostrarRanking; // <-- NUEVO FLAG
+                bool permiteCalculo = votacion.Estado == EstadoVotacion.Cerrada
+                                    || votacion.EstaCerrada
+                                    || votacion.ResultadosPublicados
+                                    || votacion.MostrarRanking;
 
                 // Verificar si hay intervención guardada
                 var intervenidos = (await _unitOfWork.ResultadosIntervenidos.GetAllAsync())

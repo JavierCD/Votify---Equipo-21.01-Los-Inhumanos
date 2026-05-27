@@ -61,7 +61,7 @@ namespace Votify.Services.Implementations
             // 2. RECORDATORIOS DE CIERRE PRÓXIMO
             var limiteRecordatorio = ahora.AddMinutes(5);
             var recordatorios = votacionesValidas.
-                Where(v => v.Estado == "Abierta"
+                Where(v => v.Estado == EstadoVotacion.Abierta
                         && v.FechaCierre <= limiteRecordatorio
                         && v.FechaCierre > ahora
                         && !v.NotificacionRecordatorioEnviada)
@@ -83,7 +83,7 @@ namespace Votify.Services.Implementations
 
             // 3. CIERRES
             var cierres = votacionesValidas
-                .Where(v => v.Estado == "Abierta"
+                .Where(v => v.Estado == EstadoVotacion.Abierta
                          && v.FechaCierre <= ahora
                          && !v.NotificacionCierreEnviada)
                 .ToList();

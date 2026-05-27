@@ -48,7 +48,7 @@ namespace Votify.Tests.Observer
                 FechaCierre = ahora.AddDays(1),
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = false,
-                Estado = "Pendiente"
+                Estado = EstadoVotacion.Programada
             };
             votacion.Categoria = categoria;
 
@@ -63,7 +63,7 @@ namespace Votify.Tests.Observer
                     a => a.EventType == VotacionStateEventType.Apertura && a.Votacion.Id == 1)),
                 Times.Once
             );
-            Assert.Equal("Abierta", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Abierta, votacion.Estado);
         }
 
         [Fact]
@@ -80,7 +80,7 @@ namespace Votify.Tests.Observer
                 FechaApertura = ahora.AddMinutes(10),
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = false,
-                Estado = "Pendiente"
+                Estado = EstadoVotacion.Programada
             };
             votacion.Categoria = categoria;
 
@@ -109,7 +109,7 @@ namespace Votify.Tests.Observer
             {
                 Id = 1,
                 FechaCierre = ahora.AddMinutes(3),
-                Estado = "Abierta",
+                Estado = EstadoVotacion.Abierta,
                 NotificacionRecordatorioEnviada = false
             };
             votacion.Categoria = categoria;
@@ -139,7 +139,7 @@ namespace Votify.Tests.Observer
             {
                 Id = 1,
                 FechaCierre = ahora.AddMinutes(-10),
-                Estado = "Abierta",
+                Estado = EstadoVotacion.Abierta,
                 NotificacionRecordatorioEnviada = false
             };
             votacion.Categoria = categoria;
@@ -169,7 +169,7 @@ namespace Votify.Tests.Observer
             {
                 Id = 1,
                 FechaCierre = ahora.AddMinutes(-10),
-                Estado = "Abierta",
+                Estado = EstadoVotacion.Abierta,
                 NotificacionCierreEnviada = false,
                 EnviarNotificacionApertura = false
             };
@@ -200,7 +200,7 @@ namespace Votify.Tests.Observer
             {
                 Id = 1,
                 FechaCierre = ahora.AddMinutes(-1),
-                Estado = "Cerrada",
+                Estado = EstadoVotacion.Cerrada,
                 NotificacionCierreEnviada = false,
                 EnviarNotificacionApertura = false
             };
@@ -233,7 +233,7 @@ namespace Votify.Tests.Observer
                 FechaApertura = ahora.AddMinutes(-1),
                 EnviarNotificacionApertura = true,
                 NotificacionAperturaEnviada = true,
-                Estado = "Pendiente"
+                Estado = EstadoVotacion.Programada
             };
             votacion.Categoria = categoria;
 
@@ -262,7 +262,7 @@ namespace Votify.Tests.Observer
             {
                 Id = 1,
                 FechaCierre = ahora.AddMinutes(3),
-                Estado = "Abierta",
+                Estado = EstadoVotacion.Abierta,
                 NotificacionRecordatorioEnviada = true
             };
             votacion.Categoria = categoria;
@@ -292,7 +292,7 @@ namespace Votify.Tests.Observer
             {
                 Id = 1,
                 FechaCierre = ahora.AddMinutes(-1),
-                Estado = "Abierta",
+                Estado = EstadoVotacion.Abierta,
                 NotificacionCierreEnviada = true
             };
             votacion.Categoria = categoria;

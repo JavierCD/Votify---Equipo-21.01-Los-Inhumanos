@@ -1,6 +1,7 @@
 using Moq;
 using Votify.Core.Interfaces;
 using Votify.Core.Models;
+using Votify.Core.Enums;
 using Votify.Services.Implementations;
 using Xunit;
 
@@ -64,7 +65,7 @@ namespace Votify.Tests.Services
 
             var service = new VotacionService(mockUoW.Object, subjectMock.Object);
 
-            var resultado = await service.CambiarEstadoVotacionManualAsync(999, "Abierta");
+            var resultado = await service.CambiarEstadoVotacionManualAsync(999, EstadoVotacion.Abierta);
 
             Assert.False(resultado);
         }
@@ -76,7 +77,7 @@ namespace Votify.Tests.Services
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
             var categoria = new Categoria { Id = 1, Name = "Test", Evento = evento };
-            var votacion = new Popular { Id = 1, Estado = "Programada" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Programada };
             votacion.Categoria = categoria;
 
             var mockUoW = CreateUnitOfWorkMock(votacion);
@@ -84,10 +85,10 @@ namespace Votify.Tests.Services
 
             var service = new VotacionService(mockUoW.Object, subjectMock.Object);
 
-            var resultado = await service.CambiarEstadoVotacionManualAsync(1, "Abierta");
+            var resultado = await service.CambiarEstadoVotacionManualAsync(1, EstadoVotacion.Abierta);
 
             Assert.True(resultado);
-            Assert.Equal("Abierta", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Abierta, votacion.Estado);
             subjectMock.Verify(s => s.NotifyAsync(It.Is<VotacionStateChangedArgs>(a => a.EventType == Votify.Core.Enums.VotacionStateEventType.Apertura)), Times.Once);
         }
 
@@ -98,7 +99,7 @@ namespace Votify.Tests.Services
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
             var categoria = new Categoria { Id = 1, Name = "Test", Evento = evento };
-            var votacion = new Popular { Id = 1, Estado = "Abierta" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Abierta };
             votacion.Categoria = categoria;
 
             var mockUoW = CreateUnitOfWorkMock(votacion);
@@ -106,10 +107,10 @@ namespace Votify.Tests.Services
 
             var service = new VotacionService(mockUoW.Object, subjectMock.Object);
 
-            var resultado = await service.CambiarEstadoVotacionManualAsync(1, "Cerrada");
+            var resultado = await service.CambiarEstadoVotacionManualAsync(1, EstadoVotacion.Cerrada);
 
             Assert.True(resultado);
-            Assert.Equal("CerradaManual", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Cerrada, votacion.Estado);
             subjectMock.Verify(s => s.NotifyAsync(It.Is<VotacionStateChangedArgs>(a => a.EventType == Votify.Core.Enums.VotacionStateEventType.Cierre)), Times.Once);
         }
 
@@ -120,7 +121,7 @@ namespace Votify.Tests.Services
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
             var categoria = new Categoria { Id = 1, Name = "Test", Evento = evento };
-            var votacion = new Popular { Id = 1, Estado = "Abierta" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Abierta };
             votacion.Categoria = categoria;
 
             var mockUoW = CreateUnitOfWorkMock(votacion);
@@ -128,10 +129,10 @@ namespace Votify.Tests.Services
 
             var service = new VotacionService(mockUoW.Object, subjectMock.Object);
 
-            var resultado = await service.CambiarEstadoVotacionManualAsync(1, "Pausada");
+            var resultado = await service.CambiarEstadoVotacionManualAsync(1, EstadoVotacion.Pausada);
 
             Assert.True(resultado);
-            Assert.Equal("Pausada", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Pausada, votacion.Estado);
         }
 
         [Fact]
@@ -141,7 +142,7 @@ namespace Votify.Tests.Services
             evento.Id = 1;
             evento.Jurado = new List<Juez>();
             var categoria = new Categoria { Id = 1, Name = "Test", Evento = evento };
-            var votacion = new Popular { Id = 1, Estado = "Pausada" };
+            var votacion = new Popular { Id = 1, Estado = EstadoVotacion.Pausada };
             votacion.Categoria = categoria;
 
             var mockUoW = CreateUnitOfWorkMock(votacion);
@@ -149,10 +150,10 @@ namespace Votify.Tests.Services
 
             var service = new VotacionService(mockUoW.Object, subjectMock.Object);
 
-            var resultado = await service.CambiarEstadoVotacionManualAsync(1, "Programada");
+            var resultado = await service.CambiarEstadoVotacionManualAsync(1, EstadoVotacion.Programada);
 
             Assert.True(resultado);
-            Assert.Equal("Programada", votacion.Estado);
+            Assert.Equal(EstadoVotacion.Programada, votacion.Estado);
         }
     }
 }
