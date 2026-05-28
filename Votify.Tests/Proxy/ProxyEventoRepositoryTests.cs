@@ -9,9 +9,9 @@ using Votify.Core.Models;
 using Votify.Persistence.Repositories;
 using Xunit;
 
-namespace Votify.Tests.Decorator
+namespace Votify.Tests.Proxy
 {
-    public class CachedEventoRepositoryTests
+    public class ProxyEventoRepositoryTests
     {
         private IMemoryCache CreateCache() => new MemoryCache(new MemoryCacheOptions());
 
@@ -29,170 +29,170 @@ namespace Votify.Tests.Decorator
         }
 
         [Fact]
-        public async Task GetByIdAsync_PrimeraLlama_DelegaEnInner()
+        public async Task GetByIdAsync_PrimeraLlama_DelegaEnRealSubject()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            var resultado = await cachedRepo.GetByIdAsync(1);
+            var resultado = await proxy.GetByIdAsync(1);
 
             Assert.NotNull(resultado);
             Assert.Equal(1, resultado.Id);
-            mockInner.Verify(r => r.GetByIdAsync(1), Times.Once);
+            mockRealSubject.Verify(r => r.GetByIdAsync(1), Times.Once);
         }
 
         [Fact]
         public async Task GetByIdAsync_SegundaLlama_UsaCache()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            var resultado1 = await cachedRepo.GetByIdAsync(1);
-            var resultado2 = await cachedRepo.GetByIdAsync(1);
+            var resultado1 = await proxy.GetByIdAsync(1);
+            var resultado2 = await proxy.GetByIdAsync(1);
 
             Assert.Equal(1, resultado1.Id);
             Assert.Equal(1, resultado2.Id);
-            mockInner.Verify(r => r.GetByIdAsync(1), Times.Once);
+            mockRealSubject.Verify(r => r.GetByIdAsync(1), Times.Once);
         }
 
         [Fact]
-        public async Task GetAllAsync_PrimeraLlama_DelegaEnInner()
+        public async Task GetAllAsync_PrimeraLlama_DelegaEnRealSubject()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            var resultado = await cachedRepo.GetAllAsync();
+            var resultado = await proxy.GetAllAsync();
 
             Assert.Single(resultado);
-            mockInner.Verify(r => r.GetAllAsync(), Times.Once);
+            mockRealSubject.Verify(r => r.GetAllAsync(), Times.Once);
         }
 
         [Fact]
         public async Task GetAllAsync_SegundaLlama_UsaCache()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            var resultado1 = await cachedRepo.GetAllAsync();
-            var resultado2 = await cachedRepo.GetAllAsync();
+            var resultado1 = await proxy.GetAllAsync();
+            var resultado2 = await proxy.GetAllAsync();
 
             Assert.Single(resultado1);
             Assert.Single(resultado2);
-            mockInner.Verify(r => r.GetAllAsync(), Times.Once);
+            mockRealSubject.Verify(r => r.GetAllAsync(), Times.Once);
         }
 
         [Fact]
-        public async Task ObtenerEventoConDetallesAsync_PrimeraLlama_DelegaEnInner()
+        public async Task ObtenerEventoConDetallesAsync_PrimeraLlama_DelegaEnRealSubject()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            var resultado = await cachedRepo.ObtenerEventoConDetallesAsync(1);
+            var resultado = await proxy.ObtenerEventoConDetallesAsync(1);
 
             Assert.NotNull(resultado);
             Assert.Equal(1, resultado.Id);
-            mockInner.Verify(r => r.ObtenerEventoConDetallesAsync(1), Times.Once);
+            mockRealSubject.Verify(r => r.ObtenerEventoConDetallesAsync(1), Times.Once);
         }
 
         [Fact]
         public async Task ObtenerEventoConDetallesAsync_SegundaLlama_UsaCache()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            var resultado1 = await cachedRepo.ObtenerEventoConDetallesAsync(1);
-            var resultado2 = await cachedRepo.ObtenerEventoConDetallesAsync(1);
+            var resultado1 = await proxy.ObtenerEventoConDetallesAsync(1);
+            var resultado2 = await proxy.ObtenerEventoConDetallesAsync(1);
 
             Assert.Equal(1, resultado1.Id);
             Assert.Equal(1, resultado2.Id);
-            mockInner.Verify(r => r.ObtenerEventoConDetallesAsync(1), Times.Once);
+            mockRealSubject.Verify(r => r.ObtenerEventoConDetallesAsync(1), Times.Once);
         }
 
         [Fact]
-        public async Task ObtenerEventosDisponiblesAsync_PrimeraLlama_DelegaEnInner()
+        public async Task ObtenerEventosDisponiblesAsync_PrimeraLlama_DelegaEnRealSubject()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            var resultado = await cachedRepo.ObtenerEventosDisponiblesAsync();
+            var resultado = await proxy.ObtenerEventosDisponiblesAsync();
 
             Assert.Single(resultado);
-            mockInner.Verify(r => r.ObtenerEventosDisponiblesAsync(), Times.Once);
+            mockRealSubject.Verify(r => r.ObtenerEventosDisponiblesAsync(), Times.Once);
         }
 
         [Fact]
         public async Task ObtenerEventosDisponiblesAsync_SegundaLlama_UsaCache()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            var resultado1 = await cachedRepo.ObtenerEventosDisponiblesAsync();
-            var resultado2 = await cachedRepo.ObtenerEventosDisponiblesAsync();
+            var resultado1 = await proxy.ObtenerEventosDisponiblesAsync();
+            var resultado2 = await proxy.ObtenerEventosDisponiblesAsync();
 
             Assert.Single(resultado1);
             Assert.Single(resultado2);
-            mockInner.Verify(r => r.ObtenerEventosDisponiblesAsync(), Times.Once);
+            mockRealSubject.Verify(r => r.ObtenerEventosDisponiblesAsync(), Times.Once);
         }
 
         [Fact]
         public async Task AddAsync_InvalidaCache()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            await cachedRepo.GetAllAsync();
-            await cachedRepo.AddAsync(evento);
-            await cachedRepo.GetAllAsync();
+            await proxy.GetAllAsync();
+            await proxy.AddAsync(evento);
+            await proxy.GetAllAsync();
 
-            mockInner.Verify(r => r.GetAllAsync(), Times.Exactly(2));
+            mockRealSubject.Verify(r => r.GetAllAsync(), Times.Exactly(2));
         }
 
         [Fact]
         public async Task UpdateAsync_InvalidaCache()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            await cachedRepo.GetAllAsync();
-            await cachedRepo.UpdateAsync(evento);
-            await cachedRepo.GetAllAsync();
+            await proxy.GetAllAsync();
+            await proxy.UpdateAsync(evento);
+            await proxy.GetAllAsync();
 
-            mockInner.Verify(r => r.GetAllAsync(), Times.Exactly(2));
+            mockRealSubject.Verify(r => r.GetAllAsync(), Times.Exactly(2));
         }
 
         [Fact]
         public async Task DeleteAsync_InvalidaCache()
         {
             var evento = new HackathonEvent("Hackathon", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), 1) { Id = 1 };
-            var mockInner = CreateMockInner(evento);
+            var mockRealSubject = CreateMockInner(evento);
             var cache = CreateCache();
-            var cachedRepo = new CachedEventoRepository(mockInner.Object, cache);
+            var proxy = new ProxyEventoRepository(mockRealSubject.Object, cache);
 
-            await cachedRepo.GetAllAsync();
-            await cachedRepo.DeleteAsync(1);
-            await cachedRepo.GetAllAsync();
+            await proxy.GetAllAsync();
+            await proxy.DeleteAsync(1);
+            await proxy.GetAllAsync();
 
-            mockInner.Verify(r => r.GetAllAsync(), Times.Exactly(2));
+            mockRealSubject.Verify(r => r.GetAllAsync(), Times.Exactly(2));
         }
     }
 }

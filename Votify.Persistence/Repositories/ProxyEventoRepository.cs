@@ -10,16 +10,16 @@ using Votify.Core.Models;
 
 namespace Votify.Persistence.Repositories
 {
-    public class CachedEventoRepository : IEventoRepository
+    public class ProxyEventoRepository : IEventoRepository
     {
-        private readonly IEventoRepository _inner;
+        private readonly IEventoRepository _realSubject;
         private readonly IMemoryCache _cache;
         private readonly TimeSpan _defaultExpiration;
         private CancellationTokenSource _resetTokenSource;
 
-        public CachedEventoRepository(IEventoRepository inner, IMemoryCache cache, TimeSpan? expiration = null)
+        public ProxyEventoRepository(IEventoRepository realSubject, IMemoryCache cache, TimeSpan? expiration = null)
         {
-            _inner = inner;
+            _realSubject = realSubject;
             _cache = cache;
             _defaultExpiration = expiration ?? TimeSpan.FromMinutes(5);
             _resetTokenSource = new CancellationTokenSource();
@@ -32,7 +32,7 @@ namespace Votify.Persistence.Repositories
             if (_cache.TryGetValue(cacheKey, out Evento? cached))
                 return cached;
 
-            var entity = await _inner.GetByIdAsync(id);
+            var entity = await _realSubject.GetByIdAsync(id);
 
             if (entity != null)
             {
@@ -54,7 +54,7 @@ namespace Votify.Persistence.Repositories
             if (_cache.TryGetValue(cacheKey, out IEnumerable<Evento>? cached))
                 return cached!;
 
-            var entities = await _inner.GetAllAsync();
+            var entities = await _realSubject.GetAllAsync();
             var list = entities.ToList();
             var options = new MemoryCacheEntryOptions
             {
@@ -72,7 +72,7 @@ namespace Votify.Persistence.Repositories
             if (_cache.TryGetValue(cacheKey, out Evento? cached))
                 return cached;
 
-            var entity = await _inner.GetWithIncludesAsync(predicate, includes);
+            var entity = await _realSubject.GetWithIncludesAsync(predicate, includes);
             if (entity != null)
             {
                 var options = new MemoryCacheEntryOptions
@@ -93,7 +93,7 @@ namespace Votify.Persistence.Repositories
             if (_cache.TryGetValue(cacheKey, out IEnumerable<Evento>? cached))
                 return cached!;
 
-            var entities = await _inner.GetAllWithIncludesAsync(includes);
+            var entities = await _realSubject.GetAllWithIncludesAsync(includes);
             var list = entities.ToList();
             var options = new MemoryCacheEntryOptions
             {
@@ -106,20 +106,20 @@ namespace Votify.Persistence.Repositories
 
         public async Task<Evento> AddAsync(Evento entity)
         {
-            var result = await _inner.AddAsync(entity);
+            var result = await _realSubject.AddAsync(entity);
             ClearCache();
             return result;
         }
 
         public async Task UpdateAsync(Evento entity)
         {
-            await _inner.UpdateAsync(entity);
+            await _realSubject.UpdateAsync(entity);
             ClearCache();
         }
 
         public async Task DeleteAsync(int id)
         {
-            await _inner.DeleteAsync(id);
+            await _realSubject.DeleteAsync(id);
             ClearCache();
         }
 
@@ -130,7 +130,7 @@ namespace Votify.Persistence.Repositories
             if (_cache.TryGetValue(cacheKey, out Evento? cached))
                 return cached;
 
-            var entity = await _inner.ObtenerEventoConDetallesAsync(id);
+            var entity = await _realSubject.ObtenerEventoConDetallesAsync(id);
             if (entity != null)
             {
                 var options = new MemoryCacheEntryOptions
@@ -151,7 +151,7 @@ namespace Votify.Persistence.Repositories
             if (_cache.TryGetValue(cacheKey, out IEnumerable<Evento>? cached))
                 return cached!;
 
-            var entities = await _inner.ObtenerEventosPorJuezAsync(juezId);
+            var entities = await _realSubject.ObtenerEventosPorJuezAsync(juezId);
             var list = entities.ToList();
             var options = new MemoryCacheEntryOptions
             {
@@ -169,7 +169,7 @@ namespace Votify.Persistence.Repositories
             if (_cache.TryGetValue(cacheKey, out IEnumerable<Evento>? cached))
                 return cached!;
 
-            var entities = await _inner.ObtenerEventosDisponiblesAsync();
+            var entities = await _realSubject.ObtenerEventosDisponiblesAsync();
             var list = entities.ToList();
             var options = new MemoryCacheEntryOptions
             {
@@ -187,7 +187,7 @@ namespace Votify.Persistence.Repositories
             if (_cache.TryGetValue(cacheKey, out IEnumerable<Evento>? cached))
                 return cached!;
 
-            var entities = await _inner.ObtenerEventosPorParticipanteAsync(participanteId);
+            var entities = await _realSubject.ObtenerEventosPorParticipanteAsync(participanteId);
             var list = entities.ToList();
             var options = new MemoryCacheEntryOptions
             {

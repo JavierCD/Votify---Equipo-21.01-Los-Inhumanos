@@ -167,4 +167,5 @@ Votify/
 - **Observer Pattern:** Notificaciones de estado de votación en tiempo real
 - **Factory Pattern:** Creación de eventos con diferentes configuraciones
 - **Strategy Pattern:** Diferentes tipos de votación con comportamiento polimórfico
+- **Proxy Pattern:** Caché de lectura para repositorios de acceso frecuente (Eventos, Jueces)
 - **Dependency Injection:** Inversión de control en toda la aplicación

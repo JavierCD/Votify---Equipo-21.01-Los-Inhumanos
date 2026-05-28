@@ -52,7 +52,8 @@ namespace Votify.Persistence.UnitOfWork
             _cache = cache;
         }
 
-        public IGenericRepository<Evento> Eventos => _eventos ??= new CachedGenericRepository<Evento>(new GenericRepository<Evento>(_context), _cache);
+        // Proxy Pattern: caché de lectura para entidades de consulta frecuente
+        public IGenericRepository<Evento> Eventos => _eventos ??= new ProxyGenericRepository<Evento>(new GenericRepository<Evento>(_context), _cache);
         public IGenericRepository<Proyecto> Proyectos => _proyectos ??= new GenericRepository<Proyecto>(_context);
         public IGenericRepository<Categoria> Categorias => _categorias ??= new GenericRepository<Categoria>(_context);
         public IGenericRepository<Voto> Votos => _votos ??= new GenericRepository<Voto>(_context);
@@ -63,13 +64,14 @@ namespace Votify.Persistence.UnitOfWork
         public IGenericRepository<Votacion> Votaciones => _votaciones ??= new GenericRepository<Votacion>(_context);
         public IGenericRepository<Votante> Votantes => _votantes ??= new GenericRepository<Votante>(_context);
         public IGenericRepository<Participante> Participantes => _participantes ??= new GenericRepository<Participante>(_context);
-        public IGenericRepository<Juez> Jueces => _jueces ??= new CachedGenericRepository<Juez>(new GenericRepository<Juez>(_context), _cache);
+        public IGenericRepository<Juez> Jueces => _jueces ??= new ProxyGenericRepository<Juez>(new GenericRepository<Juez>(_context), _cache);
         public IGenericRepository<Organizador> Organizadores => _organizadores ??= new GenericRepository<Organizador>(_context);
         public IGenericRepository<Notificacion> Notificaciones => _notificaciones ??= new GenericRepository<Notificacion>(_context);
         public IGenericRepository<ResultadoIntervenido> ResultadosIntervenidos => _resultadosIntervenidos ??= new GenericRepository<ResultadoIntervenido>(_context);
         public IGenericRepository<SintesisIA> SintesisIA => _sintesisIA ??= new GenericRepository<SintesisIA>(_context);
 
-        public IEventoRepository EventoRepository => _eventoRepository ??= new CachedEventoRepository(new EventoRepository(_context), _cache);
+        // Proxy Pattern: caché de lectura para el repositorio de eventos
+        public IEventoRepository EventoRepository => _eventoRepository ??= new ProxyEventoRepository(new EventoRepository(_context), _cache);
         public ICategoriaRepository CategoriaRepository => _categoriaRepository ??= new CategoriaRepository(_context);
         public IParticipanteRepository ParticipanteRepository => _participanteRepository ??= new ParticipanteRepository(_context);
         public IPopularRepository PopularRepository => _popularRepository ??= new PopularRepository(_context);
