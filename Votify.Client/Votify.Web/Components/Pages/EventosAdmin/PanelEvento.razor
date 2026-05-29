@@ -12,11 +12,14 @@
 @inject ISupervisionService SupervisionService
 @inject IResultadosService ResultadosService
 @inject UserSession Session
+@inject IJSRuntime JSRuntime
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Panel del Evento: <span class="text-primary">@(evento?.Name ?? "Cargando...")</span></h2>
-        <button class="btn btn-outline-secondary" @onclick='() => NavigationManager.NavigateTo("/")'>Volver al Dashboard</button>
+        <button class="btn btn-outline-secondary" @onclick="VolverAtras">
+            <RadzenIcon Icon="arrow_back" Style="font-size: 16px; vertical-align: text-bottom;" class="me-1" /> Volver Atrás
+        </button>
     </div>
 
     @if (evento == null)
@@ -520,5 +523,10 @@
         {
             cargandoResultados = false;
         }
+    }
+
+    private async Task VolverAtras()
+    {
+        await JSRuntime.InvokeVoidAsync("history.back");
     }
 }
