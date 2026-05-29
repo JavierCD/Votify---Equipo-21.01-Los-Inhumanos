@@ -42,15 +42,11 @@ namespace Votify.Core.Models
 
         public Evento(string name, DateTime fechaInit, DateTime fechaFin, int orgaId, string? desc = null) 
         {
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException("El nombre del evento es obligatorio.", nameof(name));
-
-            if (fechaFin <= fechaInit) throw new ArgumentException("La fecha de acabar el evento no puede ser anterior a la fecha de inicio.");
 
             if(orgaId <= 0) throw new ArgumentException("El Id del organizador es inválido.", nameof(OrganizadorId));
 
-            Name = name;
-            FechaFin = fechaFin;
-            FechaInicio = fechaInit;
+            ActualizarDetalles(name, desc);
+            ModificarVentanaDeTiempo(fechaInit, fechaFin);
             OrganizadorId = orgaId;
             Description = desc;
             Estado = EstadoEvento.Borrador;
@@ -101,16 +97,9 @@ namespace Votify.Core.Models
 
         public void ActualizarDatosGenerales(string nombre, DateTime fechaInicio, DateTime fechaFin, string desc)
         {
-            if (string.IsNullOrWhiteSpace(nombre))
-                throw new ArgumentException("El nombre del evento es obligatorio.", nameof(nombre));
-
-            if (fechaFin < fechaInicio)
-                throw new ArgumentException("La fecha de fin no puede ser anterior a la de inicio.");
-
-            Name = nombre;
-            Description = desc;
-            FechaInicio = fechaInicio;
-            FechaFin = fechaFin;
+            // Reutilizamos la lógica y centralizamos las invariantes
+            ActualizarDetalles(nombre, desc);
+            ModificarVentanaDeTiempo(fechaInicio, fechaFin);
         }
 
         public abstract string Modalidad();
