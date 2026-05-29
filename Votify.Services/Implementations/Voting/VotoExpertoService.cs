@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using Votify.Core.Factories;
 using Votify.Core.Interfaces;
@@ -49,14 +47,8 @@ namespace Votify.Services.Implementations
                 bool esAnonimo = false;
                 string? hash = null;
 
-                if (esAnonimo)
-                {
-                    hash = Convert.ToHexString(
-                        SHA256.HashData(
-                            Encoding.UTF8.GetBytes($"{votacionId}-{juezId}-VotifySecretSalt2026")
-                        )
-                    ).Substring(0, 16);
-                }
+                
+                
 
                 var creador = new VotoExpertoCreator();
                 var nuevoVoto = creador.CrearVoto(votacionId, proyectoId, puntuacionBase, esAnonimo, hash, comentario);
